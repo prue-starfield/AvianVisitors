@@ -17,6 +17,10 @@ Later reviews and contextual/Bayesian scores are stored in separate tables.
 They never overwrite the original species, confidence, model settings, or
 recording filename.
 
+Detector/range-model changes belong in `configuration_epochs`, so historical
+analysis can distinguish genuine seasonal changes from a classifier or
+threshold change.
+
 ## Default destination
 
 ```text

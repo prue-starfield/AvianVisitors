@@ -65,6 +65,9 @@ def test_import_is_idempotent_and_preserves_review(tmp_path: Path) -> None:
     assert conn.execute("SELECT count(*) FROM daily_species").fetchone()[0] == 2
     assert conn.execute("SELECT count(*) FROM monthly_species").fetchone()[0] == 2
     assert conn.execute("SELECT count(*) FROM review_queue").fetchone()[0] == 0
+    assert conn.execute(
+        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='configuration_epochs'"
+    ).fetchone()[0] == 1
     conn.close()
 
 

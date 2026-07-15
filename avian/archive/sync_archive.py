@@ -96,6 +96,17 @@ CREATE TABLE IF NOT EXISTS sync_runs (
     error TEXT
 );
 
+CREATE TABLE IF NOT EXISTS configuration_epochs (
+    effective_at TEXT PRIMARY KEY,
+    audio_model TEXT NOT NULL,
+    range_model TEXT NOT NULL,
+    occurrence_threshold REAL NOT NULL,
+    confidence_threshold REAL NOT NULL,
+    sensitivity REAL NOT NULL,
+    overlap REAL NOT NULL,
+    reason TEXT
+);
+
 CREATE VIEW IF NOT EXISTS daily_species AS
 SELECT date, scientific_name, common_name,
        count(*) AS detections,

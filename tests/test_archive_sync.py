@@ -2,6 +2,8 @@ import importlib.util
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "avian" / "archive" / "sync_archive.py"
 spec = importlib.util.spec_from_file_location("sync_archive", MODULE_PATH)
@@ -116,3 +118,90 @@ def test_archive_mirror_is_atomic_valid_and_checksummed(tmp_path: Path) -> None:
     assert conn.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
     assert conn.execute("SELECT count(*) FROM detections").fetchone()[0] == 2
     conn.close()
+
+
+def test_web_audio_cache_is_checksum_verified_bounded_and_newest_first(tmp_path: Path) -> None:
+    source = tmp_path / "source.db"
+    archive = tmp_path / "archive.db"
+    canonical = tmp_path / "canonical-audio"
+    audio_root = canonical / "By_Date"
+    cache = tmp_path / "web-cache"
+    make_source(source)
+    sync_archive.import_snapshot(source, archive, "model-v1", "birdnet")
+
+    robin = audio_root / "2026-07-14" / "American_Robin"
+    phoebe = audio_root / "2026-07-15" / "Eastern_Phoebe"
+    robin.mkdir(parents=True)
+    phoebe.mkdir(parents=True)
+    robin_bytes = b"robin-audio"
+    phoebe_bytes = b"phoebe-audio"
+    (robin / "American_Robin-95-2026-07-14-birdnet-06:00:00.mp3").write_bytes(robin_bytes)
+    (phoebe / "Eastern_Phoebe-81-2026-07-15-birdnet-07:00:00.mp3").write_bytes(phoebe_bytes)
+    assert sync_archive.index_audio(archive, audio_root) == 2
+
+    copied, selected_bytes = sync_archive.refresh_web_audio_cache(
+        archive, canonical, cache, len(robin_bytes) + len(phoebe_bytes)
+    )
+    assert copied == 2
+    assert selected_bytes == len(robin_bytes) + len(phoebe_bytes)
+    assert len(list(cache.rglob("*.mp3"))) == 2
+
+    newest = next(cache.rglob("Eastern_Phoebe*.mp3"))
+    newest.write_bytes(b"x" * len(phoebe_bytes))
+    (cache / "stale.partial").write_bytes(b"stale")
+    (cache / "rogue.bin").write_bytes(b"rogue")
+
+    copied, selected_bytes = sync_archive.refresh_web_audio_cache(
+        archive, canonical, cache, len(phoebe_bytes)
+    )
+    assert copied == 1
+    assert selected_bytes == len(phoebe_bytes)
+    cached = list(cache.rglob("*.mp3"))
+    assert len(cached) == 1
+    assert cached[0].name.startswith("Eastern_Phoebe")
+    assert cached[0].read_bytes() == phoebe_bytes
+    assert not (cache / "stale.partial").exists()
+    assert not (cache / "rogue.bin").exists()
+
+
+def test_web_audio_cache_rejects_path_escape_and_dangerous_root(tmp_path: Path) -> None:
+    source = tmp_path / "source.db"
+    archive = tmp_path / "archive.db"
+    canonical = tmp_path / "canonical-audio"
+    make_source(source)
+    sync_archive.import_snapshot(source, archive, "model-v1", "birdnet")
+    with sqlite3.connect(archive) as conn:
+        conn.execute(
+            """UPDATE detections SET audio_relpath='../../escape.mp3',
+               audio_sha256=?,audio_bytes=9
+               WHERE detection_id=(SELECT detection_id FROM detections LIMIT 1)""",
+            ("f" * 64,),
+        )
+        conn.commit()
+
+    with pytest.raises(RuntimeError, match="invalid archive audio path"):
+        sync_archive.refresh_web_audio_cache(
+            archive, canonical, tmp_path / "web-cache", 1024
+        )
+    with pytest.raises(RuntimeError, match="unsafe web cache root"):
+        sync_archive.refresh_web_audio_cache(archive, canonical, tmp_path, 1024)
+
+
+def test_sync_run_status_is_updated_not_duplicated(tmp_path: Path) -> None:
+    archive = tmp_path / "archive.sqlite3"
+    started = "2026-07-15T12:00:00+00:00"
+    sync_archive.record_run(archive, started, "running")
+    sync_archive.record_run(
+        archive, started, "error", source_rows=4, inserted=2,
+        indexed=1, error="cache failed",
+    )
+    conn = sqlite3.connect(archive)
+    try:
+        rows = conn.execute(
+            "SELECT status,source_rows,inserted_rows,error,completed_at FROM sync_runs"
+        ).fetchall()
+    finally:
+        conn.close()
+    assert len(rows) == 1
+    assert rows[0][:4] == ("error", 4, 2, "cache failed")
+    assert rows[0][4] is not None

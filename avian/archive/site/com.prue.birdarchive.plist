@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.prue.birdarchive</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>/Users/prue/projects/AvianVisitors/avian/archive/site/server.py</string>
+    <string>--host</string>
+    <string>127.0.0.1</string>
+    <string>--port</string>
+    <string>9137</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/prue/projects/AvianVisitors</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PYTHONUNBUFFERED</key>
+    <string>1</string>
+    <key>BIRD_ARCHIVE_DB</key>
+    <string>/Users/prue/Library/Application Support/AvianVisitorsArchive/detections.sqlite3</string>
+    <key>BIRD_ARCHIVE_AUDIO</key>
+    <string>/Users/prue/Library/Application Support/AvianVisitorsArchive/audio</string>
+    <key>BIRD_ARCHIVE_ART</key>
+    <string>/Users/prue/Library/Application Support/AvianVisitorsArchive/illustrations</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>StandardOutPath</key>
+  <string>/Users/prue/Library/Logs/birdarchive.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/prue/Library/Logs/birdarchive.err</string>
+</dict>
+</plist>

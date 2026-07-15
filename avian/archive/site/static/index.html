@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ebe4d2">
+  <meta name="description" content="A permanent, auditable record of birds heard at the listening garden in Sharon, Connecticut.">
+  <title>The Listening Garden</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the record</a>
+  <div class="paper-noise" aria-hidden="true"></div>
+
+  <header class="hero">
+    <div class="hero-mark" aria-hidden="true">
+      <span>聴</span>
+      <small>LISTEN</small>
+    </div>
+    <div class="hero-copy">
+      <p class="eyebrow">06069 · SHARON, CONNECTICUT · PRIVATE FIELD RECORD</p>
+      <h1>The Listening<br><em>Garden</em></h1>
+      <p class="lede">Every accepted recognition, kept with its timestamp, model claim and original sound. A garden measured by ear.</p>
+    </div>
+    <div class="archive-status" id="archiveStatus" aria-live="polite">
+      <span class="pulse" aria-hidden="true"></span>
+      <div><strong>Reading the archive</strong><small>Checking the latest mirror…</small></div>
+    </div>
+  </header>
+
+  <nav class="section-nav" aria-label="Archive sections">
+    <a href="#today">Today</a>
+    <a href="#rhythm">Rhythm</a>
+    <a href="#species">Species</a>
+    <a href="#ledger">Ledger</a>
+    <a href="#provenance">Provenance</a>
+  </nav>
+
+  <main id="main">
+    <section class="summary-band" aria-label="Archive summary">
+      <div class="metric"><span id="metricDetections">—</span><small>recognitions kept</small></div>
+      <div class="metric"><span id="metricSpecies">—</span><small>species in the record</small></div>
+      <div class="metric"><span id="metricDays">—</span><small>listening days</small></div>
+      <div class="metric"><span id="metricClips">—</span><small>sound clips preserved</small></div>
+    </section>
+
+    <section id="today" class="section today-section">
+      <header class="section-head">
+        <div>
+          <p class="kicker">The frame set</p>
+          <h2>Heard today</h2>
+        </div>
+        <div class="section-note">
+          <strong id="todayDate">Calendar day</strong>
+          <span>Midnight–midnight · America/New_York</span>
+        </div>
+      </header>
+      <div class="parity-note">
+        <span class="parity-glyph" aria-hidden="true">≡</span>
+        <p><strong>Same publication policy as the e-ink frame.</strong> One portrait per species accepted today. The archive may trail the live microphone by the sync age shown above.</p>
+      </div>
+      <div id="todayGrid" class="bird-grid" aria-live="polite">
+        <p class="loading">Listening for today’s visitors…</p>
+      </div>
+    </section>
+
+    <section id="rhythm" class="section rhythm-section">
+      <header class="section-head">
+        <div>
+          <p class="kicker">Seasonality</p>
+          <h2>The rhythm of the garden</h2>
+        </div>
+        <p class="section-intro">Dark squares are louder days. Over seasons, arrivals and absences become visible without pretending repeated calls are individual birds.</p>
+      </header>
+      <div class="rhythm-layout">
+        <article class="calendar-panel">
+          <div class="panel-title"><h3>Listening calendar</h3><span>Last 365 days</span></div>
+          <div id="activityHeatmap" class="activity-heatmap" role="img" aria-label="Daily recognition activity over the last year"></div>
+          <div class="heat-legend" aria-hidden="true"><span>quiet</span><i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i><span>loud</span></div>
+        </article>
+        <article class="hour-panel">
+          <div class="panel-title"><h3>Daily chorus</h3><span>Calls by hour</span></div>
+          <div id="hourChart" class="hour-chart" role="img" aria-label="Recognition counts by hour of day"></div>
+        </article>
+      </div>
+      <article class="season-panel">
+        <div class="panel-title season-title">
+          <div><h3>Month by month</h3><span id="seasonSpeciesNote">Choose a species to trace its year</span></div>
+          <label class="select-wrap">Species
+            <select id="seasonSpecies" aria-label="Species for monthly seasonality"></select>
+          </label>
+        </div>
+        <div id="monthChart" class="month-chart" role="img" aria-label="Monthly detections for selected species"></div>
+      </article>
+    </section>
+
+    <section id="species" class="section species-section">
+      <header class="section-head">
+        <div>
+          <p class="kicker">Field index</p>
+          <h2>Residents, regulars & passers-through</h2>
+        </div>
+        <p class="section-intro">Ranked by days heard, not raw call count. That keeps one enthusiastic singer from masquerading as an entire population.</p>
+      </header>
+      <div id="speciesIndex" class="species-index"></div>
+    </section>
+
+    <section id="ledger" class="section ledger-section">
+      <header class="section-head">
+        <div>
+          <p class="kicker">Immutable source claims</p>
+          <h2>The recognition ledger</h2>
+        </div>
+        <p class="section-intro">A recognition is a model claim about an audio segment—not proof of an individual bird. Reviews annotate it; they never rewrite it.</p>
+      </header>
+      <form id="ledgerFilters" class="ledger-filters">
+        <label class="search-field"><span>Search birds</span><input id="filterQuery" type="search" placeholder="Robin, Vireo…" autocomplete="off"></label>
+        <label><span>Species</span><select id="filterSpecies"><option value="">All species</option></select></label>
+        <label><span>From</span><input id="filterFrom" type="date"></label>
+        <label><span>Confidence</span><select id="filterConfidence"><option value="0">All ≥70%</option><option value="0.8">≥80%</option><option value="0.9">≥90%</option></select></label>
+        <label><span>Review</span><select id="filterReview"><option value="">All states</option><option value="pending">Pending review</option><option value="unreviewed">Strong / unreviewed</option><option value="confirmed">Confirmed</option><option value="uncertain">Uncertain</option><option value="rejected">Rejected</option></select></label>
+        <button type="submit">Apply</button>
+      </form>
+      <div class="ledger-meta"><span id="ledgerCount">Loading ledger…</span><span id="playingNow" aria-live="polite"></span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date & time</th><th>Recognition</th><th>Model score</th><th>Review</th><th>Evidence</th></tr></thead>
+          <tbody id="ledgerRows"></tbody>
+        </table>
+      </div>
+      <button id="loadMore" class="load-more" type="button" hidden>Load older recognitions</button>
+      <audio id="audioPlayer" preload="none"></audio>
+    </section>
+
+    <section id="provenance" class="section provenance-section">
+      <header class="section-head">
+        <div>
+          <p class="kicker">Audit trail</p>
+          <h2>How the listening changed</h2>
+        </div>
+        <p class="section-intro">Model, range and location-policy changes are recorded as epochs so a technical change cannot masquerade as an ecological one.</p>
+      </header>
+      <ol id="epochTimeline" class="epoch-timeline"></ol>
+      <div class="method-note">
+        <h3>What is kept</h3>
+        <p>All BirdNET detections accepted at the configured threshold, their timestamps, raw scores, model settings and content-hashed MP3 clips. Later Perch, Bayesian or human judgments live in separate review fields.</p>
+        <h3>What the number is not</h3>
+        <p>Detection counts are recognised vocalisation segments. They are not unique birds, population estimates, or calibrated probabilities of truth.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div><strong>The Listening Garden</strong><span>Private tailnet archive · 06069</span></div>
+    <p>Owned locally. Auditable by design. No cloud dependency for recognition.</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

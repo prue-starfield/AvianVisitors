@@ -3,7 +3,7 @@
 `sync_archive.py` turns a BirdNET-Pi installation into an auditable long-term
 record suitable for seasonality analysis.
 
-It does four things on each run:
+It does five things on each run:
 
 1. Uses SQLite's online backup API to take a consistent snapshot of
    `birds.db` without stopping detection.
@@ -12,6 +12,9 @@ It does four things on each run:
 3. Mirrors the MP3 evidence clips before BirdNET's disk-pressure purge can
    remove them.
 4. Links each row to its clip using a SHA-256 content digest.
+5. Refreshes a checksum-verified, size-bounded internal playback cache for the
+   tailnet web UI. This cache is disposable; the external archive remains the
+   canonical evidence store.
 
 Later reviews and contextual/Bayesian scores are stored in separate tables.
 They never overwrite the original species, confidence, model settings, or
@@ -40,6 +43,18 @@ That protects the seasonality record across failure of either the Pi/external
 disk or the Mac's internal storage. The mirror receives an adjacent SHA-256
 manifest and must pass SQLite's full integrity check before publication.
 
+The read-only website uses two bounded internal presentation caches:
+
+```text
+~/Library/Application Support/AvianVisitorsArchive/
+├── audio/          # newest verified clips, mechanically capped at 2 GiB
+└── illustrations/  # local copy of the current 333-species art library
+```
+
+The audio cache avoids granting a generic Python interpreter broad removable-
+volume access. Clips outside the newest 2 GiB remain permanent in the external
+archive but are not immediately playable in the browser.
+
 Override it with `--dest`. The destination's parent must already exist; this
 makes an unmounted external drive fail loudly rather than silently writing a
 lookalike directory on the system disk.
@@ -54,6 +69,24 @@ The default network route expects the microphone Pi at `192.168.36.9`, reached
 through the frame Pi at `192.168.36.36`. All connection paths and model labels
 are command-line options. Normal successful runs produce no output, which makes
 the script suitable for silent-on-success watchdog scheduling.
+
+## Private archive website
+
+`site/server.py` is a standard-library, loopback-only HTTP service installed as
+the `com.prue.birdarchive` LaunchAgent. Caddy exposes it only through the
+Tailscale-authenticated route:
+
+```text
+https://prudences.tailb1167.ts.net/birds/
+```
+
+The service opens the internal SQLite mirror in query-only mode. It never
+returns raw coordinates or filesystem paths. Evidence audio is resolved only
+from an immutable 64-character detection ID and supports HTTP byte ranges.
+The website's “Today” species set uses publication policy v1: accepted BirdNET
+detections for the `America/New_York` calendar day, matching the e-ink frame.
+The mirror may trail the live microphone by one archive-sync interval, which is
+displayed prominently rather than hidden.
 
 ## Archive views
 

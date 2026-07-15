@@ -22,7 +22,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
-from typing import Dict, Iterable, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 DETECTION_COLUMNS = (
     "Date", "Time", "Sci_Name", "Com_Name", "Confidence", "Lat", "Lon",
@@ -268,6 +268,108 @@ def mirror_archive_db(archive: Path, mirror: Path) -> str:
     return digest
 
 
+def refresh_web_audio_cache(
+    archive: Path,
+    canonical_audio_root: Path,
+    cache_root: Path,
+    max_bytes: int,
+) -> Tuple[int, int]:
+    """Materialise the newest evidence clips into a bounded internal cache.
+
+    The external archive remains canonical. This cache exists only because
+    macOS background services cannot reliably read removable volumes without
+    a broad TCC grant. New files are checksum-verified and atomically replaced;
+    files outside the newest ``max_bytes`` window are removed.
+    """
+    canonical_audio_root = canonical_audio_root.resolve()
+    cache_root = cache_root.resolve()
+    home = Path.home().resolve()
+    if (
+        cache_root in {Path("/"), home, canonical_audio_root}
+        or cache_root in canonical_audio_root.parents
+        or canonical_audio_root in cache_root.parents
+    ):
+        raise RuntimeError(f"refusing unsafe web cache root: {cache_root}")
+    cache_root.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(archive))
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = list(conn.execute(
+            """SELECT detection_id,audio_relpath,audio_sha256,audio_bytes
+               FROM detections
+               WHERE audio_relpath IS NOT NULL AND audio_sha256 IS NOT NULL
+               ORDER BY date DESC,time DESC,detection_id"""
+        ))
+    finally:
+        conn.close()
+
+    keep: set[str] = set()
+    selected: list[sqlite3.Row] = []
+    selected_bytes = 0
+    for row in rows:
+        size = int(row["audio_bytes"] or 0)
+        if size <= 0 or selected_bytes + size > max_bytes:
+            continue
+        rel = str(row["audio_relpath"])
+        keep.add(rel)
+        selected.append(row)
+        selected_bytes += size
+
+    # Remove every unselected regular file or symlink first, including stale
+    # .partial files. The byte cap applies to the whole dedicated cache tree,
+    # not merely files whose names happen to end in .mp3.
+    for cached in cache_root.rglob("*"):
+        if not (cached.is_file() or cached.is_symlink()):
+            continue
+        rel = cached.relative_to(cache_root).as_posix()
+        if rel not in keep:
+            cached.unlink()
+
+    copied = 0
+    for row in selected:
+        rel = Path(str(row["audio_relpath"]))
+        if rel.is_absolute() or ".." in rel.parts:
+            raise RuntimeError(f"invalid archive audio path: {rel}")
+        source = (canonical_audio_root / rel).resolve()
+        target = (cache_root / rel).resolve()
+        if canonical_audio_root not in source.parents or cache_root not in target.parents:
+            raise RuntimeError(f"archive audio path escaped its root: {rel}")
+        if not source.is_file():
+            keep.discard(rel.as_posix())
+            if target.is_file() or target.is_symlink():
+                target.unlink()
+            continue
+        if target.is_file() and target.stat().st_size == int(row["audio_bytes"]):
+            if sha256_file(target) == row["audio_sha256"]:
+                continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        tmp = target.with_name(target.name + ".partial")
+        tmp.unlink(missing_ok=True)
+        shutil.copy2(source, tmp)
+        if sha256_file(tmp) != row["audio_sha256"]:
+            tmp.unlink(missing_ok=True)
+            raise RuntimeError(f"web audio cache checksum mismatch: {rel}")
+        tmp.replace(target)
+        copied += 1
+
+    for directory in sorted(
+        (p for p in cache_root.rglob("*") if p.is_dir()),
+        key=lambda p: len(p.parts), reverse=True,
+    ):
+        try:
+            directory.rmdir()
+        except OSError:
+            pass
+    actual_bytes = sum(
+        p.stat().st_size for p in cache_root.rglob("*") if p.is_file()
+    )
+    if actual_bytes > max_bytes:
+        raise RuntimeError(
+            f"web audio cache exceeded hard cap: {actual_bytes} > {max_bytes}"
+        )
+    return copied, actual_bytes
+
+
 def ssh_options(args: argparse.Namespace) -> list[str]:
     opts = [
         "-q",
@@ -343,14 +445,26 @@ def record_run(
     try:
         initialise_archive(conn)
         with conn:
-            conn.execute(
-                """INSERT INTO sync_runs
-                   (started_at,completed_at,source_rows,inserted_rows,indexed_clips,
-                    snapshot_sha256,status,error)
-                   VALUES (?,?,?,?,?,?,?,?)""",
-                (started, now_iso(), source_rows, inserted, indexed,
-                 snapshot_hash, status, error),
-            )
+            completed = None if status == "running" else now_iso()
+            existing = conn.execute(
+                "SELECT run_id FROM sync_runs WHERE started_at=? ORDER BY run_id DESC LIMIT 1",
+                (started,),
+            ).fetchone()
+            values = (completed, source_rows, inserted, indexed,
+                      snapshot_hash, status, error)
+            if existing:
+                conn.execute(
+                    """UPDATE sync_runs SET completed_at=?,source_rows=?,inserted_rows=?,
+                       indexed_clips=?,snapshot_sha256=?,status=?,error=? WHERE run_id=?""",
+                    values + (existing[0],),
+                )
+            else:
+                conn.execute(
+                    """INSERT INTO sync_runs
+                       (started_at,completed_at,source_rows,inserted_rows,indexed_clips,
+                        snapshot_sha256,status,error) VALUES (?,?,?,?,?,?,?,?)""",
+                    (started,) + values,
+                )
     finally:
         conn.close()
 
@@ -364,6 +478,15 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         "--db-mirror", type=Path,
         default=home / "Library/Application Support/AvianVisitorsArchive/detections.sqlite3",
         help="Atomic second-device copy of the archive database",
+    )
+    ap.add_argument(
+        "--web-audio-cache", type=Path,
+        default=home / "Library/Application Support/AvianVisitorsArchive/audio",
+        help="Bounded internal playback cache; the external archive remains canonical",
+    )
+    ap.add_argument(
+        "--web-audio-cache-bytes", type=int, default=2 * 1024 * 1024 * 1024,
+        help="Maximum internal playback-cache size (default: 2 GiB)",
     )
     ap.add_argument("--remote-host", default="birdnet@192.168.36.9")
     ap.add_argument("--jump-host", default="birdpic@192.168.36.36")
@@ -400,6 +523,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
         source_rows = inserted = indexed = 0
         snapshot_hash: Optional[str] = None
+        record_run(archive, started, "running")
         try:
             with tempfile.TemporaryDirectory(prefix="bird-archive-") as td:
                 snapshot = fetch_snapshot(args, Path(td))
@@ -411,9 +535,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             if not args.skip_audio:
                 mirror_audio(args, audio_root)
                 indexed = index_audio(archive, audio_root)
+            mirror_path = args.db_mirror.expanduser().resolve()
+            cache_copied = cache_bytes = 0
+            if not args.skip_audio:
+                cache_copied, cache_bytes = refresh_web_audio_cache(
+                    archive,
+                    args.dest / "audio",
+                    args.web_audio_cache.expanduser().resolve(),
+                    args.web_audio_cache_bytes,
+                )
             record_run(archive, started, "ok", source_rows, inserted,
                        indexed, snapshot_hash)
-            mirror_path = args.db_mirror.expanduser().resolve()
             mirror_archive_db(archive, mirror_path)
             if args.verbose:
                 conn = sqlite3.connect(str(archive))
@@ -427,7 +559,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 print(
                     f"archive ok source={source_rows} inserted={inserted} "
                     f"indexed={indexed} total={total} clips={clips} "
-                    f"mirror={mirror_path}"
+                    f"mirror={mirror_path} web_cache_copied={cache_copied} "
+                    f"web_cache_bytes={cache_bytes}"
                 )
             return 0
         except Exception as exc:

@@ -45,6 +45,8 @@ DEFAULTS = {
     "bw_days": 7,           # BirdWeather lookback window, in days
     "bw_country": "us",     # geocoder country for the ZIP
     "hours": 24,
+    "calendar_today": False, # true = local midnight-to-midnight; false = rolling `hours`
+    "cutout_local": "~/AvianVisitors/avian/assets/illustrations",
     "image": "",            # local PNG written by the shooter
     "image_url": "",        # or a published screenshot URL
     "shoot": False,         # or capture inline (needs a browser; the Zero 2 W handles it)
@@ -83,8 +85,10 @@ def _bucket(n):
     return 8
 
 
-def fetch_recent(base, hours, timeout, auth=None):
+def fetch_recent(base, hours, timeout, auth=None, calendar_today=False):
     url = f"{base.rstrip('/')}/avian/api/birdnet-api.php?action=recent&hours={hours}"
+    if calendar_today:
+        url += "&calendar=today"
     req = urllib.request.Request(url, headers={"User-Agent": "AvianVisitors-frame/1.0"})
     if auth:
         req.add_header("Authorization", auth)
@@ -104,7 +108,8 @@ def fetch_species(cfg, auth=None):
     if cfg.get("species_source") == "birdweather":
         import birdweather
         return birdweather.species_for_zip(cfg["zip"], country=cfg["bw_country"], days=cfg["bw_days"])
-    return fetch_recent(cfg["base_url"], cfg["hours"], cfg["timeout"], auth)
+    return fetch_recent(cfg["base_url"], cfg["hours"], cfg["timeout"], auth,
+                        cfg.get("calendar_today", False))
 
 
 # --- image ------------------------------------------------------------------
@@ -315,7 +320,11 @@ def obtain_image(cfg, species=None):
         shoot(cfg["base_url"], out, title=cfg["shoot_title"], subtitle=cfg["shoot_subtitle"],
               headline_px=cfg["shoot_headline_px"], eyebrow_px=cfg["shoot_eyebrow_px"],
               lowercase=cfg["shoot_lowercase"], mat=cfg["shoot_mat"],
-              small_floor=cfg["shoot_small_floor"], count_exp=cfg["shoot_count_exp"], timeout_ms=cfg["timeout"] * 1000,
+              small_floor=cfg["shoot_small_floor"], count_exp=cfg["shoot_count_exp"],
+              window_hours=cfg["hours"], calendar_today=cfg.get("calendar_today", False),
+              cutout_base=cfg["base_url"].rstrip("/") + "/avian/assets/illustrations/",
+              cutout_local=os.path.expanduser(cfg.get("cutout_local") or "") or None,
+              timeout_ms=cfg["timeout"] * 1000,
               user=cfg["basic_user"], password=cfg["basic_pass"])
         return Image.open(out).convert("RGB")
     src = cfg["image_url"] or cfg["image"]

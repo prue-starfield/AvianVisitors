@@ -22,7 +22,10 @@ shoot = true
 # bw_country = "us"    # geocoder country for the ZIP
 # shoot = true         # this Pi renders the collage
 
-hours = 24             # window shown on the frame
+hours = 24             # rolling window when calendar_today is false
+calendar_today = false # true = midnight-to-midnight in the BirdNET-Pi timezone
+# Serve illustrations from this Pi during screenshots; network fallback remains available.
+# cutout_local = "~/AvianVisitors/avian/assets/illustrations"
 
 # --- Titles and look (used when this Pi renders, i.e. shoot = true) ----------
 shoot_title = "Avian Visitors"

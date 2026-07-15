@@ -72,7 +72,15 @@ def _safe_continue(route):
         pass
 
 
-def _make_api_handler(floor_frac, window_hours, auth, species=None):
+def _windowed_recent_url(url, window_hours=None, calendar_today=False):
+    if window_hours:
+        url = re.sub(r"hours=\d+", f"hours={int(window_hours)}", url)
+    if calendar_today and "calendar=today" not in url:
+        url += ("&" if "?" in url else "?") + "calendar=today"
+    return url
+
+
+def _make_api_handler(floor_frac, window_hours, calendar_today, auth, species=None):
     """Re-window action=recent (to preview busy days) and floor the rarest
     counts so the packer draws them a little larger. With `species` set
     (--bird-weather), serve that list for recent and an empty body for the
@@ -87,7 +95,7 @@ def _make_api_handler(floor_frac, window_hours, auth, species=None):
             if species is not None:
                 data = {"hours": int(window_hours or 24), "species": species, "as_of": ""}
             else:
-                url = re.sub(r"hours=\d+", f"hours={int(window_hours)}", req.url) if window_hours else req.url
+                url = _windowed_recent_url(req.url, window_hours, calendar_today)
                 kw = {"url": url}
                 if auth:
                     kw["headers"] = {**req.headers, "authorization": auth}
@@ -166,6 +174,7 @@ def shoot(url, out, *, title=None, subtitle=None, vw=600, vh=800, dsf=2,
           headline_px=42, eyebrow_px=18, lowercase=False,
           mat=0.04, collage_vh=52, cluster_xbias=1.0, cluster_ybias=1.2,
           count_exp=0.4, cluster_pad=1, small_floor=0.04, window_hours=None,
+          calendar_today=False,
           timeout_ms=45000, user=None, password=None, species=None, cutout_base=None,
           cutout_local=None, empty_text="listening for birds…"):
     pad_side, pad_top, pad_bottom = int(vw * mat), int(vh * mat * 0.92), int(vh * mat)
@@ -179,12 +188,17 @@ def shoot(url, out, *, title=None, subtitle=None, vw=600, vh=800, dsf=2,
                 ctx_kw["http_credentials"] = {"username": user, "password": password or ""}
             page = browser.new_context(**ctx_kw).new_page()
             misses = []
-            page.route("**/birdnet-api.php**", _make_api_handler(small_floor, window_hours, auth, species))
+            page.route("**/birdnet-api.php**", _make_api_handler(
+                small_floor, window_hours, calendar_today, auth, species))
             page.route("**/apt.js*", _make_js_handler(cluster_xbias, cluster_ybias, count_exp, cluster_pad, auth, misses))
             if cutout_base:
                 page.route("**/cutout.php*", _make_cutout_handler(cutout_base, cutout_local))
 
             css = HIDE_CSS + _frame_css(headline_px, eyebrow_px, lowercase, pad_top, pad_side, pad_bottom, collage_vh)
+            # A screenshot is immutable by design. Disable the site's polling
+            # intervals before apt.js loads so a 30-second refresh cannot tear
+            # down partly-decoded bird images while we are waiting to capture.
+            page.add_init_script("window.setInterval=function(){return 0;};")
             page.add_init_script(
                 "document.addEventListener('DOMContentLoaded',function(){"
                 "var s=document.createElement('style');s.textContent=" + json.dumps(css) +

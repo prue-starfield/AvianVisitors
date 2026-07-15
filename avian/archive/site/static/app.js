@@ -223,8 +223,9 @@ function ledgerRow(item) {
   const reviewStatus = String(item.review_status || "unreviewed");
   const reviewClass = ["pending", "unreviewed", "confirmed", "uncertain", "rejected"].includes(reviewStatus)
     ? reviewStatus : "unreviewed";
-  const audio = item.has_audio
-    ? `<button class="play-button" type="button" data-id="${item.detection_id}" data-name="${escapeHTML(item.common_name)}">Play clip</button>`
+  const detectionId = String(item.detection_id || "");
+  const audio = item.has_audio && /^[0-9a-f]{64}$/.test(detectionId)
+    ? `<button class="play-button" type="button" data-id="${escapeHTML(detectionId)}" data-name="${escapeHTML(item.common_name)}">Play clip</button>`
     : '<button class="play-button" type="button" disabled>No clip</button>';
   return `<tr>
     <td><time datetime="${escapeHTML(item.observed_at_local)}">${displayDate(item.date, { short: true })}<br>${displayTime(item.time)}</time></td>
@@ -263,7 +264,7 @@ function bindAudio() {
       return;
     }
     $$(".play-button[data-id]").forEach(item => { item.textContent = "Play clip"; });
-    player.src = `api/audio/${button.dataset.id}`;
+    player.src = `api/audio/${encodeURIComponent(button.dataset.id)}`;
     player.dataset.id = button.dataset.id;
     button.textContent = "Pause";
     $("#playingNow").textContent = `Playing ${button.dataset.name}`;

@@ -34,6 +34,11 @@ def slugify(scientific_name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", scientific_name.lower()).strip("-")
 
 
+def public_model_label(value: Any) -> str:
+    """Return a display label without leaking POSIX or Windows path prefixes."""
+    return re.split(r"[\\/]", str(value or ""))[-1]
+
+
 def db_connect(path: Path) -> sqlite3.Connection:
     uri = path.resolve().as_uri() + "?mode=ro"
     conn = sqlite3.connect(uri, uri=True, timeout=5)
@@ -207,6 +212,9 @@ def get_epochs(db_path: Path) -> dict[str, Any]:
                       sensitivity, overlap, reason
                FROM configuration_epochs ORDER BY effective_at"""
         ))
+    for epoch in epochs:
+        epoch["audio_model"] = public_model_label(epoch.get("audio_model"))
+        epoch["range_model"] = public_model_label(epoch.get("range_model"))
     return {"epochs": epochs}
 
 
@@ -227,7 +235,11 @@ def get_detections(
         )
     except ValueError as exc:
         raise ValueError("invalid numeric filter") from exc
-    conditions = ["d.confidence >= ?"]
+    conditions = [
+        "d.confidence >= ?",
+        "length(d.detection_id) = 64",
+        "d.detection_id NOT GLOB '*[^0-9a-f]*'",
+    ]
     values: list[Any] = [confidence_min]
     species = one("species")
     date_from, date_to = one("date_from"), one("date_to")
@@ -263,7 +275,7 @@ def get_detections(
         result = rows_dict(db.execute(
             f"""SELECT d.detection_id, d.date, d.time, d.observed_at_local,
                        d.timezone, d.scientific_name, d.common_name, d.confidence,
-                       d.source_model, d.ingested_at,
+                       d.ingested_at,
                        d.audio_relpath, d.audio_sha256, d.audio_bytes,
                        {status_expr} AS review_status,
                        r.reviewer, r.review_model, r.review_score, r.notes, r.reviewed_at,

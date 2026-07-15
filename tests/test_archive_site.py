@@ -123,6 +123,39 @@ def test_api_does_not_expose_coordinates_or_audio_paths(archive_site):
     assert payload["detections"][1]["review_status"] == "pending"
 
 
+def test_malformed_ids_and_model_paths_never_reach_public_api(archive_site):
+    base, db_path = archive_site
+    with sqlite3.connect(db_path) as conn:
+        insert_detection(
+            conn, '\"><img src=x onerror=alert(1)>',
+            site.now_local().date().isoformat(), "09:00:00",
+            "Malicia avis", "Injected Candidate", 0.99,
+        )
+        conn.execute(
+            """UPDATE configuration_epochs
+               SET audio_model='/private/models/BirdNET.bin',
+                   range_model='C:\\private\\models\\range.tflite'"""
+        )
+        conn.commit()
+
+    _, _, ledger = get_json(base + "/api/detections?limit=20")
+    assert ledger["total"] == 3
+    serialised = json.dumps(ledger)
+    assert "Injected Candidate" not in serialised
+    assert "source_model" not in serialised
+
+    _, _, epochs = get_json(base + "/api/epochs")
+    assert epochs["epochs"][0]["audio_model"] == "BirdNET.bin"
+    assert epochs["epochs"][0]["range_model"] == "range.tflite"
+    assert "/private/" not in json.dumps(epochs)
+    assert "C:\\private" not in json.dumps(epochs)
+
+
+def test_frontend_escapes_detection_id_in_attribute_context():
+    app_js = (Path(site.__file__).parent / "static" / "app.js").read_text()
+    assert 'data-id="${escapeHTML(detectionId)}"' in app_js
+
+
 def test_publication_floor_applies_to_every_public_view(archive_site):
     base, _ = archive_site
     for endpoint in ("/api/summary", "/api/today", "/api/activity", "/api/species", "/api/seasonality"):

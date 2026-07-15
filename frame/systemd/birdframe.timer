@@ -4,6 +4,10 @@ Description=Update the e-ink bird frame on a schedule
 [Timer]
 OnBootSec=2min
 OnUnitActiveSec=15min
+# Calendar-day frames must clear yesterday at local midnight rather than wait
+# for the next unaligned 15-minute tick.
+OnCalendar=*-*-* 00:00:00
+AccuracySec=30s
 Persistent=true
 
 [Install]

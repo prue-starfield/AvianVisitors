@@ -1,5 +1,8 @@
 "use strict";
 
+const ART_VERSION = "r2";
+const ART_RETRY_DELAYS_MS = [5000, 30000, 300000];
+
 const state = {
   summary: null,
   species: [],
@@ -61,6 +64,30 @@ function showToast(message) {
   showToast.timer = setTimeout(() => toast.classList.remove("show"), 3500);
 }
 
+function makeIllustrationsSelfHealing(root) {
+  root.querySelectorAll("img").forEach(img => {
+    let retries = 0;
+    img.addEventListener("load", () => {
+      img.style.visibility = "visible";
+    });
+    img.addEventListener("error", () => {
+      img.style.visibility = "hidden";
+      if (retries >= ART_RETRY_DELAYS_MS.length) {
+        if (!img.alt.endsWith(" (illustration unavailable)")) {
+          img.alt = `${img.alt} (illustration unavailable)`;
+        }
+        return;
+      }
+      const delay = ART_RETRY_DELAYS_MS[retries++];
+      window.setTimeout(() => {
+        const retryURL = new URL(img.src, window.location.href);
+        retryURL.searchParams.set("retry", `${Date.now()}`);
+        img.src = retryURL.toString();
+      }, delay);
+    });
+  });
+}
+
 function renderSummary(summary) {
   state.summary = summary;
   const totals = summary.totals;
@@ -93,15 +120,12 @@ function renderToday(data) {
   grid.innerHTML = data.species.map((bird, index) => `
     <article class="bird-card">
       <span class="bird-number">${String(index + 1).padStart(2, "0")}</span>
-      <img src="art/${encodeURIComponent(bird.slug)}.png" alt="Illustration of ${escapeHTML(bird.common_name)}">
+      <img src="art/${encodeURIComponent(bird.slug)}.png?v=${ART_VERSION}" alt="Illustration of ${escapeHTML(bird.common_name)}">
       <h3>${escapeHTML(bird.common_name)}</h3>
       <span class="latin">${escapeHTML(bird.scientific_name)}</span>
       <div class="bird-facts"><span>${formatNumber(bird.detections)} call${bird.detections === 1 ? "" : "s"}</span><span>${displayTime(bird.first_heard)}–${displayTime(bird.last_heard)}</span></div>
     </article>`).join("");
-  $$("#todayGrid img").forEach(img => img.addEventListener("error", () => {
-    img.alt = `${img.alt} (illustration unavailable)`;
-    img.style.visibility = "hidden";
-  }));
+  makeIllustrationsSelfHealing(grid);
 }
 
 function dateRange(days, endKey) {

@@ -115,6 +115,27 @@
         </div>
         <p class="section-intro">A recognition is a model claim about an audio segment—not proof of an individual bird. Reviews annotate it; they never rewrite it.</p>
       </header>
+      <article id="evidencePanel" class="evidence-panel" hidden aria-live="polite">
+        <header class="evidence-head">
+          <div><p class="kicker">Selected archived segment</p><h3 id="evidenceTitle">Recognition evidence</h3><p id="evidenceLatin" class="evidence-latin"></p></div>
+          <button id="evidenceClose" class="evidence-close" type="button" aria-label="Close evidence panel">Close</button>
+        </header>
+        <div class="evidence-layout">
+          <img id="evidenceArt" class="evidence-art" alt="">
+          <div class="evidence-body">
+            <dl class="evidence-facts">
+              <div><dt>Recorded</dt><dd id="evidenceRecorded">—</dd></div>
+              <div><dt>BirdNET claim</dt><dd id="evidenceBirdnet">—</dd></div>
+              <div><dt>Independent review</dt><dd id="evidenceReview">—</dd></div>
+              <div><dt>Archive proof</dt><dd id="evidenceHash">—</dd></div>
+            </dl>
+            <label class="audio-label" for="evidenceAudio">Listen to the exact preserved segment</label>
+            <audio id="evidenceAudio" controls preload="metadata"></audio>
+            <p id="evidenceNotes" class="evidence-notes"></p>
+            <a id="evidencePermalink" class="evidence-permalink" href="#">Copyable link to this evidence</a>
+          </div>
+        </div>
+      </article>
       <form id="ledgerFilters" class="ledger-filters">
         <label class="search-field"><span>Search birds</span><input id="filterQuery" type="search" placeholder="Robin, Vireo…" autocomplete="off"></label>
         <label><span>Species</span><select id="filterSpecies"><option value="">All species</option></select></label>
@@ -131,7 +152,6 @@
         </table>
       </div>
       <button id="loadMore" class="load-more" type="button" hidden>Load older recognitions</button>
-      <audio id="audioPlayer" preload="none"></audio>
     </section>
 
     <section id="provenance" class="section provenance-section">

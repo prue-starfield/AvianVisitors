@@ -123,6 +123,18 @@ def test_api_does_not_expose_coordinates_or_audio_paths(archive_site):
     assert payload["detections"][1]["review_status"] == "pending"
 
 
+def test_detection_id_filter_returns_one_safe_evidence_record(archive_site):
+    base, _ = archive_site
+    detection_id = "b" * 64
+    _, _, payload = get_json(base + f"/api/detections?detection_id={detection_id}&limit=1")
+    assert payload["total"] == 1
+    assert payload["detections"][0]["detection_id"] == detection_id
+    assert payload["detections"][0]["review_status"] == "unreviewed"
+    with pytest.raises(HTTPError) as error:
+        urlopen(base + "/api/detections?detection_id=not-safe", timeout=3)
+    assert error.value.code == 400
+
+
 def test_malformed_ids_and_model_paths_never_reach_public_api(archive_site):
     base, db_path = archive_site
     with sqlite3.connect(db_path) as conn:
@@ -154,6 +166,15 @@ def test_malformed_ids_and_model_paths_never_reach_public_api(archive_site):
 def test_frontend_escapes_detection_id_in_attribute_context():
     app_js = (Path(site.__file__).parent / "static" / "app.js").read_text()
     assert 'data-id="${escapeHTML(detectionId)}"' in app_js
+
+
+def test_evidence_panel_renders_full_digest_with_safe_wrapping():
+    static = Path(site.__file__).parent / "static"
+    app_js = (static / "app.js").read_text()
+    styles = (static / "styles.css").read_text()
+    assert "${digest} · ${formatNumber(item.audio_bytes)} bytes" in app_js
+    assert "digest.slice" not in app_js
+    assert "#evidenceHash { overflow-wrap: anywhere;" in styles
 
 
 def test_publication_floor_applies_to_every_public_view(archive_site):

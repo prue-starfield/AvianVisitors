@@ -248,15 +248,15 @@ function ledgerRow(item) {
   const reviewClass = ["pending", "unreviewed", "confirmed", "uncertain", "rejected"].includes(reviewStatus)
     ? reviewStatus : "unreviewed";
   const detectionId = String(item.detection_id || "");
-  const audio = item.has_audio && /^[0-9a-f]{64}$/.test(detectionId)
-    ? `<button class="play-button" type="button" data-id="${escapeHTML(detectionId)}" data-name="${escapeHTML(item.common_name)}">Play clip</button>`
+  const evidence = item.has_audio && /^[0-9a-f]{64}$/.test(detectionId)
+    ? `<button class="play-button evidence-button" type="button" data-id="${escapeHTML(detectionId)}">Inspect + listen</button>`
     : '<button class="play-button" type="button" disabled>No clip</button>';
   return `<tr>
     <td><time datetime="${escapeHTML(item.observed_at_local)}">${displayDate(item.date, { short: true })}<br>${displayTime(item.time)}</time></td>
     <td class="ledger-bird"><strong>${escapeHTML(item.common_name)}</strong><em>${escapeHTML(item.scientific_name)}</em></td>
     <td><span class="score">${formatConfidence(item.confidence)}</span></td>
     <td><span class="status-pill ${reviewClass}">${escapeHTML(reviewStatus)}</span></td>
-    <td>${audio}</td>
+    <td>${evidence}</td>
   </tr>`;
 }
 
@@ -275,29 +275,82 @@ async function loadLedger(reset = false) {
   $("#loadMore").hidden = state.ledgerOffset >= data.total;
 }
 
-function bindAudio() {
-  const player = $("#audioPlayer");
+function evidenceURL(detectionId) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("detection", detectionId);
+  url.hash = "evidencePanel";
+  return url;
+}
+
+function closeEvidence(updateURL = true) {
+  const panel = $("#evidencePanel");
+  const player = $("#evidenceAudio");
+  player.pause();
+  player.removeAttribute("src");
+  player.load();
+  panel.hidden = true;
+  if (updateURL) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("detection");
+    url.hash = "ledger";
+    history.replaceState({}, "", url);
+  }
+}
+
+function renderEvidence(item, updateURL = true) {
+  const detectionId = String(item.detection_id || "");
+  if (!/^[0-9a-f]{64}$/.test(detectionId)) throw new Error("invalid evidence identifier");
+  $("#evidenceTitle").textContent = item.common_name;
+  $("#evidenceLatin").textContent = item.scientific_name;
+  $("#evidenceRecorded").textContent = `${displayDate(item.date)} at ${displayTime(item.time)} ${item.timezone || ""}`.trim();
+  $("#evidenceBirdnet").textContent = `${formatConfidence(item.confidence)} raw classifier score`;
+  const status = String(item.review_status || "unreviewed");
+  if (item.review_model) {
+    const score = item.review_score == null ? "" : ` · claimed-species score ${formatConfidence(item.review_score)}`;
+    $("#evidenceReview").textContent = `${item.review_model} · ${status}${score}`;
+  } else {
+    $("#evidenceReview").textContent = status === "pending"
+      ? "Pending independent review" : "Not independently reviewed";
+  }
+  const digest = String(item.audio_sha256 || "");
+  $("#evidenceHash").textContent = /^[0-9a-f]{64}$/.test(digest)
+    ? `SHA-256 ${digest} · ${formatNumber(item.audio_bytes)} bytes`
+    : "Evidence digest unavailable";
+  $("#evidenceNotes").textContent = item.notes || "BirdNET’s original claim remains unchanged regardless of the independent review.";
+  const art = $("#evidenceArt");
+  art.src = `art/${encodeURIComponent(item.slug)}.png?v=${ART_VERSION}`;
+  art.alt = `Illustration of ${item.common_name}`;
+  const player = $("#evidenceAudio");
+  if (item.has_audio) {
+    player.src = `api/audio/${encodeURIComponent(detectionId)}`;
+  } else {
+    player.removeAttribute("src");
+    player.load();
+  }
+  const link = evidenceURL(detectionId);
+  $("#evidencePermalink").href = link;
+  $("#evidencePanel").hidden = false;
+  if (updateURL) history.replaceState({}, "", link);
+  $("#evidencePanel").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function openEvidenceById(detectionId, updateURL = true) {
+  if (!/^[0-9a-f]{64}$/.test(detectionId)) throw new Error("invalid evidence identifier");
+  const data = await fetchJSON(`api/detections?detection_id=${encodeURIComponent(detectionId)}&limit=1`);
+  if (data.detections.length !== 1) throw new Error("evidence record not found");
+  renderEvidence(data.detections[0], updateURL);
+}
+
+function bindEvidence() {
   $("#ledgerRows").addEventListener("click", async event => {
-    const button = event.target.closest(".play-button[data-id]");
+    const button = event.target.closest(".evidence-button[data-id]");
     if (!button) return;
-    const isCurrent = player.dataset.id === button.dataset.id && !player.paused;
-    if (isCurrent) {
-      player.pause();
-      $("#playingNow").textContent = "Paused";
-      button.textContent = "Play clip";
-      return;
-    }
-    $$(".play-button[data-id]").forEach(item => { item.textContent = "Play clip"; });
-    player.src = `api/audio/${encodeURIComponent(button.dataset.id)}`;
-    player.dataset.id = button.dataset.id;
-    button.textContent = "Pause";
-    $("#playingNow").textContent = `Playing ${button.dataset.name}`;
-    try { await player.play(); }
-    catch (_) { showToast("That evidence clip is temporarily unavailable."); button.textContent = "Play clip"; }
+    try { await openEvidenceById(button.dataset.id); }
+    catch (error) { showToast(`Could not open evidence: ${error.message}`); }
   });
-  player.addEventListener("ended", () => {
-    $$(".play-button[data-id]").forEach(item => { item.textContent = "Play clip"; });
-    $("#playingNow").textContent = "";
+  $("#evidenceClose").addEventListener("click", () => closeEvidence());
+  $("#evidenceAudio").addEventListener("error", () => {
+    showToast("That preserved evidence clip is temporarily unavailable.");
   });
 }
 
@@ -310,7 +363,7 @@ function bindEvents() {
   $("#loadMore").addEventListener("click", async () => {
     try { await loadLedger(false); } catch (error) { showToast(`Could not load older records: ${error.message}`); }
   });
-  bindAudio();
+  bindEvidence();
 }
 
 async function init() {
@@ -328,6 +381,11 @@ async function init() {
     renderSeasonality(seasonality);
     renderEpochs(epochs);
     await loadLedger(true);
+    const linkedDetection = new URL(window.location.href).searchParams.get("detection");
+    if (linkedDetection) {
+      try { await openEvidenceById(linkedDetection, false); }
+      catch (error) { showToast(`Could not open linked evidence: ${error.message}`); }
+    }
   } catch (error) {
     console.error(error);
     $("#archiveStatus").innerHTML = '<span class="pulse stale"></span><div><strong>Archive unavailable</strong><small>The local mirror could not be read</small></div>';

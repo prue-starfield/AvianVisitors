@@ -88,6 +88,27 @@ detections for the `America/New_York` calendar day, matching the e-ink frame.
 The mirror may trail the live microphone by one archive-sync interval, which is
 displayed prominently rather than hidden.
 
+## Independent Google Perch review
+
+`review_perch.py` runs Google Perch 2 locally through the official ONNX export.
+It verifies each archived clip's byte count and SHA-256 digest before inference,
+then writes an insert-only row to `reviews`; BirdNET's original species and raw
+score are never changed. Routine inference uses pinned, checksum-verified model
+weights and labels under `~/Library/Application Support/AvianVisitorsArchive/perch/`
+and sends no household audio to a cloud service.
+
+The automated conclusion policy is deliberately conservative because Perch
+classifier outputs are not calibrated probabilities:
+
+- `confirmed` — the BirdNET species is Perch's top result at 25% or higher;
+- `rejected` — a different species scores at least 75%, while the BirdNET species
+  is below 10% and outside Perch's top three;
+- `uncertain` — every other result, including close sibling-species disagreements.
+
+The archive website's evidence panel displays the exact clip, immutable digest,
+BirdNET score, Perch status/score/rank, and top alternatives. A deep link uses the
+immutable detection ID: `?detection=<64 hex characters>#evidencePanel`.
+
 ## Archive views
 
 - `daily_species` — first/last heard, count, and best confidence per day

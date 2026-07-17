@@ -242,9 +242,15 @@ def get_detections(
     ]
     values: list[Any] = [confidence_min]
     species = one("species")
+    detection_id = one("detection_id")
     date_from, date_to = one("date_from"), one("date_to")
     review = one("review")
     query = one("q")
+    if detection_id:
+        if not re.fullmatch(r"[0-9a-f]{64}", detection_id):
+            raise ValueError("invalid detection_id")
+        conditions.append("d.detection_id = ?")
+        values.append(detection_id)
     if species:
         conditions.append("d.scientific_name = ?")
         values.append(species)
@@ -291,7 +297,7 @@ def get_detections(
         ))
     for row in result:
         relpath = row.pop("audio_relpath", None)
-        archived = bool(row.pop("audio_sha256", None))
+        archived = bool(row.get("audio_sha256"))
         if archived and relpath and audio_root is not None:
             root = audio_root.resolve()
             candidate = (root / relpath).resolve()

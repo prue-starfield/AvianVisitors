@@ -95,7 +95,9 @@ It verifies each archived clip's byte count and SHA-256 digest before inference,
 then writes an insert-only row to `reviews`; BirdNET's original species and raw
 score are never changed. Routine inference uses pinned, checksum-verified model
 weights and labels under `~/Library/Application Support/AvianVisitorsArchive/perch/`
-and sends no household audio to a cloud service.
+and sends no household audio to a cloud service. The trusted model and label
+digests are pinned in version-controlled code; the adjacent manifest is an audit
+copy, not the trust anchor.
 
 The automated conclusion policy is deliberately conservative because Perch
 classifier outputs are not calibrated probabilities:

@@ -17,17 +17,13 @@ DEFAULT_MIRROR = Path.home() / "Library/Application Support/AvianVisitorsArchive
 DEFAULT_PERCH = Path.home() / "Library/Application Support/AvianVisitorsArchive/perch/assets"
 MODEL_NAME = "Google Perch 2.0 ONNX (inat2024_fsd50k)"
 MODEL_SHA_FILE = "SHA256SUMS"
+PINNED_ASSET_SHA256 = {
+    "perch_v2.onnx": "bf0c8467a924cb074663970ca4a0ab1e143602121930209657d0dff5d5cefa1f",
+    "labels.csv": "e4d5c0397d8fb08bf90c6b13a34810af53504faad927e472fcc567793c9de057",
+}
 
 
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def verify_model_assets(asset_root: Path) -> tuple[Path, Path]:
+def verify_model_assets(asset_root: Path) -> tuple[bytes, bytes]:
     model = asset_root / "perch_v2.onnx"
     labels = asset_root / "labels.csv"
     manifest = asset_root / MODEL_SHA_FILE
@@ -44,11 +40,15 @@ def verify_model_assets(asset_root: Path) -> tuple[Path, Path]:
         if name in expected:
             raise RuntimeError(f"Malformed Perch checksum manifest: {manifest}")
         expected[name] = digest
+    if expected != PINNED_ASSET_SHA256:
+        raise RuntimeError("Perch checksum manifest does not match version-controlled pins")
+    verified: dict[str, bytes] = {}
     for path in (model, labels):
-        actual = sha256_file(path)
-        if expected.get(path.name) != actual:
+        content = path.read_bytes()
+        if PINNED_ASSET_SHA256[path.name] != hashlib.sha256(content).hexdigest():
             raise RuntimeError(f"Perch asset checksum mismatch: {path.name}")
-    return model, labels
+        verified[path.name] = content
+    return verified[model.name], verified[labels.name]
 
 
 def classify_verdict(claim_score: float, claim_rank: int, top_score: float) -> str:
@@ -90,12 +90,12 @@ def pending_rows(conn: sqlite3.Connection, limit: int) -> list[sqlite3.Row]:
 
 
 def load_model(asset_root: Path):
-    model_path, labels_path = verify_model_assets(asset_root)
+    model_bytes, labels_bytes = verify_model_assets(asset_root)
     import numpy as np  # noqa: F401 — validates the runtime before model load
     from perch_hoplite.taxonomy import namespace
     from perch_hoplite.zoo.models_onnx import PerchV2OnnxModel
 
-    with labels_path.open("r", encoding="utf-8") as handle:
+    with io.StringIO(labels_bytes.decode("utf-8")) as handle:
         classes = namespace.ClassList.from_csv(handle)
     model = PerchV2OnnxModel(
         sample_rate=32000,
@@ -104,7 +104,7 @@ def load_model(asset_root: Path):
         target_peak=0.25,
         input_name="inputs",
         output_map={"embedding": "embedding", "logits": "label", "frontend": "spectrogram"},
-        model_path=str(model_path),
+        model_path=model_bytes,
         class_list={classes.namespace: classes},
         logit_slope=0.97,
         logit_intercept=-10.0,
@@ -159,6 +159,15 @@ def infer_review(model, classes, audio_bytes: bytes, scientific_name: str) -> di
     }
 
 
+def publish_mirror(db_path: Path, mirror_path: Path) -> None:
+    """Import the mirror helper correctly as either a package or direct script."""
+    if __package__:
+        from .sync_archive import mirror_archive_db
+    else:
+        from sync_archive import mirror_archive_db
+    mirror_archive_db(db_path, mirror_path)
+
+
 def review_archive(
     db_path: Path,
     audio_root: Path,
@@ -210,8 +219,7 @@ def review_archive(
     finally:
         conn.close()
     if mirror_path is not None:
-        from sync_archive import mirror_archive_db
-        mirror_archive_db(db_path, mirror_path)
+        publish_mirror(db_path, mirror_path)
     return reviewed
 
 

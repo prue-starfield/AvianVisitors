@@ -17,6 +17,9 @@
   var DETECTION_ID_PATTERN = /^[a-f0-9]{64}$/;
   var REVIEW_VALUES = ["pending", "unreviewed", "confirmed", "uncertain", "rejected"];
   var CONFIDENCE_VALUES = ["0", "0.8", "0.9"];
+  var PAGE_SIZE = 50;
+  var MAX_OFFSET = 1000000;
+  var MAX_PAGE = Math.floor(MAX_OFFSET / PAGE_SIZE) + 1;
   var EXPLORE_FIELDS = [
     "q",
     "species",
@@ -42,7 +45,7 @@
 
   function parseRoute(pathname) {
     var path = routePath(pathname);
-    if (path === "/" || path === "" || path === "/index.html" || path === "/index.html/") {
+    if (path === "/" || path === "" || path === "/index.html") {
       return { name: "today" };
     }
     if (path === "/explore" || path === "/explore/") {
@@ -107,10 +110,19 @@
       result.confidence_min = "";
     }
 
-    var rawPage = params.get("page");
-    var page = /^\d+$/.test(rawPage || "") ? Number(rawPage) : 1;
-    result.page = Number.isSafeInteger(page) && page >= 1 ? page : 1;
+    result.page = safePage(params.get("page"));
     return result;
+  }
+
+  function safePage(value) {
+    var page = /^\d+$/.test(String(value || "")) ? Number(value) : 1;
+    if (!Number.isSafeInteger(page) || page < 1) return 1;
+    return Math.min(page, MAX_PAGE);
+  }
+
+  function pageCount(total) {
+    var count = Math.ceil(Math.max(0, Number(total) || 0) / PAGE_SIZE);
+    return Math.max(1, Math.min(count, MAX_PAGE));
   }
 
   function exploreSearch(state) {
@@ -125,10 +137,7 @@
       }
     });
 
-    var page = Number(state.page);
-    if (Number.isSafeInteger(page) && page >= 1) {
-      params.append("page", String(page));
-    }
+    params.append("page", String(safePage(state.page)));
     var query = params.toString();
     return query ? "?" + query : "";
   }
@@ -139,5 +148,9 @@
     legacyDetectionHref: legacyDetectionHref,
     parseExplore: parseExplore,
     exploreSearch: exploreSearch,
+    safePage: safePage,
+    pageCount: pageCount,
+    PAGE_SIZE: PAGE_SIZE,
+    MAX_PAGE: MAX_PAGE,
   };
 });

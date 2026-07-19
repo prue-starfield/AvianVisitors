@@ -1,5 +1,7 @@
 import re
+import json
 from pathlib import Path
+import subprocess
 
 
 STATIC = Path(__file__).parents[1] / "avian/archive/site/static"
@@ -42,9 +44,10 @@ def test_frontend_loads_only_the_current_route_and_restores_explore_state():
     assert "Routes.legacyDetectionHref" in app
     assert "window.location.replace(legacyHref)" in app
     assert "Routes.parseExplore(window.location.search)" in app
+    assert "Routes.pageCount" in app
     assert 'window.addEventListener("popstate"' in app
     assert "history.pushState" in app
-    assert "history.replaceState" not in app
+    assert "history.replaceState" in app
     assert "initToday" in app
     assert "initExplore" in app
     assert "initSpeciesIndex" in app
@@ -57,6 +60,62 @@ def test_frontend_loads_only_the_current_route_and_restores_explore_state():
     assert "window.location.pathname" in app
     assert "initDetectionDetail" in app
     assert "initAbout" in app
+
+
+def test_canonical_species_art_detection_navigation_and_safe_fragment_contracts():
+    app = (STATIC / "app.js").read_text()
+    html = (STATIC / "index.html").read_text()
+    assert "bird.art_slug || bird.slug" in app
+    assert "bird.slug || bird.art_slug" in app
+    assert "route.slug !== bird.slug" in app
+    assert 'id="newerDetection"' in html
+    assert 'id="olderDetection"' in html
+    assert "newer_detection_id" in app
+    assert "older_detection_id" in app
+    assert "Newer recognition" in html
+    assert "Older recognition" in html
+    assert 'href="/birds/species#speciesOccurrences"' in html
+    assert 'href="#speciesOccurrences"' not in html
+
+
+def run_app_behavior(assertions):
+    app_path = STATIC / "app.js"
+    script = f"""
+const fs = require('fs'), vm = require('vm');
+const elements = new Map();
+function element(tag='DIV') {{ return {{ tagName: tag, innerHTML: '', textContent: '', value: '', hidden: false, href: '', classList: {{add(){{}}, remove(){{}}}}, addEventListener(){{}}, querySelectorAll(){{return []}}, hasAttribute(){{return true}}, setAttribute(){{}}, focus(){{}} }}; }}
+const document = {{ querySelector(sel) {{ if (!elements.has(sel)) elements.set(sel, element(sel === '#ledgerRows' ? 'TBODY' : 'DIV')); return elements.get(sel); }}, querySelectorAll() {{ return []; }}, addEventListener() {{}} }};
+const context = {{ console, process, element, URL, URLSearchParams, Intl, Date, setTimeout, clearTimeout, document, history: {{replaceState(){{}}, pushState(){{}}}}, location: {{pathname:'/birds/explore',search:'',hash:''}}, window: {{ListeningGardenRoutes: require({json.dumps(str(STATIC / 'routes.js'))}), location: {{pathname:'/birds/explore',search:'',hash:''}}, addEventListener(){{}}, setTimeout, requestAnimationFrame(fn){{fn()}} }} }};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync({json.dumps(str(app_path))}, 'utf8') + `\n(async () => {{ {assertions} }})().catch(error => {{ console.error(error); process.exitCode=1; }});`, context);
+"""
+    return subprocess.run(["node", "-e", script], capture_output=True, text=True)
+
+
+def test_show_error_uses_semantic_child_markup_in_vm():
+    result = run_app_behavior("""
+const tbody = document.querySelector('#ledgerRows'); showError(tbody, '<unsafe>');
+if (!tbody.innerHTML.startsWith('<tr><td colspan="5"')) throw new Error(tbody.innerHTML);
+const list = element('OL'); showError(list, 'broken');
+if (!list.innerHTML.startsWith('<li')) throw new Error(list.innerHTML);
+const div = element('SECTION'); showError(div, 'broken');
+if (!div.innerHTML.startsWith('<div')) throw new Error(div.innerHTML);
+""")
+    assert result.returncode == 0, result.stderr
+
+
+def test_explore_restore_ignores_an_out_of_order_stale_response_in_vm():
+    result = run_app_behavior("""
+let resolvers = [];
+fetchJSON = () => new Promise(resolve => resolvers.push(resolve));
+window.location.search = '?q=first'; location.search = '?q=first'; const first = restoreExplore();
+window.location.search = '?q=second'; location.search = '?q=second'; const second = restoreExplore();
+resolvers[1]({detections:[], total:0}); await second;
+resolvers[0]({detections:[{detection_id:'a'.repeat(64),slug:'robin',common_name:'Old',scientific_name:'Old',review_status:'pending'}], total:1}); await first;
+if (document.querySelector('#ledgerRows').innerHTML.includes('Old')) throw new Error('stale response rendered');
+if (state.explore.q !== 'second') throw new Error('stale state won');
+""")
+    assert result.returncode == 0, result.stderr
 
 
 def test_detection_view_is_audio_first_and_species_view_has_occurrences():

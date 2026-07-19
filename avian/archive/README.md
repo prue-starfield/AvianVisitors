@@ -109,7 +109,9 @@ classifier outputs are not calibrated probabilities:
 
 The archive website's evidence panel displays the exact clip, immutable digest,
 BirdNET score, Perch status/score/rank, and top alternatives. A deep link uses the
-immutable detection ID: `?detection=<64 hex characters>#evidencePanel`.
+immutable detection ID: `/birds/detection/<64 hex characters>`. Deployments may
+retain a narrowly validated redirect from the former `?detection=` URL while old
+bookmarks age out.
 
 ## Archive views
 

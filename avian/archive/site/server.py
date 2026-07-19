@@ -9,12 +9,15 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
+import math
 import mimetypes
 import os
 from pathlib import Path
 import re
 import sqlite3
+from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Iterable, Optional, Sequence
 from urllib.parse import parse_qs, unquote, urlparse
@@ -24,6 +27,34 @@ HEX_ID = re.compile(r"^[0-9a-f]{64}$")
 SAFE_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 TZ = ZoneInfo("America/New_York")
 PUBLICATION_MIN_CONFIDENCE = 0.70
+MAX_OFFSET = 1_000_000
+PUBLIC_REVIEW_MODEL = "Google Perch 2.0 ONNX (inat2024_fsd50k)"
+PERCH_LABELS_PATH = (
+    Path.home() / "Library/Application Support/AvianVisitorsArchive/perch/assets/labels.csv"
+)
+PINNED_PERCH_LABELS_SHA256 = "e4d5c0397d8fb08bf90c6b13a34810af53504faad927e472fcc567793c9de057"
+PERCH_CONCLUSIONS = (
+    "Perch independently supports the BirdNET species claim.",
+    "Perch strongly favours another species and does not support the BirdNET claim.",
+    "Perch is inconclusive or disagrees; human review remains appropriate.",
+)
+TAXON_PATTERN = (
+    r"(?:[A-Z][a-z]{1,30}(?: [a-z][a-z-]{1,30}){1,2}"
+    r"|Door|Tools|Explosion|Domestic_sounds_and_home_sounds)"
+)
+PERCH_NOTE_PATTERN = re.compile(
+    rf"^(?P<conclusion>{'|'.join(map(re.escape, PERCH_CONCLUSIONS))}) "
+    r"Claimed species rank (?P<rank>[1-9][0-9]*) of (?P<total>[1-9][0-9]*) "
+    r"with score (?P<claim>[0-9]{1,3}\.[0-9])%\. Perch top results: "
+    rf"(?P<taxon1>{TAXON_PATTERN}) (?P<score1>[0-9]{{1,3}}\.[0-9])%; "
+    rf"(?P<taxon2>{TAXON_PATTERN}) (?P<score2>[0-9]{{1,3}}\.[0-9])%; "
+    rf"(?P<taxon3>{TAXON_PATTERN}) (?P<score3>[0-9]{{1,3}}\.[0-9])%\. "
+    r"Scores are independent classifier outputs, not calibrated probabilities\.$"
+)
+
+
+class SpeciesSlugConflict(Exception):
+    """A legacy species slug identifies more than one published name."""
 
 
 def now_local() -> dt.datetime:
@@ -34,21 +65,75 @@ def slugify(scientific_name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", scientific_name.lower()).strip("-")
 
 
+def canonical_species_slug(scientific_name: str) -> str:
+    """Return a deterministic, collision-resistant public species identifier."""
+    digest = hashlib.sha256(scientific_name.encode("utf-8")).hexdigest()[:10]
+    base = slugify(scientific_name) or "species"
+    return f"{base}-{digest}"
+
+
 def is_frontend_route(path: str) -> bool:
     """Allow only the app's canonical document routes; reject catch-all paths."""
-    normalised = path.rstrip("/") or "/"
-    if normalised in {"/", "/index.html", "/explore", "/species", "/about"}:
+    if path in {"/", "/index.html", "/explore", "/explore/", "/species",
+                "/species/", "/about", "/about/"}:
         return True
-    detection_match = re.fullmatch(r"/detection/([^/]+)", normalised)
+    detection_match = re.fullmatch(r"/detection/([^/]+)/?", path)
     if detection_match:
         return bool(HEX_ID.fullmatch(detection_match.group(1)))
-    species_match = re.fullmatch(r"/species/([^/]+)", normalised)
+    species_match = re.fullmatch(r"/species/([^/]+)/?", path)
     return bool(species_match and SAFE_SLUG.fullmatch(species_match.group(1)))
 
 
 def public_model_label(value: Any) -> str:
-    """Return a display label without leaking POSIX or Windows path prefixes."""
-    return re.split(r"[\\/]", str(value or ""))[-1]
+    """Return only a model filename with an allow-listed executable-model suffix."""
+    label = re.split(r"[\\/]", str(value or ""))[-1].strip()
+    if re.fullmatch(r"[A-Za-z0-9_.()+-]{1,120}\.(?:bin|onnx|tflite)", label, re.I):
+        return label
+    return "redacted" if label else ""
+
+
+def public_review_model(value: Any) -> Optional[str]:
+    """Publish a known reviewer label, never arbitrary operator metadata."""
+    if not value:
+        return None
+    return PUBLIC_REVIEW_MODEL if str(value) == PUBLIC_REVIEW_MODEL else "Independent review"
+
+
+@lru_cache(maxsize=1)
+def pinned_perch_taxa() -> frozenset[str]:
+    """Load the exact checksum-pinned Perch taxonomy; fail closed if unavailable."""
+    try:
+        content = PERCH_LABELS_PATH.read_bytes()
+    except OSError:
+        return frozenset()
+    if hashlib.sha256(content).hexdigest() != PINNED_PERCH_LABELS_SHA256:
+        return frozenset()
+    lines = content.decode("utf-8").splitlines()
+    if len(lines) != 14_796 or lines[0] != "inat2024_fsd50k":
+        return frozenset()
+    return frozenset(lines[1:])
+
+
+def public_review_notes(value: Any) -> Optional[str]:
+    """Parse and reconstruct only notes emitted by the pinned Perch reviewer."""
+    match = PERCH_NOTE_PATTERN.fullmatch(str(value or ""))
+    if not match:
+        return None
+    groups = match.groupdict()
+    taxa = pinned_perch_taxa()
+    if not taxa or any(groups[name] not in taxa for name in ("taxon1", "taxon2", "taxon3")):
+        return None
+    rank, total = int(groups["rank"]), int(groups["total"])
+    scores = [float(groups[name]) for name in ("claim", "score1", "score2", "score3")]
+    if rank > total or total > 100_000 or any(score > 100 for score in scores):
+        return None
+    return (
+        f"{groups['conclusion']} Claimed species rank {groups['rank']} of {groups['total']} "
+        f"with score {groups['claim']}%. Perch top results: "
+        f"{groups['taxon1']} {groups['score1']}%; {groups['taxon2']} {groups['score2']}%; "
+        f"{groups['taxon3']} {groups['score3']}%. "
+        "Scores are independent classifier outputs, not calibrated probabilities."
+    )
 
 
 def db_connect(path: Path) -> sqlite3.Connection:
@@ -143,7 +228,8 @@ def get_today(db_path: Path) -> dict[str, Any]:
             (today, PUBLICATION_MIN_CONFIDENCE),
         ))
     for row in rows:
-        row["slug"] = slugify(row["scientific_name"])
+        row["slug"] = canonical_species_slug(row["scientific_name"])
+        row["art_slug"] = slugify(row["scientific_name"])
     return {
         "date": today,
         "timezone": "America/New_York",
@@ -189,7 +275,8 @@ def get_species(db_path: Path) -> dict[str, Any]:
             (PUBLICATION_MIN_CONFIDENCE,),
         ))
     for row in species:
-        row["slug"] = slugify(row["scientific_name"])
+        row["slug"] = canonical_species_slug(row["scientific_name"])
+        row["art_slug"] = slugify(row["scientific_name"])
     return {"species": species}
 
 
@@ -203,10 +290,20 @@ def get_species_detail(db_path: Path, slug: str) -> Optional[dict[str, Any]]:
                GROUP BY scientific_name""",
             (PUBLICATION_MIN_CONFIDENCE,),
         )
-        species = next(
-            (row for row in published if slugify(row["scientific_name"]) == slug),
-            None,
-        )
+        published = list(published)
+        canonical_matches = [
+            row for row in published
+            if canonical_species_slug(row["scientific_name"]) == slug
+        ]
+        if canonical_matches:
+            species = canonical_matches[0]
+        else:
+            legacy_matches = [
+                row for row in published if slugify(row["scientific_name"]) == slug
+            ]
+            if len(legacy_matches) > 1:
+                raise SpeciesSlugConflict("ambiguous legacy species slug")
+            species = legacy_matches[0] if legacy_matches else None
         if species is None:
             return None
         row = dict(db.execute(
@@ -243,7 +340,8 @@ def get_species_detail(db_path: Path, slug: str) -> Optional[dict[str, Any]]:
     return {
         "scientific_name": species["scientific_name"],
         "common_name": species["common_name"],
-        "slug": slug,
+        "slug": canonical_species_slug(species["scientific_name"]),
+        "art_slug": slugify(species["scientific_name"]),
         **row,
         "review_counts": review_counts,
     }
@@ -283,6 +381,7 @@ def get_epochs(db_path: Path) -> dict[str, Any]:
     for epoch in epochs:
         epoch["audio_model"] = public_model_label(epoch.get("audio_model"))
         epoch["range_model"] = public_model_label(epoch.get("range_model"))
+        epoch["reason"] = None
     return {"epochs": epochs}
 
 
@@ -296,12 +395,15 @@ def get_detections(
 
     try:
         limit = max(1, min(int(one("limit", "75")), 200))
-        offset = max(0, int(one("offset", "0")))
+        offset = int(one("offset", "0"))
+        confidence_value = float(one("confidence_min", str(PUBLICATION_MIN_CONFIDENCE)))
+        if offset < 0 or offset > MAX_OFFSET or not math.isfinite(confidence_value):
+            raise ValueError
         confidence_min = max(
             PUBLICATION_MIN_CONFIDENCE,
-            min(float(one("confidence_min", str(PUBLICATION_MIN_CONFIDENCE))), 1.0),
+            min(confidence_value, 1.0),
         )
-    except ValueError as exc:
+    except (ValueError, OverflowError) as exc:
         raise ValueError("invalid numeric filter") from exc
     conditions = [
         "d.confidence >= ?",
@@ -349,15 +451,11 @@ def get_detections(
         result = rows_dict(db.execute(
             f"""SELECT d.detection_id, d.date, d.time, d.observed_at_local,
                        d.timezone, d.scientific_name, d.common_name, d.confidence,
-                       d.ingested_at,
                        d.audio_relpath, d.audio_sha256, d.audio_bytes,
                        {status_expr} AS review_status,
-                       r.reviewer, r.review_model, r.review_score, r.notes, r.reviewed_at,
-                       c.occurrence_prior, c.local_prior, c.repetition_count,
-                       c.posterior, c.algorithm_version
+                       r.review_model, r.review_score, r.notes
                 FROM detections d
                 LEFT JOIN reviews r USING(detection_id)
-                LEFT JOIN context_scores c USING(detection_id)
                 WHERE {where}
                 ORDER BY d.date DESC, d.time DESC, d.detection_id DESC
                 LIMIT ? OFFSET ?""",
@@ -372,7 +470,10 @@ def get_detections(
             row["has_audio"] = root in candidate.parents and candidate.is_file()
         else:
             row["has_audio"] = archived
-        row["slug"] = slugify(row["scientific_name"])
+        row["review_model"] = public_review_model(row.get("review_model"))
+        row["notes"] = public_review_notes(row.get("notes"))
+        row["slug"] = canonical_species_slug(row["scientific_name"])
+        row["art_slug"] = slugify(row["scientific_name"])
     return {"total": total, "limit": limit, "offset": offset, "detections": result}
 
 
@@ -388,7 +489,29 @@ def get_detection(
         {"detection_id": [detection_id], "limit": ["1"]},
         audio_root,
     )
-    return payload["detections"][0] if payload["detections"] else None
+    if not payload["detections"]:
+        return None
+    detection = payload["detections"][0]
+    ordering = (detection["date"], detection["time"], detection_id)
+    with db_connect(db_path) as db:
+        neighbours = {}
+        for label, operator, direction in (
+            ("newer_detection_id", ">", "ASC"),
+            ("older_detection_id", "<", "DESC"),
+        ):
+            row = db.execute(
+                f"""SELECT detection_id FROM detections
+                    WHERE scientific_name=? AND confidence >= ?
+                      AND length(detection_id)=64
+                      AND detection_id NOT GLOB '*[^0-9a-f]*'
+                      AND (date,time,detection_id) {operator} (?,?,?)
+                    ORDER BY date {direction}, time {direction},
+                             detection_id {direction} LIMIT 1""",
+                (detection["scientific_name"], PUBLICATION_MIN_CONFIDENCE, *ordering),
+            ).fetchone()
+            neighbours[label] = row["detection_id"] if row else None
+    detection.update(neighbours)
+    return detection
 
 
 class ArchiveHandler(BaseHTTPRequestHandler):
@@ -494,6 +617,9 @@ class ArchiveHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
+        if "%" in parsed.path:
+            self.error_json("invalid encoded path", 400)
+            return
         path = unquote(parsed.path)
         if path == "/birds":
             path = "/"
@@ -525,8 +651,7 @@ class ArchiveHandler(BaseHTTPRequestHandler):
                 self.json_response(get_activity(self.config.db, days))
             elif path == "/api/species":
                 self.json_response(get_species(self.config.db))
-            elif (path.startswith("/api/species/") and
-                  "/" not in path[len("/api/species/"):]):
+            elif re.fullmatch(r"/api/species/[a-z0-9]+(?:-[a-z0-9]+)*", path):
                 species = get_species_detail(
                     self.config.db,
                     path[len("/api/species/"):],
@@ -535,14 +660,15 @@ class ArchiveHandler(BaseHTTPRequestHandler):
                     self.error_json("species not found", 404)
                     return
                 self.json_response({"species": species})
+            elif re.fullmatch(r"/api/species/[^/]+", path):
+                self.error_json("invalid species slug", 400)
             elif path == "/api/seasonality":
                 self.json_response(get_seasonality(self.config.db))
             elif path == "/api/epochs":
                 self.json_response(get_epochs(self.config.db))
             elif path == "/api/detections":
                 self.json_response(get_detections(self.config.db, params, self.config.audio))
-            elif (path.startswith("/api/detections/") and
-                  "/" not in path[len("/api/detections/"):]):
+            elif re.fullmatch(r"/api/detections/[0-9a-f]{64}", path):
                 detection = get_detection(
                     self.config.db,
                     path[len("/api/detections/"):],
@@ -552,11 +678,10 @@ class ArchiveHandler(BaseHTTPRequestHandler):
                     self.error_json("detection not found", 404)
                     return
                 self.json_response({"detection": detection})
-            elif path.startswith("/api/audio/"):
-                did = path.rsplit("/", 1)[-1]
-                if not HEX_ID.fullmatch(did):
-                    self.error_json("invalid detection id", 400)
-                    return
+            elif re.fullmatch(r"/api/detections/[^/]+", path):
+                self.error_json("invalid detection id", 400)
+            elif re.fullmatch(r"/api/audio/[0-9a-f]{64}", path):
+                did = path[len("/api/audio/"):]
                 with db_connect(self.config.db) as db:
                     row = db.execute(
                         """SELECT audio_relpath FROM detections
@@ -573,12 +698,13 @@ class ArchiveHandler(BaseHTTPRequestHandler):
                     self.error_json("invalid archive path", 500)
                     return
                 self.serve_file(candidate, "audio/mpeg", "private, max-age=86400")
-            elif path.startswith("/art/"):
-                name = path.rsplit("/", 1)[-1]
-                if not name.endswith(".png") or not SAFE_SLUG.fullmatch(name[:-4]):
-                    self.error_json("invalid illustration", 400)
-                    return
+            elif re.fullmatch(r"/api/audio/[^/]+", path):
+                self.error_json("invalid detection id", 400)
+            elif re.fullmatch(r"/art/[a-z0-9]+(?:-[a-z0-9]+)*\.png", path):
+                name = path[len("/art/"):]
                 self.serve_file(self.config.art / name, "image/png", "private, max-age=86400")
+            elif re.fullmatch(r"/art/[^/]+", path):
+                self.error_json("invalid illustration", 400)
             elif path.startswith("/api/"):
                 self.error_json("API endpoint not found", 404)
             else:
@@ -604,6 +730,8 @@ class ArchiveHandler(BaseHTTPRequestHandler):
                     self.error_json("page not found", 404)
         except ValueError as exc:
             self.error_json(str(exc), 400)
+        except SpeciesSlugConflict as exc:
+            self.error_json(str(exc), 409)
         except (sqlite3.Error, OSError) as exc:
             print(f"request failed: {exc}")
             self.error_json("archive temporarily unavailable", 503)

@@ -42,6 +42,20 @@ def test_parse_route_supports_public_and_direct_paths():
         assert run_routes(f"routes.parseRoute({json.dumps(pathname)})") == expected
 
 
+def test_route_grammar_allows_only_one_optional_trailing_slash():
+    for pathname in (
+        "/birds/index.html/",
+        "/index.html/",
+        "/birds//explore",
+        "/birds/explore//",
+        "/birds/species//turdus-migratorius",
+        "/birds/species/turdus-migratorius//",
+    ):
+        assert run_routes(f"routes.parseRoute({json.dumps(pathname)})") == {
+            "name": "not-found"
+        }
+
+
 def test_canonical_hrefs_are_safe_and_prefixed():
     assert run_routes("routes.href('today')") == "/birds/"
     assert run_routes("routes.href('explore')") == "/birds/explore"
@@ -119,3 +133,15 @@ def test_explore_state_round_trips_and_clamps_page():
         "?q=Robin&species=Turdus+migratorius&date_from=2026-07-18"
         "&confidence_min=0.8&review=confirmed&page=3"
     )
+
+
+def test_page_parsing_and_serialization_are_bounded_by_server_offset_limit():
+    assert run_routes("routes.PAGE_SIZE") == 50
+    assert run_routes("routes.MAX_PAGE") == 20001
+    assert run_routes("routes.safePage('999999999')") == 20001
+    assert run_routes("routes.safePage('0')") == 1
+    assert run_routes("routes.parseExplore('?page=999999999').page") == 20001
+    assert run_routes("routes.exploreSearch({page:999999999})") == "?page=20001"
+    assert run_routes("routes.pageCount(0)") == 1
+    assert run_routes("routes.pageCount(86)") == 2
+    assert run_routes("routes.pageCount(999999999)") == 20001

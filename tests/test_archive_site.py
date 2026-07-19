@@ -1,5 +1,6 @@
 import argparse
 import datetime as dt
+import hashlib
 import json
 from pathlib import Path
 import sqlite3
@@ -95,6 +96,49 @@ def get_json(url):
         return response.status, dict(response.headers), json.load(response)
 
 
+def canonical_slug(scientific_name):
+    base = site.slugify(scientific_name) or "species"
+    digest = hashlib.sha256(scientific_name.encode()).hexdigest()[:10]
+    return f"{base}-{digest}"
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "/etc/passwd",
+        "~/Library/secret",
+        r"C:\\secret",
+        r"\\server\\share",
+        "relative/private.txt",
+        "internal.example.io",
+        "fe80::1",
+    ],
+)
+def test_public_review_notes_reject_unstructured_or_private_text(value):
+    assert site.public_review_notes(value) is None
+
+
+def test_public_review_notes_accepts_only_reconstructed_perch_grammar():
+    note = (
+        "Perch independently supports the BirdNET species claim. "
+        "Claimed species rank 1 of 14795 with score 26.8%. "
+        "Perch top results: Catharus fuscescens 26.8%; "
+        "Sphecotheres vieilloti 26.3%; Cyanocorax violaceus 17.1%. "
+        "Scores are independent classifier outputs, not calibrated probabilities."
+    )
+    assert site.public_review_notes(note) == note
+    forged = note.replace("Catharus fuscescens", "Evil com")
+    assert site.public_review_notes(forged) is None
+    assert "Catharus fuscescens" in site.pinned_perch_taxa()
+    assert "Evil com" not in site.pinned_perch_taxa()
+
+
+def test_canonical_species_slug_is_valid_when_name_has_no_ascii_slug():
+    slug = site.canonical_species_slug("🦉")
+    assert slug.startswith("species-")
+    assert site.SAFE_SLUG.fullmatch(slug)
+
+
 def test_summary_and_today_share_calendar_day_policy(archive_site):
     base, _ = archive_site
     _, _, summary = get_json(base + "/api/summary")
@@ -169,6 +213,8 @@ def test_singular_detection_endpoint_returns_one_safe_record(archive_site):
     assert "longitude" not in serialised
     assert "audio_relpath" not in serialised
     assert "file_name" not in serialised
+    assert payload["detection"]["newer_detection_id"] == "b" * 64
+    assert payload["detection"]["older_detection_id"] is None
 
 
 def test_singular_detection_endpoint_fails_closed(archive_site):
@@ -184,12 +230,14 @@ def test_singular_detection_endpoint_fails_closed(archive_site):
 
 def test_species_detail_endpoint_returns_summary_without_private_fields(archive_site):
     base, _ = archive_site
-    status, _, payload = get_json(base + "/api/species/turdus-migratorius")
+    slug = canonical_slug("Turdus migratorius")
+    status, _, payload = get_json(base + f"/api/species/{slug}")
     assert status == 200
     assert payload["species"] == {
         "scientific_name": "Turdus migratorius",
         "common_name": "American Robin",
-        "slug": "turdus-migratorius",
+        "slug": slug,
+        "art_slug": "turdus-migratorius",
         "detections": 2,
         "days_heard": 1,
         "first_heard": payload["species"]["first_heard"],
@@ -283,6 +331,144 @@ def test_malformed_ids_and_model_paths_never_reach_public_api(archive_site):
     assert "C:\\private" not in json.dumps(epochs)
 
 
+def test_public_dtos_redact_adversarial_operator_metadata(archive_site):
+    base, db_path = archive_site
+    marker = (
+        "leak /private/secret /Users/prue/key C:\\Users\\prue\\key "
+        "https://internal.example.test/a host.local internal.example.io "
+        "192.168.1.9 fe80::1 prue@example.com 41.12345,-73.98765\x01"
+    )
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            """INSERT INTO reviews
+               (detection_id,status,reviewer,review_model,review_score,notes,reviewed_at)
+               VALUES (?,?,?,?,?,?,?)""",
+            ("a" * 64, "uncertain", marker, marker, 0.42, marker, marker),
+        )
+        conn.execute(
+            """INSERT INTO context_scores VALUES (?,?,?,?,?,?,?,?)""",
+            ("a" * 64, marker, 0.1, 0.2, 3, 0.4, marker, marker),
+        )
+        conn.execute("UPDATE configuration_epochs SET reason=?", (marker,))
+        conn.commit()
+
+    payloads = [
+        get_json(base + "/api/detections")[2],
+        get_json(base + "/api/detections/" + "a" * 64)[2],
+        get_json(base + "/api/epochs")[2],
+    ]
+    forbidden_keys = {
+        "reviewer", "reviewed_at", "occurrence_prior", "local_prior",
+        "repetition_count", "posterior", "algorithm_version", "ingested_at",
+    }
+    for payload in payloads:
+        serialised = json.dumps(payload)
+        assert not forbidden_keys.intersection(_all_keys(payload))
+        for marker_part in (
+            "/private", "/Users", "C:\\\\Users", "https://", ".local",
+            "192.168.1.9", "fe80::1", "internal.example.io", "prue@example.com",
+            "41.12345,-73.98765", "\\u0001",
+        ):
+            assert marker_part not in serialised
+
+    detection = payloads[1]["detection"]
+    assert detection["review_status"] == "uncertain"
+    assert detection["review_score"] == 0.42
+    assert detection["review_model"] == "Independent review"
+    assert detection["notes"] is None
+    assert payloads[2]["epochs"][0]["reason"] is None
+
+
+def _all_keys(value):
+    if isinstance(value, dict):
+        return set(value).union(*(map(_all_keys, value.values())))
+    if isinstance(value, list):
+        return set().union(*(map(_all_keys, value)), set())
+    return set()
+
+
+@pytest.mark.parametrize("path", [
+    "/api/audio/" + "a" * 64 + "/extra",
+    "/api/audio//" + "a" * 64,
+    "/api/audio/%2e%2e/" + "a" * 64,
+    "/api/audio/" + "a" * 64 + "%2fextra",
+    "/art/turdus-migratorius.png/extra",
+    "/art//turdus-migratorius.png",
+    "/art/%2e%2e%2fturdus-migratorius.png",
+    "/api/detections/" + "a" * 64 + "/extra",
+    "/api/species/turdus-migratorius/extra",
+])
+def test_resource_dispatch_requires_an_exact_full_path(archive_site, path):
+    base, _ = archive_site
+    with pytest.raises(HTTPError) as error:
+        urlopen(base + path, timeout=3)
+    assert error.value.code in {400, 404}
+
+
+@pytest.mark.parametrize("path", [
+    "/explore//", "/explore////", "/about////", "/about/%2e%2e",
+    "/species//", "/birds/explore////", "/birds/about/%2fextra",
+])
+def test_document_routes_allow_at_most_one_trailing_slash(archive_site, path):
+    base, _ = archive_site
+    with pytest.raises(HTTPError) as error:
+        urlopen(base + path, timeout=3)
+    assert error.value.code in {400, 404}
+
+    for valid in ("/explore", "/explore/", "/about", "/about/"):
+        with urlopen(base + valid, timeout=3) as response:
+            assert response.status == 200
+
+
+@pytest.mark.parametrize("query", [
+    "confidence_min=nan", "confidence_min=inf", "confidence_min=-inf",
+    "confidence_min=1e9999", "offset=1000001", "offset=1e9999",
+])
+def test_detection_numeric_filters_fail_closed(archive_site, query):
+    base, _ = archive_site
+    with pytest.raises(HTTPError) as error:
+        urlopen(base + "/api/detections?" + query, timeout=3)
+    assert error.value.code == 400
+    assert json.load(error.value) == {"error": "invalid numeric filter"}
+
+
+def test_species_slugs_are_canonical_collision_resistant_and_legacy_safe(archive_site):
+    base, db_path = archive_site
+    today = site.now_local().date().isoformat()
+    with sqlite3.connect(db_path) as conn:
+        insert_detection(conn, "1" * 64, today, "09:00:00", "Foo bar", "First", 0.9)
+        insert_detection(conn, "2" * 64, today, "09:01:00", "Foo-bar", "Second", 0.9)
+        insert_detection(conn, "3" * 64, today, "09:02:00", "Dog", "Dog", 0.9)
+        conn.commit()
+
+    species = get_json(base + "/api/species")[2]["species"]
+    by_name = {row["scientific_name"]: row for row in species}
+    assert len({row["slug"] for row in species}) == len(species)
+    for name in ("Foo bar", "Foo-bar", "Dog"):
+        assert by_name[name]["slug"] == canonical_slug(name)
+        assert by_name[name]["art_slug"] == site.slugify(name)
+        detail = get_json(base + "/api/species/" + by_name[name]["slug"])[2]
+        assert detail["species"]["scientific_name"] == name
+
+    with pytest.raises(HTTPError) as error:
+        urlopen(base + "/api/species/foo-bar", timeout=3)
+    assert error.value.code == 409
+    legacy = get_json(base + "/api/species/dog")[2]
+    assert legacy["species"]["scientific_name"] == "Dog"
+
+
+def test_detection_navigation_is_same_species_and_deterministic(archive_site):
+    base, db_path = archive_site
+    today = site.now_local().date().isoformat()
+    with sqlite3.connect(db_path) as conn:
+        insert_detection(conn, "e" * 64, today, "07:20:00", "Turdus migratorius", "Robin", 0.95)
+        conn.commit()
+
+    current = get_json(base + "/api/detections/" + "b" * 64)[2]["detection"]
+    assert current["newer_detection_id"] == "e" * 64
+    assert current["older_detection_id"] == "a" * 64
+
+
 def test_frontend_escapes_detection_id_in_attribute_context():
     app_js = (Path(site.__file__).parent / "static" / "app.js").read_text()
     assert 'data-id="${escapeHTML(detectionId)}"' in app_js
@@ -373,13 +559,22 @@ def test_file_open_failure_returns_one_coherent_503(archive_site):
         audio_file.chmod(0o600)
 
 
-def test_archive_database_remains_read_only(archive_site):
+def test_archive_database_remains_byte_identical_after_http_reads(archive_site):
     base, db_path = archive_site
-    before = sqlite3.connect(db_path).execute("SELECT count(*) FROM detections").fetchone()[0]
-    status, _, _ = get_json(base + "/api/detections?q=Robin")
-    after = sqlite3.connect(db_path).execute("SELECT count(*) FROM detections").fetchone()[0]
-    assert status == 200
-    assert before == after == 4
+    before = hashlib.sha256(db_path.read_bytes()).hexdigest()
+    for path in (
+        "/api/detections?q=Robin",
+        "/api/detections/" + "a" * 64,
+        "/api/species",
+        "/api/epochs",
+        "/api/detections?offset=1000001",
+    ):
+        try:
+            urlopen(base + path, timeout=3).read()
+        except HTTPError as error:
+            assert error.code == 400
+    after = hashlib.sha256(db_path.read_bytes()).hexdigest()
+    assert before == after
     with pytest.raises(HTTPError) as error:
         urlopen(base + "/api/not-real", timeout=3)
     assert error.value.code == 404

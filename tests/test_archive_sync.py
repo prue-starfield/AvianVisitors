@@ -187,6 +187,39 @@ def test_web_audio_cache_rejects_path_escape_and_dangerous_root(tmp_path: Path) 
         sync_archive.refresh_web_audio_cache(archive, canonical, tmp_path, 1024)
 
 
+def test_default_known_hosts_path_is_durable_user_state() -> None:
+    args = sync_archive.parse_args([])
+    expected = Path.home() / ".ssh/birdnet_known_hosts"
+    assert args.known_hosts == expected
+    assert not str(args.known_hosts).startswith("/tmp/")
+
+
+def test_missing_known_hosts_fails_before_sync(tmp_path: Path) -> None:
+    missing = tmp_path / "missing-known-hosts"
+    dest = tmp_path / "archive"
+    with pytest.raises(RuntimeError, match="SSH known-hosts trust file is missing"):
+        sync_archive.main([
+            "--dest", str(dest),
+            "--known-hosts", str(missing),
+        ])
+    assert not dest.exists()
+    assert not (dest / ".sync.lock").exists()
+
+
+def test_runtime_paths_expand_user_known_hosts(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    trust = tmp_path / ".ssh" / "birdnet_known_hosts"
+    trust.parent.mkdir()
+    trust.write_text("verified-host-key\n", encoding="utf-8")
+    args = sync_archive.parse_args([
+        "--dest", str(tmp_path / "archive"),
+        "--known-hosts", "~/.ssh/birdnet_known_hosts",
+    ])
+    resolved = sync_archive.resolve_runtime_paths(args)
+    assert resolved.known_hosts == trust.resolve()
+    assert resolved.dest == (tmp_path / "archive").resolve()
+
+
 def test_sync_run_status_is_updated_not_duplicated(tmp_path: Path) -> None:
     archive = tmp_path / "archive.sqlite3"
     started = "2026-07-15T12:00:00+00:00"

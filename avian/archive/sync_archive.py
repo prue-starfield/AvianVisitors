@@ -491,8 +491,10 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     ap.add_argument("--remote-host", default="birdnet@192.168.36.9")
     ap.add_argument("--jump-host", default="birdpic@192.168.36.36")
     ap.add_argument("--ssh-key", type=Path, default=home / ".ssh/id_ed25519")
-    ap.add_argument("--known-hosts", type=Path,
-                    default=Path("/tmp/birdnet-jump-kh"))
+    ap.add_argument(
+        "--known-hosts", type=Path,
+        default=home / ".ssh/birdnet_known_hosts",
+    )
     ap.add_argument("--remote-db",
                     default="/home/birdnet/BirdNET-Pi/scripts/birds.db")
     ap.add_argument("--remote-audio",
@@ -504,9 +506,17 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     return ap.parse_args(argv)
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
-    args = parse_args(argv)
+def resolve_runtime_paths(args: argparse.Namespace) -> argparse.Namespace:
+    """Resolve user-supplied paths and fail before creating archive state."""
     args.dest = args.dest.expanduser().resolve()
+    args.known_hosts = args.known_hosts.expanduser().resolve()
+    if not args.known_hosts.is_file():
+        raise RuntimeError(f"SSH known-hosts trust file is missing: {args.known_hosts}")
+    return args
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    args = resolve_runtime_paths(parse_args(argv))
     if not args.dest.parent.exists():
         raise RuntimeError(f"archive volume is not mounted: {args.dest.parent}")
     args.dest.mkdir(parents=True, exist_ok=True)

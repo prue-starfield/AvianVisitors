@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "avian-visitors",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-19",
+  "account_id": "dcd3474c07647ae62bf05f6215610ef3",
+  "workers_dev": true,
+  "preview_urls": false,
+  "vpc_services": [
+    {
+      "binding": "AVIAN_ORIGIN",
+      "service_id": "019f7acf-4661-7533-9d1d-fa166484b4b7"
+    }
+  ]
+}

@@ -21,7 +21,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 from zoneinfo import ZoneInfo
 
 HEX_ID = re.compile(r"^[0-9a-f]{64}$")
-SAFE_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+){1,4}(?:-2)?$")
+SAFE_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 TZ = ZoneInfo("America/New_York")
 PUBLICATION_MIN_CONFIDENCE = 0.70
 
@@ -32,6 +32,18 @@ def now_local() -> dt.datetime:
 
 def slugify(scientific_name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", scientific_name.lower()).strip("-")
+
+
+def is_frontend_route(path: str) -> bool:
+    """Allow only the app's canonical document routes; reject catch-all paths."""
+    normalised = path.rstrip("/") or "/"
+    if normalised in {"/", "/index.html", "/explore", "/species", "/about"}:
+        return True
+    detection_match = re.fullmatch(r"/detection/([^/]+)", normalised)
+    if detection_match:
+        return bool(HEX_ID.fullmatch(detection_match.group(1)))
+    species_match = re.fullmatch(r"/species/([^/]+)", normalised)
+    return bool(species_match and SAFE_SLUG.fullmatch(species_match.group(1)))
 
 
 def public_model_label(value: Any) -> str:
@@ -181,6 +193,62 @@ def get_species(db_path: Path) -> dict[str, Any]:
     return {"species": species}
 
 
+def get_species_detail(db_path: Path, slug: str) -> Optional[dict[str, Any]]:
+    if not SAFE_SLUG.fullmatch(slug):
+        raise ValueError("invalid species slug")
+    with db_connect(db_path) as db:
+        published = db.execute(
+            """SELECT scientific_name, max(common_name) AS common_name
+               FROM detections WHERE confidence >= ?
+               GROUP BY scientific_name""",
+            (PUBLICATION_MIN_CONFIDENCE,),
+        )
+        species = next(
+            (row for row in published if slugify(row["scientific_name"]) == slug),
+            None,
+        )
+        if species is None:
+            return None
+        row = dict(db.execute(
+            """SELECT count(*) AS detections,
+                      count(DISTINCT d.date) AS days_heard,
+                      min(d.observed_at_local) AS first_heard,
+                      max(d.observed_at_local) AS last_heard,
+                      max(d.confidence) AS best_confidence,
+                      avg(d.confidence) AS mean_confidence,
+                      sum(d.audio_sha256 IS NOT NULL) AS clips_preserved,
+                      sum(CASE WHEN COALESCE(r.status,
+                          CASE WHEN d.confidence < 0.90 THEN 'pending' ELSE 'unreviewed' END
+                      ) = 'confirmed' THEN 1 ELSE 0 END) AS confirmed,
+                      sum(CASE WHEN COALESCE(r.status,
+                          CASE WHEN d.confidence < 0.90 THEN 'pending' ELSE 'unreviewed' END
+                      ) = 'uncertain' THEN 1 ELSE 0 END) AS uncertain,
+                      sum(CASE WHEN COALESCE(r.status,
+                          CASE WHEN d.confidence < 0.90 THEN 'pending' ELSE 'unreviewed' END
+                      ) = 'rejected' THEN 1 ELSE 0 END) AS rejected,
+                      sum(CASE WHEN COALESCE(r.status,
+                          CASE WHEN d.confidence < 0.90 THEN 'pending' ELSE 'unreviewed' END
+                      ) = 'pending' THEN 1 ELSE 0 END) AS pending,
+                      sum(CASE WHEN COALESCE(r.status,
+                          CASE WHEN d.confidence < 0.90 THEN 'pending' ELSE 'unreviewed' END
+                      ) = 'unreviewed' THEN 1 ELSE 0 END) AS unreviewed
+               FROM detections d LEFT JOIN reviews r USING(detection_id)
+               WHERE d.scientific_name=? AND d.confidence >= ?""",
+            (species["scientific_name"], PUBLICATION_MIN_CONFIDENCE),
+        ).fetchone())
+    review_counts = {
+        status: int(row.pop(status) or 0)
+        for status in ("confirmed", "uncertain", "rejected", "pending", "unreviewed")
+    }
+    return {
+        "scientific_name": species["scientific_name"],
+        "common_name": species["common_name"],
+        "slug": slug,
+        **row,
+        "review_counts": review_counts,
+    }
+
+
 def get_seasonality(db_path: Path) -> dict[str, Any]:
     with db_connect(db_path) as db:
         rows = rows_dict(db.execute(
@@ -291,7 +359,7 @@ def get_detections(
                 LEFT JOIN reviews r USING(detection_id)
                 LEFT JOIN context_scores c USING(detection_id)
                 WHERE {where}
-                ORDER BY d.date DESC, d.time DESC
+                ORDER BY d.date DESC, d.time DESC, d.detection_id DESC
                 LIMIT ? OFFSET ?""",
             values + [limit, offset],
         ))
@@ -306,6 +374,21 @@ def get_detections(
             row["has_audio"] = archived
         row["slug"] = slugify(row["scientific_name"])
     return {"total": total, "limit": limit, "offset": offset, "detections": result}
+
+
+def get_detection(
+    db_path: Path,
+    detection_id: str,
+    audio_root: Optional[Path] = None,
+) -> Optional[dict[str, Any]]:
+    if not HEX_ID.fullmatch(detection_id):
+        raise ValueError("invalid detection id")
+    payload = get_detections(
+        db_path,
+        {"detection_id": [detection_id], "limit": ["1"]},
+        audio_root,
+    )
+    return payload["detections"][0] if payload["detections"] else None
 
 
 class ArchiveHandler(BaseHTTPRequestHandler):
@@ -412,6 +495,10 @@ class ArchiveHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         path = unquote(parsed.path)
+        if path == "/birds":
+            path = "/"
+        elif path.startswith("/birds/"):
+            path = path[len("/birds"):]
         params = parse_qs(parsed.query)
         try:
             if path == "/health":
@@ -438,12 +525,33 @@ class ArchiveHandler(BaseHTTPRequestHandler):
                 self.json_response(get_activity(self.config.db, days))
             elif path == "/api/species":
                 self.json_response(get_species(self.config.db))
+            elif (path.startswith("/api/species/") and
+                  "/" not in path[len("/api/species/"):]):
+                species = get_species_detail(
+                    self.config.db,
+                    path[len("/api/species/"):],
+                )
+                if species is None:
+                    self.error_json("species not found", 404)
+                    return
+                self.json_response({"species": species})
             elif path == "/api/seasonality":
                 self.json_response(get_seasonality(self.config.db))
             elif path == "/api/epochs":
                 self.json_response(get_epochs(self.config.db))
             elif path == "/api/detections":
                 self.json_response(get_detections(self.config.db, params, self.config.audio))
+            elif (path.startswith("/api/detections/") and
+                  "/" not in path[len("/api/detections/"):]):
+                detection = get_detection(
+                    self.config.db,
+                    path[len("/api/detections/"):],
+                    self.config.audio,
+                )
+                if detection is None:
+                    self.error_json("detection not found", 404)
+                    return
+                self.json_response({"detection": detection})
             elif path.startswith("/api/audio/"):
                 did = path.rsplit("/", 1)[-1]
                 if not HEX_ID.fullmatch(did):
@@ -474,16 +582,26 @@ class ArchiveHandler(BaseHTTPRequestHandler):
             elif path.startswith("/api/"):
                 self.error_json("API endpoint not found", 404)
             else:
-                static_name = "index.html" if path in {"", "/"} else path.lstrip("/")
-                if static_name not in {"index.html", "app.js", "styles.css", "favicon.svg"}:
-                    static_name = "index.html"
-                content_type = {
-                    "index.html": "text/html; charset=utf-8",
-                    "app.js": "application/javascript; charset=utf-8",
-                    "styles.css": "text/css; charset=utf-8",
-                    "favicon.svg": "image/svg+xml",
-                }[static_name]
-                self.serve_file(self.config.static / static_name, content_type, "no-cache, must-revalidate")
+                static_types = {
+                    "/app.js": "application/javascript; charset=utf-8",
+                    "/routes.js": "application/javascript; charset=utf-8",
+                    "/styles.css": "text/css; charset=utf-8",
+                    "/favicon.svg": "image/svg+xml",
+                }
+                if path in static_types:
+                    self.serve_file(
+                        self.config.static / path.lstrip("/"),
+                        static_types[path],
+                        "no-cache, must-revalidate",
+                    )
+                elif is_frontend_route(path):
+                    self.serve_file(
+                        self.config.static / "index.html",
+                        "text/html; charset=utf-8",
+                        "no-cache, must-revalidate",
+                    )
+                else:
+                    self.error_json("page not found", 404)
         except ValueError as exc:
             self.error_json(str(exc), 400)
         except (sqlite3.Error, OSError) as exc:

@@ -123,6 +123,28 @@ def test_api_does_not_expose_coordinates_or_audio_paths(archive_site):
     assert payload["detections"][1]["review_status"] == "pending"
 
 
+def test_detection_pagination_uses_detection_id_as_stable_tiebreaker(archive_site):
+    source = Path(site.__file__).read_text()
+    assert "ORDER BY d.date DESC, d.time DESC, d.detection_id DESC" in source
+    base, db_path = archive_site
+    today = site.now_local().date().isoformat()
+    with sqlite3.connect(db_path) as conn:
+        insert_detection(
+            conn,
+            "e" * 64,
+            today,
+            "07:20:00",
+            "Turdus migratorius",
+            "American Robin",
+            0.93,
+        )
+        conn.commit()
+    _, _, first = get_json(base + "/api/detections?limit=1&offset=0")
+    _, _, second = get_json(base + "/api/detections?limit=1&offset=1")
+    assert first["detections"][0]["detection_id"] == "e" * 64
+    assert second["detections"][0]["detection_id"] == "b" * 64
+
+
 def test_detection_id_filter_returns_one_safe_evidence_record(archive_site):
     base, _ = archive_site
     detection_id = "b" * 64
@@ -133,6 +155,104 @@ def test_detection_id_filter_returns_one_safe_evidence_record(archive_site):
     with pytest.raises(HTTPError) as error:
         urlopen(base + "/api/detections?detection_id=not-safe", timeout=3)
     assert error.value.code == 400
+
+
+def test_singular_detection_endpoint_returns_one_safe_record(archive_site):
+    base, _ = archive_site
+    detection_id = "a" * 64
+    status, _, payload = get_json(base + f"/api/detections/{detection_id}")
+    assert status == 200
+    assert payload["detection"]["detection_id"] == detection_id
+    assert payload["detection"]["common_name"] == "American Robin"
+    serialised = json.dumps(payload)
+    assert "latitude" not in serialised
+    assert "longitude" not in serialised
+    assert "audio_relpath" not in serialised
+    assert "file_name" not in serialised
+
+
+def test_singular_detection_endpoint_fails_closed(archive_site):
+    base, _ = archive_site
+    for path, expected in (
+        ("/api/detections/not-safe", 400),
+        ("/api/detections/" + "e" * 64, 404),
+    ):
+        with pytest.raises(HTTPError) as error:
+            urlopen(base + path, timeout=3)
+        assert error.value.code == expected
+
+
+def test_species_detail_endpoint_returns_summary_without_private_fields(archive_site):
+    base, _ = archive_site
+    status, _, payload = get_json(base + "/api/species/turdus-migratorius")
+    assert status == 200
+    assert payload["species"] == {
+        "scientific_name": "Turdus migratorius",
+        "common_name": "American Robin",
+        "slug": "turdus-migratorius",
+        "detections": 2,
+        "days_heard": 1,
+        "first_heard": payload["species"]["first_heard"],
+        "last_heard": payload["species"]["last_heard"],
+        "best_confidence": 0.94,
+        "mean_confidence": pytest.approx(0.91),
+        "clips_preserved": 1,
+        "review_counts": {
+            "confirmed": 0,
+            "uncertain": 0,
+            "rejected": 0,
+            "pending": 1,
+            "unreviewed": 1,
+        },
+    }
+    serialised = json.dumps(payload)
+    assert "latitude" not in serialised
+    assert "longitude" not in serialised
+    assert "audio_relpath" not in serialised
+
+
+def test_species_detail_endpoint_rejects_invalid_or_missing_slug(archive_site):
+    base, _ = archive_site
+    for path, expected in (
+        ("/api/species/../etc", 404),
+        ("/api/species/not_a_slug", 400),
+        ("/api/species/not-a-bird", 404),
+    ):
+        with pytest.raises(HTTPError) as error:
+            urlopen(base + path, timeout=3)
+        assert error.value.code == expected
+
+
+def test_birds_prefixed_routes_and_assets_resolve_to_the_app(archive_site):
+    base, _ = archive_site
+    with urlopen(base + "/birds/detection/" + "a" * 64, timeout=3) as response:
+        assert response.status == 200
+        assert response.headers["Content-Type"].startswith("text/html")
+        assert b"The Listening Garden" in response.read()
+    for route in ("/index.html", "/birds/index.html", "/species/corvus", "/birds/species/corvus"):
+        with urlopen(base + route, timeout=3) as response:
+            assert response.status == 200
+            assert response.headers["Content-Type"].startswith("text/html")
+    for asset in ("app.js", "routes.js"):
+        with urlopen(base + f"/birds/{asset}", timeout=3) as response:
+            assert response.headers["Content-Type"].startswith("application/javascript")
+    status, _, payload = get_json(base + "/birds/api/species/turdus-migratorius")
+    assert status == 200
+    assert payload["species"]["common_name"] == "American Robin"
+
+
+def test_unknown_or_malformed_frontend_routes_fail_closed(archive_site):
+    base, _ = archive_site
+    for path in (
+        "/not-real",
+        "/etc/passwd",
+        "/detection/not-an-id",
+        "/species/not_a_slug",
+        "/birds/etc/passwd",
+    ):
+        with pytest.raises(HTTPError) as error:
+            urlopen(base + path, timeout=3)
+        assert error.value.code == 404
 
 
 def test_malformed_ids_and_model_paths_never_reach_public_api(archive_site):

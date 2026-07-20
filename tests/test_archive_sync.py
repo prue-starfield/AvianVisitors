@@ -238,3 +238,143 @@ def test_sync_run_status_is_updated_not_duplicated(tmp_path: Path) -> None:
     assert len(rows) == 1
     assert rows[0][:4] == ("error", 4, 2, "cache failed")
     assert rows[0][4] is not None
+
+
+def quality_connection() -> tuple[sqlite3.Connection, str]:
+    conn = sqlite3.connect(":memory:")
+    sync_archive.initialise_archive(conn)
+    detection_id = "a" * 64
+    conn.execute(
+        """INSERT INTO detections (
+               detection_id,date,time,observed_at_local,timezone,
+               scientific_name,common_name,confidence,file_name,
+               source_model,source_host,ingested_at
+           ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (
+            detection_id, "2026-07-20", "12:00:00", "2026-07-20T12:00:00",
+            "America/New_York", "Turdus migratorius", "American Robin", 0.9,
+            "clip.mp3", "model", "birdnet", "2026-07-20T16:00:00+00:00",
+        ),
+    )
+    conn.execute(
+        "INSERT INTO audio_quality VALUES (?,?,?,?,?,?,?,?,?)",
+        (detection_id, "v1", 32000, 6.0, -40.0, -20.0, 20.0, 0.0, "now"),
+    )
+    conn.commit()
+    return conn, detection_id
+
+
+def test_audio_quality_rows_are_append_only_at_sqlite_boundary() -> None:
+    conn, detection_id = quality_connection()
+    for statement in (
+        "UPDATE audio_quality SET signal_contrast_db=1",
+        "DELETE FROM audio_quality",
+        "INSERT OR REPLACE INTO audio_quality VALUES "
+        f"('{detection_id}','v1',32000,6,-40,-20,20,0,'later')",
+    ):
+        with pytest.raises(sqlite3.IntegrityError, match="append-only|already exists"):
+            conn.execute(statement)
+        conn.rollback()
+    historical_rowid = conn.execute(
+        "SELECT rowid FROM audio_quality WHERE detection_id=? AND algorithm_version='v1'",
+        (detection_id,),
+    ).fetchone()[0]
+    with pytest.raises(sqlite3.IntegrityError, match="rowid is managed internally"):
+        conn.execute(
+            """INSERT OR REPLACE INTO audio_quality
+               (rowid,detection_id,algorithm_version,sample_rate,duration_seconds,
+                noise_floor_dbfs,signal_level_dbfs,signal_contrast_db,
+                clipping_fraction,computed_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (
+                historical_rowid, detection_id, "v-rowid-replace", 32000, 6.0,
+                -40.0, -20.0, 20.0, 0.0, "attack",
+            ),
+        )
+    conn.rollback()
+    with pytest.raises(sqlite3.IntegrityError, match="rowid is managed internally"):
+        conn.execute(
+            """INSERT INTO audio_quality
+               (rowid,detection_id,algorithm_version,sample_rate,duration_seconds,
+                noise_floor_dbfs,signal_level_dbfs,signal_contrast_db,
+                clipping_fraction,computed_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (
+                -7, detection_id, "v-negative-rowid", 32000, 6.0,
+                -40.0, -20.0, 20.0, 0.0, "attack",
+            ),
+        )
+    conn.rollback()
+    assert conn.execute(
+        "SELECT algorithm_version FROM audio_quality"
+    ).fetchall() == [("v1",)]
+    conn.execute(
+        "INSERT INTO audio_quality VALUES (?,?,?,?,?,?,?,?,?)",
+        (detection_id, "v2", 32000, 6.0, -40.0, -20.0, 20.0, 0.0, "later"),
+    )
+    conn.commit()
+    assert conn.execute("SELECT count(*) FROM audio_quality").fetchone()[0] == 2
+    conn.close()
+
+
+def test_audio_quality_migration_rejects_malformed_table_atomically() -> None:
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE detections(detection_id TEXT PRIMARY KEY)")
+    conn.execute("CREATE TABLE audio_quality(detection_id TEXT)")
+    conn.commit()
+    with pytest.raises(RuntimeError, match="noncanonical.*audio_quality"):
+        sync_archive.ensure_audio_quality_schema(conn)
+    objects = {
+        row[0] for row in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type IN ('index','trigger')"
+        )
+    }
+    assert "audio_quality_algorithm_idx" not in objects
+    assert not (objects & set(sync_archive.AUDIO_QUALITY_TRIGGER_DDLS))
+    conn.close()
+
+
+def test_audio_quality_migration_rejects_weak_named_index_without_partial_triggers() -> None:
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE detections(detection_id TEXT PRIMARY KEY)")
+    conn.execute(sync_archive.AUDIO_QUALITY_TABLE_DDL)
+    conn.execute("CREATE INDEX audio_quality_algorithm_idx ON audio_quality(detection_id)")
+    conn.commit()
+    with pytest.raises(RuntimeError, match="noncanonical.*audio_quality_algorithm_idx"):
+        sync_archive.ensure_audio_quality_schema(conn)
+    triggers = conn.execute(
+        "SELECT count(*) FROM sqlite_master WHERE type='trigger'"
+    ).fetchone()[0]
+    assert triggers == 0
+    conn.close()
+
+
+def test_audio_quality_attestation_rejects_extra_triggers() -> None:
+    conn, _ = quality_connection()
+    conn.execute(
+        "CREATE TRIGGER audio_quality_extra AFTER INSERT ON audio_quality BEGIN SELECT 1; END"
+    )
+    conn.commit()
+    with pytest.raises(RuntimeError, match="noncanonical audio_quality trigger set"):
+        sync_archive.validate_audio_quality_schema(conn)
+    with pytest.raises(RuntimeError, match="noncanonical audio_quality trigger set"):
+        sync_archive.ensure_audio_quality_schema(conn)
+    conn.close()
+
+
+def test_audio_quality_attestation_rejects_extra_indexes() -> None:
+    conn, _ = quality_connection()
+    conn.execute(
+        "CREATE UNIQUE INDEX audio_quality_unexpected_unique "
+        "ON audio_quality(detection_id)"
+    )
+    conn.commit()
+    with pytest.raises(RuntimeError, match="noncanonical audio_quality indexes"):
+        sync_archive.validate_audio_quality_schema(conn)
+    with pytest.raises(RuntimeError, match="noncanonical audio_quality indexes"):
+        sync_archive.ensure_audio_quality_schema(conn)
+    assert conn.execute(
+        "SELECT count(*) FROM sqlite_master "
+        "WHERE type='index' AND name='audio_quality_unexpected_unique'"
+    ).fetchone()[0] == 1
+    conn.close()

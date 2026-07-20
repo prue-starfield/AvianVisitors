@@ -6,6 +6,8 @@ const ART_RETRY_DELAYS_MS = [5000, 30000, 300000];
 const PAGE_SIZE = Routes.PAGE_SIZE;
 const state = { summary: null, species: [], seasonality: [], explore: null };
 let exploreRequestToken = 0;
+let relatedRequestToken = 0;
+let relatedAbortController = null;
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 
@@ -27,9 +29,9 @@ function displayTime(value) {
   const parts = String(value).slice(0, 5).split(":").map(Number);
   return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(new Date(2000, 0, 1, parts[0], parts[1]));
 }
-async function fetchJSON(path) {
-  const response = await fetch(path, { headers: { Accept: "application/json" } });
-  if (!response.ok) { let message = `${response.status}`; try { message = (await response.json()).error || message; } catch (_) { /* non-JSON error */ } throw new Error(message); }
+async function fetchJSON(path, options = {}) {
+  const response = await fetch(path, { headers: { Accept: "application/json" }, signal: options.signal });
+  if (!response.ok) { let message = `${response.status}`; try { message = (await response.json()).error || message; } catch (_) { /* non-JSON error */ } const error = new Error(message); error.status = response.status; throw error; }
   return response.json();
 }
 function showToast(message) { const toast = $("#toast"); toast.textContent = message; toast.classList.add("show"); clearTimeout(showToast.timer); showToast.timer = setTimeout(() => toast.classList.remove("show"), 4000); }
@@ -55,11 +57,11 @@ function renderSummary(summary) {
   state.summary = summary;
   ["Detections", "Species", "Days", "Clips"].forEach((name, index) => { const node = $(`#metric${name}`); if (node) node.textContent = formatNumber([summary.totals.detections, summary.totals.species, summary.totals.days_listening, summary.totals.clips_preserved][index]); });
   const sync = summary.latest_sync; const status = $("#archiveStatus");
-  if (!sync?.completed_at) { status.innerHTML = '<i class="pulse stale"></i><div><strong>Mirror status unknown</strong><small>No successful sync recorded</small></div>'; return; }
+  if (!sync?.completed_at) { status.innerHTML = '<i class="pulse stale"></i><div><strong><span class="wide-status">Mirror status </span>unknown</strong><small>No successful sync recorded</small></div>'; return; }
   const minutes = Math.max(0, Math.floor((Date.now() - new Date(sync.completed_at).getTime()) / 60000)); const stale = minutes > 30;
-  status.innerHTML = `<i class="pulse ${stale ? "stale" : ""}" aria-hidden="true"></i><div><strong>${stale ? "Mirror needs attention" : "Archive mirror current"}</strong><small>Synced ${minutes ? `${formatNumber(minutes)} min` : "less than a minute"} ago · ${formatNumber(sync.source_rows)} source rows</small></div>`;
+  status.innerHTML = `<i class="pulse ${stale ? "stale" : ""}" aria-hidden="true"></i><div><strong>${stale ? '<span class="wide-status">Mirror </span>needs attention' : '<span class="wide-status">Archive mirror </span>current'}</strong><small>Synced ${minutes ? `${formatNumber(minutes)} min` : "less than a minute"} ago · ${formatNumber(sync.source_rows)} source rows</small></div>`;
 }
-async function loadCommonStatus() { try { renderSummary(await fetchJSON("api/summary")); } catch (_) { $("#archiveStatus").innerHTML = '<i class="pulse stale"></i><div><strong>Archive unavailable</strong><small>The private mirror could not be read</small></div>'; } }
+async function loadCommonStatus() { try { renderSummary(await fetchJSON("api/summary")); } catch (_) { $("#archiveStatus").innerHTML = '<i class="pulse stale"></i><div><strong><span class="wide-status">Archive </span>unavailable</strong><small>The private mirror could not be read</small></div>'; } }
 
 function renderToday(data) {
   $("#todayDate").textContent = displayDate(data.date);
@@ -146,7 +148,190 @@ async function initSpeciesDetail(route) {
 
 function reviewText(item) { const status = String(item.review_status || "unreviewed"); if (!item.review_model) return status === "pending" ? "Pending independent review" : "Not independently reviewed"; return `${item.review_model} · ${status}${item.review_score == null ? "" : ` · claimed-species score ${formatConfidence(item.review_score)}`}`; }
 function setDetectionNeighbor(selector, detectionId) { const link = $(selector); const id = String(detectionId || ""); const valid = /^[0-9a-f]{64}$/.test(id); link.hidden = !valid; if (valid) link.href = Routes.href("detection-detail", { detectionId: id }); else link.removeAttribute("href"); }
-async function initDetectionDetail(route) { try { const data = await fetchJSON(`api/detections/${encodeURIComponent(route.detectionId)}`); const item = data.detection; const detectionId = String(item.detection_id || ""); if (!/^[0-9a-f]{64}$/.test(detectionId)) throw new Error("invalid evidence identifier"); document.title = `${item.common_name} evidence · The Listening Garden`; $("#detectionTitle").textContent = item.common_name; $("#detectionRecorded").textContent = `${displayDate(item.date)} at ${displayTime(item.time)}${item.timezone ? ` · ${item.timezone}` : ""}`; $("#detectionScore").textContent = `${formatConfidence(item.confidence)} raw classifier score`; $("#detectionReview").textContent = reviewText(item); $("#detectionReviewDetails").textContent = reviewText(item); $("#detectionAlternatives").textContent = item.notes || "No independent alternatives recorded."; const digest = String(item.audio_sha256 || ""); $("#detectionHash").textContent = /^[0-9a-f]{64}$/.test(digest) ? `SHA-256 ${digest} · ${formatNumber(item.audio_bytes)} bytes` : "Evidence digest unavailable"; const speciesLink = $("#detectionSpeciesLink"); speciesLink.href = speciesHistoryHref(item.slug); speciesLink.textContent = `${item.common_name} · ${item.scientific_name} →`; $("#detectionBack").href = speciesHistoryHref(item.slug); $("#detectionBack").textContent = `Back to ${item.common_name}`; setDetectionNeighbor("#newerDetection", item.newer_detection_id); setDetectionNeighbor("#olderDetection", item.older_detection_id); const audio = $("#detectionAudio"); if (item.has_audio) audio.src = `api/audio/${encodeURIComponent(detectionId)}`; else { audio.hidden = true; audio.insertAdjacentHTML("afterend", '<p class="empty-state">The audio segment is not currently available, but its claim metadata remains auditable.</p>'); } $("#detectionIdentity").innerHTML = `<span class="digest-label">Immutable detection identity</span><code data-id="${escapeHTML(detectionId)}">${escapeHTML(detectionId)}</code>`; focusRouteDestination($("#detectionTitle")); } catch (error) { document.title = "Evidence unavailable · The Listening Garden"; $("#detectionTitle").textContent = "Evidence unavailable"; $("#detectionRecorded").textContent = "This preserved recognition could not be opened."; $("#detectionReview").textContent = error.message; } }
+
+const RELATED_PAGE_SIZE = 12;
+const MAX_RELATED_PAGE = 20;
+const RELATED_SORTS = new Set(["best", "contrast", "recent"]);
+const RELATED_EXPLANATIONS = {
+  best: "Best evidence groups independent review outcomes first, then uses review score, BirdNET score, audio contrast and recency as separate tie-breakers.",
+  contrast: "Highest audio contrast orders broadband P95–P20 frame-level variation. A loud gust, vehicle or another bird can also raise it.",
+  recent: "Newest recording orders playable clips only by their original local timestamp.",
+};
+function relatedStateFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const requestedSort = params.get("related_sort") || "best";
+  const sort = RELATED_SORTS.has(requestedSort) ? requestedSort : "best";
+  const rawPage = params.get("related_page") || "1";
+  const page = /^\d{1,2}$/.test(rawPage) ? Math.min(MAX_RELATED_PAGE, Math.max(1, Number(rawPage))) : 1;
+  return { sort, page };
+}
+function persistRelatedState(sort, page) {
+  const url = new URL(window.location.href);
+  const safePage = Math.min(MAX_RELATED_PAGE, Math.max(1, Number(page) || 1));
+  if (sort === "best") url.searchParams.delete("related_sort");
+  else url.searchParams.set("related_sort", sort);
+  if (safePage <= 1) url.searchParams.delete("related_page");
+  else url.searchParams.set("related_page", String(safePage));
+  history.replaceState({ ...(history.state || {}), relatedSort: sort, relatedPage: safePage }, "", `${url.pathname}${url.search}${url.hash}`);
+  const skip = $("#skipLink");
+  if (skip) skip.href = `${url.pathname}${url.search}#main`;
+}
+function qualityText(quality) {
+  if (!quality) return "Waveform analysis pending";
+  const fraction = Number(quality.near_full_scale_fraction || 0);
+  const nearFullScale = fraction > 0 ? ` · ${(fraction * 100).toFixed(3)}% near-full-scale samples` : " · no near-full-scale samples";
+  return `${Number(quality.audio_contrast_db).toFixed(1)} dB audio contrast · quiet-frame level ${Number(quality.quiet_frame_level_dbfs).toFixed(1)} dBFS · high-energy level ${Number(quality.high_energy_frame_level_dbfs).toFixed(1)} dBFS${nearFullScale}`;
+}
+function comparisonCard(item, rank) {
+  const detectionId = String(item.detection_id || "");
+  if (!/^[0-9a-f]{64}$/.test(detectionId)) return "";
+  const status = ["pending", "unreviewed", "confirmed", "uncertain", "rejected"].includes(item.review_status) ? item.review_status : "unreviewed";
+  const reviewer = item.review_kind === "perch" ? "Perch" : item.review_kind === "independent" ? "Independent review" : null;
+  const statusText = reviewer ? {
+    confirmed: `${reviewer} supports`,
+    uncertain: `${reviewer} inconclusive`,
+    rejected: `${reviewer} does not support`,
+    pending: `${reviewer} pending`,
+    unreviewed: "No independent review",
+  }[status] : "No independent review";
+  const quality = item.audio_quality;
+  const contrast = quality ? `${Number(quality.audio_contrast_db).toFixed(1)} dB` : "Pending";
+  const quiet = quality ? `${Number(quality.quiet_frame_level_dbfs).toFixed(1)} dBFS` : "Pending";
+  const when = `${displayDate(item.date)} at ${displayTime(item.time)}`;
+  return `<article class="comparison-card" data-id="${escapeHTML(detectionId)}"><header><span class="comparison-rank" aria-label="Position ${rank}">${String(rank).padStart(2, "0")}</span><div><time datetime="${escapeHTML(item.observed_at_local)}">${escapeHTML(when)}</time><span class="status-pill ${escapeHTML(status)}">${escapeHTML(statusText)}</span></div></header><dl class="comparison-metrics"><div><dt>BirdNET score</dt><dd>${formatConfidence(item.confidence)}</dd></div><div><dt>${escapeHTML(reviewer ? `${reviewer} claim score` : "Review claim score")}</dt><dd>${item.review_score == null ? "—" : formatConfidence(item.review_score)}</dd></div><div><dt>Audio contrast</dt><dd>${escapeHTML(contrast)}</dd></div><div><dt>Quiet-frame level</dt><dd>${escapeHTML(quiet)}</dd></div></dl><audio controls preload="none" src="api/audio/${encodeURIComponent(detectionId)}" aria-label="Other ${escapeHTML(item.common_name)} call, recorded ${escapeHTML(when)}"></audio><a class="comparison-evidence" href="${escapeHTML(Routes.href("detection-detail", { detectionId }))}">Open full evidence →</a></article>`;
+}
+async function loadRelatedCalls(detectionId, append = false) {
+  const holder = $("#relatedCalls");
+  const more = $("#relatedMore");
+  const sort = $("#relatedSort").value;
+  const offset = append ? Number(holder.dataset.loaded || 0) : 0;
+  const revision = append ? String(holder.dataset.revision || "") : "";
+  const replacingLoadedQueue = !append && Number(holder.dataset.loaded || 0) > 0;
+  const token = ++relatedRequestToken;
+  if (relatedAbortController) relatedAbortController.abort();
+  const controller = new AbortController();
+  relatedAbortController = controller;
+  more.disabled = true;
+  if (!append) {
+    if (replacingLoadedQueue) {
+      holder.querySelectorAll("audio").forEach(player => player.pause());
+      const primary = $("#detectionAudio");
+      if (primary && typeof primary.pause === "function") primary.pause();
+    }
+    holder.dataset.loaded = "0";
+    delete holder.dataset.revision;
+    holder.innerHTML = '<p class="loading">Ranking preserved calls…</p>';
+    $("#relatedCount").textContent = "Loading related calls…";
+    more.hidden = true;
+  }
+  try {
+    const params = new URLSearchParams({ sort, limit: RELATED_PAGE_SIZE, offset });
+    if (revision) params.set("revision", revision);
+    const data = await fetchJSON(
+      `api/detections/${encodeURIComponent(detectionId)}/related?${params}`,
+      { signal: controller.signal },
+    );
+    if (token !== relatedRequestToken || $("#relatedSort").value !== sort) return false;
+    if (data.sort !== sort || data.offset !== offset || !/^[0-9a-f]{64}$/.test(String(data.revision || ""))) throw new Error("invalid related queue response");
+    const existing = new Set([...holder.querySelectorAll(".comparison-card[data-id]")].map(card => card.dataset.id));
+    const freshCalls = data.calls.filter(item => !existing.has(String(item.detection_id || "")));
+    const cards = freshCalls.map((item, index) => comparisonCard(item, offset + index + 1)).join("");
+    if (append) holder.insertAdjacentHTML("beforeend", cards);
+    else holder.innerHTML = cards || '<p class="empty-state">No other playable calls carrying this scientific species label are available yet.</p>';
+    const loaded = offset + data.calls.length;
+    holder.dataset.loaded = String(loaded);
+    holder.dataset.revision = data.revision;
+    const viewLimit = RELATED_PAGE_SIZE * MAX_RELATED_PAGE;
+    const viewCapped = loaded >= viewLimit && loaded < data.total;
+    $("#relatedCount").textContent = data.total
+      ? `Showing ${formatNumber(loaded)} of ${formatNumber(data.total)} other playable clips${viewCapped ? ` · listening view capped at ${formatNumber(viewLimit)}` : ""}`
+      : "No other playable clip carrying this scientific species label is available yet.";
+    more.hidden = loaded >= data.total || viewCapped;
+    persistRelatedState(sort, Math.max(1, Math.ceil(loaded / RELATED_PAGE_SIZE)));
+    return true;
+  } catch (error) {
+    if (error.name === "AbortError" || token !== relatedRequestToken) return false;
+    if (append && error.status === 409) {
+      showToast("The ranked queue changed as new evidence arrived; refreshing it now.");
+      return loadRelatedCalls(detectionId, false);
+    }
+    if (!append) {
+      holder.dataset.loaded = "0";
+      delete holder.dataset.revision;
+      showError(holder, error.message);
+      $("#relatedCount").textContent = "Related calls unavailable.";
+      more.hidden = true;
+    } else {
+      showToast(`More calls unavailable: ${error.message}`);
+    }
+    return false;
+  } finally {
+    if (token === relatedRequestToken) {
+      relatedAbortController = null;
+      more.disabled = false;
+    }
+  }
+}
+async function initDetectionDetail(route) {
+  try {
+    const data = await fetchJSON(`api/detections/${encodeURIComponent(route.detectionId)}`);
+    const item = data.detection;
+    const detectionId = String(item.detection_id || "");
+    if (!/^[0-9a-f]{64}$/.test(detectionId)) throw new Error("invalid evidence identifier");
+    document.title = `${item.common_name} evidence · The Listening Garden`;
+    $("#detectionTitle").textContent = item.common_name;
+    $("#detectionRecorded").textContent = `${displayDate(item.date)} at ${displayTime(item.time)}${item.timezone ? ` · ${item.timezone}` : ""}`;
+    $("#detectionScore").textContent = `${formatConfidence(item.confidence)} raw classifier score`;
+    $("#detectionReview").textContent = reviewText(item);
+    $("#detectionReviewDetails").textContent = reviewText(item);
+    $("#detectionQuality").textContent = qualityText(item.audio_quality);
+    $("#detectionAlternatives").textContent = item.notes || "No independent alternatives recorded.";
+    const digest = String(item.audio_sha256 || "");
+    const audioBytes = Number(item.audio_bytes);
+    const validEvidenceMetadata = /^[0-9a-f]{64}$/.test(digest) && Number.isSafeInteger(audioBytes) && audioBytes > 0;
+    $("#detectionHash").textContent = validEvidenceMetadata ? `SHA-256 ${digest} · ${formatNumber(audioBytes)} bytes` : "Evidence digest or size unavailable";
+    const speciesLink = $("#detectionSpeciesLink");
+    speciesLink.href = speciesHistoryHref(item.slug);
+    speciesLink.textContent = `${item.common_name} · ${item.scientific_name} →`;
+    $("#detectionBack").href = speciesHistoryHref(item.slug);
+    $("#detectionBack").textContent = `Back to ${item.common_name}`;
+    $("#comparisonTitle").textContent = `Hear more ${item.common_name} clips`;
+    setDetectionNeighbor("#newerDetection", item.newer_detection_id);
+    setDetectionNeighbor("#olderDetection", item.older_detection_id);
+    const audio = $("#detectionAudio");
+    if (item.has_audio) audio.src = `api/audio/${encodeURIComponent(detectionId)}`;
+    else { audio.hidden = true; audio.insertAdjacentHTML("afterend", '<p class="empty-state">The audio segment is not currently available, but its claim metadata remains auditable.</p>'); }
+    $("#detectionIdentity").innerHTML = `<span class="digest-label">Immutable detection identity</span><code data-id="${escapeHTML(detectionId)}">${escapeHTML(detectionId)}</code>`;
+    const holder = $("#relatedCalls");
+    holder.addEventListener("play", event => {
+      holder.querySelectorAll("audio").forEach(player => { if (player !== event.target) player.pause(); });
+      if (audio !== event.target) audio.pause();
+    }, true);
+    audio.addEventListener("play", () => holder.querySelectorAll("audio").forEach(player => player.pause()));
+    const relatedState = relatedStateFromURL();
+    $("#relatedSort").value = relatedState.sort;
+    $("#comparisonExplanation").textContent = RELATED_EXPLANATIONS[relatedState.sort];
+    $("#relatedSort").addEventListener("change", async event => {
+      holder.querySelectorAll("audio").forEach(player => player.pause());
+      $("#comparisonExplanation").textContent = RELATED_EXPLANATIONS[event.target.value] || RELATED_EXPLANATIONS.best;
+      persistRelatedState(event.target.value, 1);
+      await loadRelatedCalls(detectionId);
+    });
+    $("#relatedMore").addEventListener("click", () => loadRelatedCalls(detectionId, true));
+    focusRouteDestination($("#detectionTitle"));
+    const firstPageLoaded = await loadRelatedCalls(detectionId);
+    if (firstPageLoaded) {
+      for (let page = 2; page <= relatedState.page && !$("#relatedMore").hidden; page += 1) {
+        if (!await loadRelatedCalls(detectionId, true)) break;
+      }
+    }
+  } catch (error) {
+    document.title = "Evidence unavailable · The Listening Garden";
+    $("#detectionTitle").textContent = "Evidence unavailable";
+    $("#detectionRecorded").textContent = "This preserved recognition could not be opened.";
+    $("#detectionReview").textContent = error.message;
+  }
+}
 
 function renderEpochs(data) { const holder = $("#epochTimeline"); holder.innerHTML = data.epochs.length ? data.epochs.map((epoch, index) => `<li><time datetime="${escapeHTML(epoch.effective_at)}">${escapeHTML(String(epoch.effective_at).replace("T", " ").slice(0, 16))}</time><div><h3>${escapeHTML(epoch.reason || `Configuration epoch ${index + 1}`)}</h3><p>${escapeHTML(epoch.audio_model || "Detector recorded")} · range ${escapeHTML(epoch.range_model || "—")} · confidence ${formatConfidence(epoch.confidence_threshold)}</p></div></li>`).join("") : '<li class="empty-state">No configuration epochs recorded.</li>'; }
 async function initAbout() { try { renderEpochs(await fetchJSON("api/epochs")); } catch (error) { showError($("#epochTimeline"), error.message); } }

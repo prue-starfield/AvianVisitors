@@ -16,6 +16,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import shutil
 import sqlite3
@@ -142,6 +143,162 @@ WHERE d.confidence < 0.90 AND r.detection_id IS NULL
 ORDER BY d.confidence ASC, d.date DESC, d.time DESC;
 """
 
+AUDIO_QUALITY_TABLE_DDL = """
+CREATE TABLE audio_quality (
+    detection_id TEXT NOT NULL REFERENCES detections(detection_id),
+    algorithm_version TEXT NOT NULL,
+    sample_rate INTEGER NOT NULL CHECK(sample_rate BETWEEN 8000 AND 192000),
+    duration_seconds REAL NOT NULL CHECK(duration_seconds > 0 AND duration_seconds <= 3600),
+    noise_floor_dbfs REAL NOT NULL CHECK(noise_floor_dbfs BETWEEN -120 AND 0),
+    signal_level_dbfs REAL NOT NULL CHECK(signal_level_dbfs BETWEEN -120 AND 0),
+    signal_contrast_db REAL NOT NULL CHECK(signal_contrast_db BETWEEN 0 AND 120),
+    clipping_fraction REAL NOT NULL CHECK(clipping_fraction BETWEEN 0 AND 1),
+    computed_at TEXT NOT NULL,
+    PRIMARY KEY (detection_id, algorithm_version)
+)
+"""
+AUDIO_QUALITY_INDEX_DDL = """
+CREATE INDEX audio_quality_algorithm_idx
+    ON audio_quality(algorithm_version, signal_contrast_db DESC)
+"""
+AUDIO_QUALITY_TRIGGER_DDLS = {
+    "audio_quality_no_update": """
+        CREATE TRIGGER audio_quality_no_update
+        BEFORE UPDATE ON audio_quality
+        BEGIN
+            SELECT RAISE(ABORT, 'audio_quality is append-only');
+        END
+    """,
+    "audio_quality_no_delete": """
+        CREATE TRIGGER audio_quality_no_delete
+        BEFORE DELETE ON audio_quality
+        BEGIN
+            SELECT RAISE(ABORT, 'audio_quality is append-only');
+        END
+    """,
+    "audio_quality_no_replace": """
+        CREATE TRIGGER audio_quality_no_replace
+        BEFORE INSERT ON audio_quality
+        WHEN EXISTS (
+            SELECT 1 FROM audio_quality
+            WHERE detection_id=NEW.detection_id
+              AND algorithm_version=NEW.algorithm_version
+        )
+        BEGIN
+            SELECT RAISE(ABORT, 'audio_quality version already exists');
+        END
+    """,
+    "audio_quality_no_explicit_rowid": """
+        CREATE TRIGGER audio_quality_no_explicit_rowid
+        BEFORE INSERT ON audio_quality
+        WHEN NEW.rowid > 0
+        BEGIN
+            SELECT RAISE(ABORT, 'audio_quality rowid is managed internally');
+        END
+    """,
+    "audio_quality_positive_rowid": """
+        CREATE TRIGGER audio_quality_positive_rowid
+        AFTER INSERT ON audio_quality
+        WHEN NEW.rowid <= 0
+        BEGIN
+            SELECT RAISE(ABORT, 'audio_quality rowid is managed internally');
+        END
+    """,
+}
+
+
+def _normalise_schema_sql(value: str) -> str:
+    return re.sub(r"\s+", " ", value.strip().rstrip(";")).lower()
+
+
+def _schema_object_sql(
+    conn: sqlite3.Connection,
+    object_type: str,
+    name: str,
+) -> Optional[str]:
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type=? AND name=?",
+        (object_type, name),
+    ).fetchone()
+    return None if row is None else row[0]
+
+
+def _attest_schema_object(
+    conn: sqlite3.Connection,
+    object_type: str,
+    name: str,
+    expected_sql: str,
+) -> None:
+    actual = _schema_object_sql(conn, object_type, name)
+    if actual is None:
+        raise RuntimeError(f"missing required archive schema object: {name}")
+    if _normalise_schema_sql(actual) != _normalise_schema_sql(expected_sql):
+        raise RuntimeError(f"noncanonical archive schema object: {name}")
+
+
+def validate_audio_quality_schema(conn: sqlite3.Connection) -> None:
+    """Fail closed unless the append-only annotation schema is exact."""
+    _attest_schema_object(
+        conn, "table", "audio_quality", AUDIO_QUALITY_TABLE_DDL,
+    )
+    _attest_schema_object(
+        conn, "index", "audio_quality_algorithm_idx", AUDIO_QUALITY_INDEX_DDL,
+    )
+    actual_indexes = {
+        row[1] for row in conn.execute("PRAGMA index_list(audio_quality)")
+    }
+    expected_indexes = {
+        "audio_quality_algorithm_idx", "sqlite_autoindex_audio_quality_1",
+    }
+    if actual_indexes != expected_indexes:
+        raise RuntimeError(
+            "noncanonical audio_quality indexes: "
+            f"expected {sorted(expected_indexes)}, found {sorted(actual_indexes)}"
+        )
+    actual_triggers = {
+        row[0] for row in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='audio_quality'"
+        )
+    }
+    expected_triggers = set(AUDIO_QUALITY_TRIGGER_DDLS)
+    if actual_triggers != expected_triggers:
+        raise RuntimeError("noncanonical audio_quality trigger set")
+    for name, ddl in AUDIO_QUALITY_TRIGGER_DDLS.items():
+        _attest_schema_object(conn, "trigger", name, ddl)
+
+
+def ensure_audio_quality_schema(conn: sqlite3.Connection) -> None:
+    """Atomically install or attest the append-only annotation schema."""
+    if conn.in_transaction:
+        raise RuntimeError("audio-quality migration requires a clean transaction boundary")
+    conn.execute("PRAGMA foreign_keys=ON")
+    conn.execute("BEGIN IMMEDIATE")
+    try:
+        table_sql = _schema_object_sql(conn, "table", "audio_quality")
+        if table_sql is None:
+            conn.execute(AUDIO_QUALITY_TABLE_DDL)
+        elif _normalise_schema_sql(table_sql) != _normalise_schema_sql(
+            AUDIO_QUALITY_TABLE_DDL
+        ):
+            raise RuntimeError("noncanonical archive schema object: audio_quality")
+
+        objects = [
+            ("index", "audio_quality_algorithm_idx", AUDIO_QUALITY_INDEX_DDL),
+            *(("trigger", name, ddl) for name, ddl in AUDIO_QUALITY_TRIGGER_DDLS.items()),
+        ]
+        for object_type, name, ddl in objects:
+            actual = _schema_object_sql(conn, object_type, name)
+            if actual is None:
+                conn.execute(ddl)
+            elif _normalise_schema_sql(actual) != _normalise_schema_sql(ddl):
+                raise RuntimeError(f"noncanonical archive schema object: {name}")
+        validate_audio_quality_schema(conn)
+    except Exception:
+        conn.rollback()
+        raise
+    else:
+        conn.commit()
+
 
 def now_iso() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
@@ -164,6 +321,7 @@ def detection_id(values: Sequence[object]) -> str:
 
 def initialise_archive(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    ensure_audio_quality_schema(conn)
 
 
 def import_snapshot(

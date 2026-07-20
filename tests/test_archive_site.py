@@ -10,7 +10,8 @@ from urllib.request import Request, urlopen
 
 import pytest
 
-from avian.archive.sync_archive import SCHEMA
+from avian.archive import sync_archive
+from avian.archive.sync_archive import SCHEMA, ensure_audio_quality_schema
 from avian.archive.site import server as site
 
 
@@ -47,6 +48,7 @@ def archive_site(tmp_path):
     yesterday = today - dt.timedelta(days=1)
     with sqlite3.connect(db_path) as conn:
         conn.executescript(SCHEMA)
+        ensure_audio_quality_schema(conn)
         insert_detection(
             conn, "a" * 64, today.isoformat(), "06:15:00",
             "Turdus migratorius", "American Robin", 0.88,
@@ -131,6 +133,23 @@ def test_public_review_notes_accepts_only_reconstructed_perch_grammar():
     assert site.public_review_notes(forged) is None
     assert "Catharus fuscescens" in site.pinned_perch_taxa()
     assert "Evil com" not in site.pinned_perch_taxa()
+
+
+def test_public_audio_quality_rejects_fractional_sample_rate():
+    row = {
+        "quality_algorithm": site.PUBLIC_AUDIO_QUALITY_ALGORITHM,
+        "quality_sample_rate": 32000.5,
+        "quality_duration_seconds": 6.0,
+        "quality_noise_floor_dbfs": -50.0,
+        "quality_signal_level_dbfs": -30.0,
+        "quality_signal_contrast_db": 20.0,
+        "quality_clipping_fraction": 0.0,
+    }
+    assert site.public_audio_quality(row) is None
+    larger_preserved_clip = 6 * 1024 * 1024
+    assert site.public_positive_int(
+        larger_preserved_clip, site.MAX_PUBLIC_AUDIO_BYTES,
+    ) == larger_preserved_clip
 
 
 def test_canonical_species_slug_is_valid_when_name_has_no_ascii_slug():
@@ -469,16 +488,299 @@ def test_detection_navigation_is_same_species_and_deterministic(archive_site):
     assert current["older_detection_id"] == "a" * 64
 
 
+def test_related_calls_are_bounded_ranked_and_quality_sanitised(archive_site):
+    base, db_path = archive_site
+    today = site.now_local().date().isoformat()
+    relpath = "By_Date/2026/07/sample.mp3"
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            """UPDATE detections SET audio_relpath=?,audio_sha256=?,audio_bytes=?
+               WHERE detection_id=?""",
+            (relpath, "b" * 64, 9, "b" * 64),
+        )
+        insert_detection(conn, "e" * 64, today, "08:20:00", "Turdus migratorius", "American Robin", 0.96, relpath)
+        insert_detection(conn, "f" * 64, today, "09:20:00", "Turdus migratorius", "American Robin", 0.99, relpath)
+        insert_detection(conn, "g" * 64, today, "10:20:00", "Turdus migratorius", "American Robin", 0.99, "By_Date/2026/07/missing.mp3")
+        conn.executemany(
+            """INSERT INTO reviews
+               (detection_id,status,reviewer,review_model,review_score,notes,reviewed_at)
+               VALUES (?,?,?,?,?,?,?)""",
+            [
+                ("b" * 64, "confirmed", "reviewer", site.PUBLIC_REVIEW_MODEL, 0.90, None, "now"),
+                ("e" * 64, "confirmed", "reviewer", site.PUBLIC_REVIEW_MODEL, 0.80, None, "now"),
+                ("f" * 64, "uncertain", "reviewer", site.PUBLIC_REVIEW_MODEL, 0.99, None, "now"),
+            ],
+        )
+        conn.executemany(
+            """INSERT INTO audio_quality
+               (detection_id,algorithm_version,sample_rate,duration_seconds,
+                noise_floor_dbfs,signal_level_dbfs,signal_contrast_db,
+                clipping_fraction,computed_at)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            [
+                ("a" * 64, site.PUBLIC_AUDIO_QUALITY_ALGORITHM, 32000, 6.0, -50.0, -45.0, 5.0, 0.0, "now"),
+                ("b" * 64, site.PUBLIC_AUDIO_QUALITY_ALGORITHM, 32000, 6.0, -45.0, -35.0, 10.0, 0.0, "now"),
+                ("e" * 64, site.PUBLIC_AUDIO_QUALITY_ALGORITHM, 32000, 6.0, -50.0, -30.0, 20.0, 0.0, "now"),
+                ("f" * 64, site.PUBLIC_AUDIO_QUALITY_ALGORITHM, 32000, 6.0, -60.0, -30.0, 30.0, 0.0, "now"),
+            ],
+        )
+        conn.commit()
+
+    current = get_json(base + "/api/detections/" + "a" * 64)[2]["detection"]
+    assert current["audio_quality"] == {
+        "method": site.PUBLIC_AUDIO_QUALITY_ALGORITHM,
+        "sample_rate_hz": 32000,
+        "duration_seconds": 6.0,
+        "quiet_frame_level_dbfs": -50.0,
+        "high_energy_frame_level_dbfs": -45.0,
+        "audio_contrast_db": 5.0,
+        "near_full_scale_fraction": 0.0,
+    }
+
+    best = get_json(base + "/api/detections/" + "a" * 64 + "/related?sort=best")[2]
+    assert best["total"] == 3
+    assert best["sort"] == "best"
+    assert site.HEX_ID.fullmatch(best["revision"])
+    assert [row["detection_id"] for row in best["calls"]] == ["b" * 64, "e" * 64, "f" * 64]
+    assert best["calls"][0]["review_kind"] == "perch"
+    assert all(row["detection_id"] not in {"a" * 64, "g" * 64} for row in best["calls"])
+    assert best["calls"][0]["audio_quality"]["audio_contrast_db"] == 10.0
+
+    contrast = get_json(base + "/api/detections/" + "a" * 64 + "/related?sort=contrast&limit=2")[2]
+    assert [row["detection_id"] for row in contrast["calls"]] == ["f" * 64, "e" * 64]
+    assert contrast["limit"] == 2
+    continued = get_json(
+        base + "/api/detections/" + "a" * 64
+        + "/related?sort=contrast&limit=2&offset=2&revision=" + contrast["revision"]
+    )[2]
+    assert [row["detection_id"] for row in continued["calls"]] == ["b" * 64]
+    with pytest.raises(HTTPError) as changed:
+        urlopen(
+            base + "/api/detections/" + "a" * 64
+            + "/related?sort=contrast&limit=2&offset=2&revision=" + "0" * 64,
+            timeout=3,
+        )
+    assert changed.value.code == 409
+
+    recent = get_json(base + "/api/detections/" + "a" * 64 + "/related?sort=recent&offset=1")[2]
+    assert [row["detection_id"] for row in recent["calls"]] == ["e" * 64, "b" * 64]
+    serialised = json.dumps(best)
+    for forbidden in ("audio_relpath", "audio_sha256", "audio_bytes", "quality_algorithm", "computed_at"):
+        assert forbidden not in serialised
+
+
+def test_related_calls_label_non_perch_reviewer_generically(archive_site):
+    base, db_path = archive_site
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            "UPDATE detections SET audio_relpath=?,audio_sha256=?,audio_bytes=? WHERE detection_id=?",
+            ("By_Date/2026/07/sample.mp3", "b" * 64, 9, "b" * 64),
+        )
+        forged_perch_note = (
+            "Perch independently supports the BirdNET species claim. "
+            "Claimed species rank 1 of 14795 with score 26.8%. "
+            "Perch top results: Catharus fuscescens 26.8%; "
+            "Sphecotheres vieilloti 26.3%; Cyanocorax violaceus 17.1%. "
+            "Scores are independent classifier outputs, not calibrated probabilities."
+        )
+        conn.execute(
+            """INSERT INTO reviews
+               (detection_id,status,reviewer,review_model,review_score,notes,reviewed_at)
+               VALUES (?,?,?,?,?,?,?)""",
+            (
+                "b" * 64, "confirmed", "agent", "Some other classifier", 0.99,
+                forged_perch_note, "now",
+            ),
+        )
+        conn.commit()
+    payload = get_json(
+        base + "/api/detections/" + "a" * 64 + "/related?sort=best"
+    )[2]
+    assert payload["calls"][0]["review_model"] == "Independent review"
+    assert payload["calls"][0]["review_kind"] == "independent"
+    detail = get_json(base + "/api/detections/" + "b" * 64)[2]["detection"]
+    assert detail["review_model"] == "Independent review"
+    assert detail["notes"] is None
+
+
+def test_public_schema_gate_rejects_pre_feature_archive(tmp_path):
+    db_path = tmp_path / "legacy.sqlite3"
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("CREATE TABLE detections(detection_id TEXT PRIMARY KEY)")
+    with pytest.raises(RuntimeError, match="canonical audio-quality schema|noncanonical schema object"):
+        site.validate_public_archive_schema(db_path)
+
+
+def test_public_schema_fingerprints_match_writer_contract():
+    writer_objects = {
+        "audio_quality": sync_archive.AUDIO_QUALITY_TABLE_DDL,
+        "audio_quality_algorithm_idx": sync_archive.AUDIO_QUALITY_INDEX_DDL,
+        **sync_archive.AUDIO_QUALITY_TRIGGER_DDLS,
+    }
+    assert {
+        name: site._normalised_schema_hash(sql)
+        for name, sql in writer_objects.items()
+    } == site.PUBLIC_AUDIO_QUALITY_SCHEMA_HASHES
+
+
+@pytest.mark.parametrize("mutation", [
+    """DROP INDEX audio_quality_algorithm_idx;
+       CREATE INDEX audio_quality_algorithm_idx ON audio_quality(detection_id);""",
+    """DROP TRIGGER audio_quality_no_update;
+       CREATE TRIGGER audio_quality_no_update BEFORE UPDATE ON audio_quality
+       BEGIN SELECT 1; END;""",
+])
+def test_public_schema_gate_rejects_noncanonical_sql(tmp_path, mutation):
+    db_path = tmp_path / "malformed.sqlite3"
+    with sqlite3.connect(db_path) as conn:
+        conn.executescript(SCHEMA)
+        ensure_audio_quality_schema(conn)
+        conn.executescript(mutation)
+    with pytest.raises(RuntimeError, match="noncanonical schema object"):
+        site.validate_public_archive_schema(db_path)
+
+
+def test_public_schema_gate_rejects_unexpected_index(tmp_path):
+    db_path = tmp_path / "extra-index.sqlite3"
+    with sqlite3.connect(db_path) as conn:
+        conn.executescript(SCHEMA)
+        ensure_audio_quality_schema(conn)
+        conn.execute(
+            "CREATE UNIQUE INDEX audio_quality_unexpected_unique "
+            "ON audio_quality(detection_id)"
+        )
+    with pytest.raises(RuntimeError, match="noncanonical audio-quality indexes"):
+        site.validate_public_archive_schema(db_path)
+
+
+def test_related_calls_exclude_out_of_range_confidence(archive_site):
+    base, db_path = archive_site
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            "UPDATE detections SET audio_relpath=?,audio_sha256=?,audio_bytes=? "
+            "WHERE detection_id=?",
+            ("By_Date/2026/07/sample.mp3", "b" * 64, 9, "b" * 64),
+        )
+        conn.execute(
+            "UPDATE detections SET confidence=1.5 WHERE detection_id=?",
+            ("b" * 64,),
+        )
+        conn.commit()
+    payload = get_json(base + "/api/detections/" + "a" * 64 + "/related?sort=recent")[2]
+    assert all(row["detection_id"] != "b" * 64 for row in payload["calls"])
+    with pytest.raises(HTTPError) as singular:
+        urlopen(base + "/api/detections/" + "b" * 64, timeout=3)
+    assert singular.value.code == 404
+
+
+def test_public_detection_boundary_withholds_invalid_operator_values(archive_site):
+    base, db_path = archive_site
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            "UPDATE detections SET timezone=? WHERE detection_id=?",
+            ("/Users/prue/PRIVATE-TIMEZONE-MARKER", "a" * 64),
+        )
+        conn.execute(
+            "UPDATE detections SET confidence=? WHERE detection_id=?",
+            (1.5, "b" * 64),
+        )
+        conn.execute(
+            """INSERT INTO reviews
+               (detection_id,status,reviewer,review_model,review_score,reviewed_at)
+               VALUES (?,?,?,?,?,?)""",
+            ("a" * 64, "confirmed", "agent", site.PUBLIC_REVIEW_MODEL, 2.5, "now"),
+        )
+        conn.execute(
+            "UPDATE configuration_epochs SET confidence_threshold=1.5"
+        )
+        conn.commit()
+    first = get_json(base + "/api/detections/" + "a" * 64)[2]["detection"]
+    assert first["timezone"] is None
+    assert first["review_model"] is None
+    assert first["review_score"] is None
+    assert first["review_status"] == "pending"
+    assert "/Users/" not in json.dumps(first)
+    with pytest.raises(HTTPError) as malformed:
+        urlopen(base + "/api/detections/" + "b" * 64, timeout=3)
+    assert malformed.value.code == 404
+
+    aggregate_urls = (
+        "/api/today", "/api/activity?days=30", "/api/species",
+        "/api/species/" + canonical_slug("Turdus migratorius"),
+        "/api/detections?limit=100", "/api/epochs",
+    )
+    score_keys = {
+        "confidence", "best_confidence", "mean_confidence", "review_score",
+        "confidence_threshold",
+    }
+
+    def assert_public_scores(value):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if key in score_keys and child is not None:
+                    assert 0 <= child <= 1
+                assert_public_scores(child)
+        elif isinstance(value, list):
+            for child in value:
+                assert_public_scores(child)
+
+    for path in aggregate_urls:
+        payload = get_json(base + path)[2]
+        assert_public_scores(payload)
+        assert "\"confidence\": 1.5" not in json.dumps(payload)
+
+
+def test_related_candidate_work_is_hard_bounded(archive_site, monkeypatch):
+    base, db_path = archive_site
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            "UPDATE detections SET audio_relpath=?,audio_sha256=?,audio_bytes=? "
+            "WHERE detection_id=?",
+            ("By_Date/2026/07/sample.mp3", "b" * 64, 9, "b" * 64),
+        )
+        conn.commit()
+    monkeypatch.setattr(site, "MAX_RELATED_CANDIDATES", 0)
+    with pytest.raises(HTTPError) as error:
+        urlopen(
+            base + "/api/detections/" + "a" * 64 + "/related?sort=best",
+            timeout=3,
+        )
+    assert error.value.code == 503
+    assert json.load(error.value) == {
+        "error": "related call queue exceeds bounded work limit",
+    }
+
+
+@pytest.mark.parametrize("query", [
+    "sort=evil", "sort=match", "sort=clarity", "limit=13", "limit=25",
+    "limit=0", "offset=-1", "offset=1000001",
+    "sort=best&sort=recent", "sort=&sort=recent", "sort=", "unknown=value",
+    "unknown=", "revision=", "revision=bad",
+])
+def test_related_calls_reject_invalid_filters(archive_site, query):
+    base, _ = archive_site
+    with pytest.raises(HTTPError) as error:
+        urlopen(base + "/api/detections/" + "a" * 64 + "/related?" + query, timeout=3)
+    assert error.value.code == 400
+
+
 def test_frontend_escapes_detection_id_in_attribute_context():
     app_js = (Path(site.__file__).parent / "static" / "app.js").read_text()
     assert 'data-id="${escapeHTML(detectionId)}"' in app_js
+
+
+def test_empty_toast_is_mechanically_hidden():
+    styles = (Path(site.__file__).parent / "static" / "styles.css").read_text()
+    assert ".toast:empty{display:none}" in styles
+    assert ".toast.show:not(:empty)" in styles
 
 
 def test_evidence_panel_renders_full_digest_with_safe_wrapping():
     static = Path(site.__file__).parent / "static"
     app_js = (static / "app.js").read_text()
     styles = (static / "styles.css").read_text()
-    assert "${digest} · ${formatNumber(item.audio_bytes)} bytes" in app_js
+    assert "SHA-256 ${digest} · ${formatNumber(audioBytes)} bytes" in app_js
+    assert "Number.isSafeInteger(audioBytes) && audioBytes > 0" in app_js
     assert "digest.slice" not in app_js
     assert "#evidenceHash { overflow-wrap: anywhere;" in styles
 

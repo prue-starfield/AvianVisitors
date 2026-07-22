@@ -303,6 +303,20 @@ def test_birds_prefixed_routes_and_assets_resolve_to_the_app(archive_site):
     for asset in ("app.js", "routes.js"):
         with urlopen(base + f"/birds/{asset}", timeout=3) as response:
             assert response.headers["Content-Type"].startswith("application/javascript")
+    for asset, expected_type, signature in (
+        ("favicon.svg?v=2", "image/svg+xml", b"<svg"),
+        ("favicon-32.png?v=2", "image/png", b"\x89PNG\r\n\x1a\n"),
+        ("apple-touch-icon.png?v=2", "image/png", b"\x89PNG\r\n\x1a\n"),
+    ):
+        with urlopen(base + f"/birds/{asset}", timeout=3) as response:
+            assert response.status == 200
+            assert response.headers["Content-Type"].startswith(expected_type)
+            assert response.read().lstrip().startswith(signature)
+    with urlopen(base + "/birds/index.html", timeout=3) as response:
+        html = response.read().decode("utf-8")
+    assert 'href="favicon-32.png?v=2" sizes="32x32" type="image/png"' in html
+    assert 'href="favicon.svg?v=2" sizes="any" type="image/svg+xml"' in html
+    assert 'href="apple-touch-icon.png?v=2" sizes="180x180"' in html
     status, _, payload = get_json(base + "/birds/api/species/turdus-migratorius")
     assert status == 200
     assert payload["species"]["common_name"] == "American Robin"

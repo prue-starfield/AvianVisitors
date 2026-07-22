@@ -1,6 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="8" fill="#ebe4d2"/>
-  <path d="M11 38c11-19 25-25 43-21-9 3-15 8-18 15 7-3 12-3 17-1-10 3-17 8-22 17-4-8-10-11-20-10Z" fill="#334f3b"/>
-  <circle cx="45" cy="20" r="2.3" fill="#b6402f"/>
-  <path d="m52 21 9 3-9 3Z" fill="#b6402f"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">The Listening Garden</title>
+  <rect width="64" height="64" rx="13" fill="#ece4cf"/>
+  <path d="M22 1C10 3 3 12 3 24h4C7 14 13 7 22 5Z" fill="#a33d2c"/>
+  <path d="M21 8c-7 2-11 7-11 14h4c0-5 3-9 9-11Z" fill="#a33d2c"/>
+  <path d="M24 39 8 52l23-5Z" fill="#334e39"/>
+  <path d="M16 47c1-10 6-16 15-20-2-9 4-16 13-16 8 0 13 6 12 14 0 10-9 20-23 22Z" fill="#334e39"/>
+  <path d="m54 24 10 5-11 4Z" fill="#a33d2c"/>
+  <path d="M25 39c8-1 14-5 18-12-2 10-7 16-15 19Z" fill="#82917d"/>
+  <circle cx="46" cy="20" r="2.6" fill="#ece4cf"/>
+  <circle cx="46" cy="20" r="1.15" fill="#17211a"/>
+  <path d="M18 50h31" stroke="#17211a" stroke-width="3" stroke-linecap="round"/>
 </svg>

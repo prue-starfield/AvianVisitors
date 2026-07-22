@@ -1089,6 +1089,8 @@ class ArchiveHandler(BaseHTTPRequestHandler):
                     "/routes.js": "application/javascript; charset=utf-8",
                     "/styles.css": "text/css; charset=utf-8",
                     "/favicon.svg": "image/svg+xml",
+                    "/favicon-32.png": "image/png",
+                    "/apple-touch-icon.png": "image/png",
                 }
                 if path in static_types:
                     self.serve_file(

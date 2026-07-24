@@ -46,11 +46,12 @@ def insert_interpretation(
     conn.execute(
         """INSERT INTO review_interpretations
            (detection_id,policy_version,outcome,claim_score,claim_rank,label_count,
-            top_label,top_score,interpreted_at)
-           VALUES (?,?,?,?,?,?,?,?,?)""",
+            top_label,top_score,top_score_provenance,interpreted_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?)""",
         (
             did, corroboration.POLICY_VERSION, outcome, claim_score, claim_rank,
-            14795, top_label, top_score, "2026-07-24T12:00:00+00:00",
+            14795, top_label, top_score, "live_model_output_exact",
+            "2026-07-24T12:00:00+00:00",
         ),
     )
 
@@ -354,6 +355,60 @@ def test_species_and_detection_apis_expose_versioned_corroboration_standing(arch
     assert summary["totals"]["uncorroborated_species"] == 2
 
 
+def test_public_surfaces_share_one_fail_closed_interpretation_boundary(archive_site):
+    base, db_path = archive_site
+    before = get_json(base + "/api/summary")[2]["totals"]
+    did = "9" * 64
+    with sqlite3.connect(db_path) as conn:
+        insert_detection(
+            conn, did, "2026-07-24", "09:00:00", "Pandion haliaetus",
+            "Poison Osprey", 0.81, f"By_Date/2026/07/{did}.mp3",
+        )
+        conn.execute(
+            "INSERT INTO reviews VALUES (?,?,?,?,?,?,?)",
+            (
+                did, "uncertain", "reviewer", corroboration.PERCH_MODEL_NAME,
+                0.01, "forged review", "2026-07-24T13:00:00+00:00",
+            ),
+        )
+        conn.execute("PRAGMA ignore_check_constraints=ON")
+        conn.execute(
+            """INSERT INTO review_interpretations
+               (detection_id,policy_version,outcome,claim_score,claim_rank,
+                label_count,top_label,top_score,top_score_provenance,interpreted_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (
+                did, corroboration.POLICY_VERSION, "corroborated", 0.01, 8,
+                14795, "Evil com", 0.90, "live_model_output_exact",
+                "2026-07-24T13:00:00+00:00",
+            ),
+        )
+        conn.commit()
+
+    detail = get_json(base + f"/api/detections/{did}")[2]["detection"]
+    assert detail["review_status"] == "pending"
+    assert detail["review_policy_version"] is None
+    filtered = get_json(
+        base + "/api/detections?q=Poison&review=corroborated"
+    )[2]
+    assert filtered["total"] == 0
+    assert filtered["detections"] == []
+    poison = next(
+        item for item in get_json(base + "/api/species")[2]["species"]
+        if item["common_name"] == "Poison Osprey"
+    )
+    assert poison["standing"] == "uncorroborated"
+    assert poison["review_counts"] == {
+        "corroborated": 0,
+        "uncorroborated": 0,
+        "model_conflict": 0,
+        "pending": 1,
+        "unreviewed": 0,
+    }
+    after = get_json(base + "/api/summary")[2]["totals"]
+    assert after["corroborated_species"] == before["corroborated_species"]
+
+
 def test_species_detail_endpoint_rejects_invalid_or_missing_slug(archive_site):
     base, _ = archive_site
     for path, expected in (
@@ -604,15 +659,18 @@ def test_related_calls_are_bounded_ranked_and_quality_sanitised(archive_site):
         conn.executemany(
             """INSERT INTO review_interpretations
                (detection_id,policy_version,outcome,claim_score,claim_rank,
-                label_count,top_label,top_score,interpreted_at)
-               VALUES (?,?,?,?,?,?,?,?,?)""",
+                label_count,top_label,top_score,top_score_provenance,interpreted_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
             [
                 ("b" * 64, corroboration.POLICY_VERSION, "corroborated", 0.90,
-                 1, 14795, "Turdus migratorius", 0.90, "now"),
+                 1, 14795, "Turdus migratorius", 0.90,
+                 "live_model_output_exact", "now"),
                 ("e" * 64, corroboration.POLICY_VERSION, "corroborated", 0.80,
-                 1, 14795, "Turdus migratorius", 0.80, "now"),
+                 1, 14795, "Turdus migratorius", 0.80,
+                 "live_model_output_exact", "now"),
                 ("f" * 64, corroboration.POLICY_VERSION, "uncorroborated", 0.99,
-                 2, 14795, "Icterus galbula", 0.995, "now"),
+                 2, 14795, "Icterus galbula", 0.995,
+                 "live_model_output_exact", "now"),
             ],
         )
         conn.executemany(

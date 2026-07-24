@@ -103,13 +103,25 @@ The stored `reviews` row is the immutable model output and its contemporaneous
 legacy conclusion. A second append-only `review_interpretations` table applies an
 explicit, versioned policy without rewriting that history. Policy
 `perch-corroboration-v2` is deliberately conservative because Perch classifier
-outputs are model activations, not calibrated probabilities:
+outputs are model activations, not calibrated probabilities. The claimed-species
+score is the exact stored model output. Historical top-alternative scores are
+reconstructed from review notes rounded to 0.1 percentage point; each interpretation
+records that provenance explicitly rather than pretending the reconstructed value
+is exact:
 
 - `corroborated` — Perch ranks the BirdNET species first at 25% or higher;
 - `model_conflict` — the BirdNET species is below 10% and outside Perch's top
   three while another label reaches at least 25%;
 - `uncorroborated` — every other usable result, including weak top-three matches
   and close sibling-species disagreements.
+
+The interpretation table is a STRICT SQLite contract: storage classes, taxonomy
+size, rank bounds, provenance, and the v2 outcome equation are enforced at insert.
+Writers additionally require every reconstructed label to occur in the
+checksum-pinned Perch taxonomy. Public detail, filters, aggregates, species standing,
+and alerts all use the same taxonomy-aware validator; invalid rows fail closed as
+pending rather than being counted. Alert metadata rejects control characters, and
+only root-contained artwork paths may become standalone `MEDIA:` transport lines.
 
 Species standing is equally explicit: one corroborated clip moves a taxon into
 the corroborated field index; taxa with no corroborated clip remain in the

@@ -8,6 +8,7 @@ is the intended security boundary.
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import datetime as dt
 import hashlib
 import json
@@ -17,11 +18,18 @@ import os
 from pathlib import Path
 import re
 import sqlite3
+import sys
 from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Iterable, Optional, Sequence
 from urllib.parse import parse_qs, unquote, urlparse
 from zoneinfo import ZoneInfo
+
+try:
+    from .. import corroboration
+except ImportError:  # Direct execution of this script.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+    from avian.archive import corroboration  # type: ignore[no-redef]
 
 HEX_ID = re.compile(r"^[0-9a-f]{64}$")
 SAFE_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -41,7 +49,7 @@ PUBLIC_AUDIO_QUALITY_SCHEMA_HASHES = {
     "audio_quality_positive_rowid": "005d47c6514ad0507a70e3f019c6a8c4434b37889fa054135b05cc9f5e83d252",
 }
 PUBLIC_REVIEW_INTERPRETATION_SCHEMA_HASHES = {
-    "review_interpretations": "67f8d0f157191947d0d8b6644d2074d1d86a9a8b03a3e1e8c37ddb6545a7c7f5",
+    "review_interpretations": "402cd11f4a957fff4f3fc5feb2fdfd4c37e3183a236c8b823a8a75c19b7aed87",
     "review_interpretations_policy_idx": "eac467566460e7c89bbffb070439ae836b717e5b4f687d72d4b4843d4d35c29a",
     "review_interpretations_no_update": "efe613ec0faa00f9abfc140fde1ddf221aa824292876c794213dfc985aa683ec",
     "review_interpretations_no_delete": "a9f62a0c24c48251beb26d7cd13d696d7f608a7a58b57d53eccee133d8951018",
@@ -63,7 +71,9 @@ REVIEW_STATUS_SQL = (
 )
 REVIEW_INTERPRETATION_JOIN_SQL = (
     "LEFT JOIN review_interpretations i ON i.detection_id=d.detection_id "
-    f"AND i.policy_version='{PUBLIC_REVIEW_POLICY_VERSION}'"
+    f"AND i.policy_version='{PUBLIC_REVIEW_POLICY_VERSION}' "
+    "AND valid_current_interpretation(i.outcome,i.claim_score,i.claim_rank,"
+    "i.label_count,i.top_label,i.top_score,i.top_score_provenance)=1"
 )
 PUBLIC_AUDIO_QUALITY_ALGORITHM = "frame-level-percentiles-v1"
 PERCH_LABELS_PATH = (
@@ -257,6 +267,17 @@ def db_connect(path: Path) -> sqlite3.Connection:
     uri = path.resolve().as_uri() + "?mode=ro"
     conn = sqlite3.connect(uri, uri=True, timeout=5)
     conn.row_factory = sqlite3.Row
+    taxa = pinned_perch_taxa()
+    conn.create_function(
+        "valid_current_interpretation",
+        7,
+        lambda outcome, claim_score, claim_rank, label_count, top_label,
+        top_score, provenance: int(corroboration.valid_interpretation(
+            outcome, claim_score, claim_rank, label_count, top_label,
+            top_score, provenance, taxa,
+        )),
+        deterministic=True,
+    )
     conn.execute("PRAGMA query_only=ON")
     return conn
 
@@ -358,7 +379,7 @@ def validate_public_archive_schema(path: Path) -> None:
         expected_interpretation_columns = (
             "detection_id", "policy_version", "outcome", "claim_score",
             "claim_rank", "label_count", "top_label", "top_score",
-            "interpreted_at",
+            "top_score_provenance", "interpreted_at",
         )
         for name, expected_hash in PUBLIC_REVIEW_INTERPRETATION_SCHEMA_HASHES.items():
             object_type = (
@@ -798,10 +819,12 @@ def get_detections(
                        {status_expr} AS review_status,
                        r.review_model, r.review_score, r.notes,
                        i.policy_version AS review_policy_version,
+                       i.claim_score AS review_interpretation_claim_score,
                        i.claim_rank AS review_rank,
                        i.label_count AS review_label_count,
                        i.top_label AS review_top_label,
                        i.top_score AS review_top_score,
+                       i.top_score_provenance AS review_top_score_provenance,
                        q.algorithm_version AS quality_algorithm,
                        q.sample_rate AS quality_sample_rate,
                        q.duration_seconds AS quality_duration_seconds,
@@ -835,19 +858,21 @@ def prepare_detection_rows(
         row["confidence"] = public_score(row.get("confidence"))
         row["review_score"] = public_score(row.get("review_score"))
         policy = row.get("review_policy_version")
+        interpretation_claim_score = public_score(
+            row.pop("review_interpretation_claim_score", None)
+        )
         rank = public_positive_int(row.get("review_rank"), 100_000)
         label_count = public_positive_int(row.get("review_label_count"), 100_000)
         top_score = public_score(row.get("review_top_score"))
         top_label = row.get("review_top_label")
+        provenance = row.get("review_top_score_provenance")
         valid_interpretation = (
             policy == PUBLIC_REVIEW_POLICY_VERSION
-            and row.get("review_status") in PUBLIC_REVIEW_OUTCOMES
-            and label_count == 14_795
-            and rank is not None
-            and rank <= label_count
-            and isinstance(top_label, str)
-            and top_label in pinned_perch_taxa()
-            and top_score is not None
+            and interpretation_claim_score == row["review_score"]
+            and corroboration.valid_interpretation(
+                row.get("review_status"), interpretation_claim_score, rank,
+                label_count, top_label, top_score, provenance, pinned_perch_taxa(),
+            )
         )
         if valid_interpretation:
             row["review_rank"] = rank
@@ -861,6 +886,7 @@ def prepare_detection_rows(
             row["review_label_count"] = None
             row["review_top_label"] = None
             row["review_top_score"] = None
+            row["review_top_score_provenance"] = None
         row["timezone"] = public_timezone(row.get("timezone"))
         row["audio_bytes"] = public_positive_int(
             row.get("audio_bytes"), MAX_PUBLIC_AUDIO_BYTES,
@@ -1001,10 +1027,12 @@ def get_related_detections(
                        {status_expr} AS review_status,
                        r.review_model,r.review_score,r.notes,
                        i.policy_version AS review_policy_version,
+                       i.claim_score AS review_interpretation_claim_score,
                        i.claim_rank AS review_rank,
                        i.label_count AS review_label_count,
                        i.top_label AS review_top_label,
                        i.top_score AS review_top_score,
+                       i.top_score_provenance AS review_top_score_provenance,
                        q.algorithm_version AS quality_algorithm,
                        q.sample_rate AS quality_sample_rate,
                        q.duration_seconds AS quality_duration_seconds,

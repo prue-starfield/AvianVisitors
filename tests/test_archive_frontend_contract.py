@@ -172,6 +172,7 @@ def test_species_index_and_evidence_make_uncorroborated_claims_visually_explicit
     assert "model_conflict" in app
     assert "rank #${formatNumber(item.review_rank)}" in app
     assert "model score—not probability" in app
+    assert "alternative score reconstructed from stored 0.1%-rounded notes" in app
     assert ".candidate-species-section" in styles
     assert ".review-callout.model_conflict" in styles
     assert ".review-callout.uncorroborated" in styles

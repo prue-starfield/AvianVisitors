@@ -8,6 +8,11 @@ import pytest
 from avian.archive import review_perch
 
 
+TEST_LABELS = frozenset({
+    "Birdus example", "Icterus galbula", "Turdus migratorius",
+})
+
+
 def test_conservative_verdict_policy():
     assert review_perch.classify_verdict(0.25, 1, 0.25) == "confirmed"
     assert review_perch.classify_verdict(0.24, 1, 0.24) == "uncertain"
@@ -45,6 +50,23 @@ def test_model_assets_are_checksum_verified(tmp_path, monkeypatch):
     model.write_bytes(b"tampered")
     with pytest.raises(RuntimeError, match="checksum mismatch"):
         review_perch.verify_model_assets(tmp_path)
+
+
+def test_taxonomy_only_loader_is_checksum_and_namespace_pinned(tmp_path, monkeypatch):
+    content = (
+        "inat2024_fsd50k\nBirdus example\nIcterus galbula\nTurdus migratorius\n"
+    ).encode()
+    (tmp_path / "labels.csv").write_bytes(content)
+    monkeypatch.setitem(
+        review_perch.PINNED_ASSET_SHA256,
+        "labels.csv",
+        hashlib.sha256(content).hexdigest(),
+    )
+    monkeypatch.setattr(review_perch.corroboration, "EXPECTED_LABEL_COUNT", 3)
+    assert review_perch.load_pinned_labels(tmp_path) == TEST_LABELS
+    (tmp_path / "labels.csv").write_bytes(content + b"Evil com\n")
+    with pytest.raises(RuntimeError, match="checksum mismatch"):
+        review_perch.load_pinned_labels(tmp_path)
 
 
 def test_coordinated_asset_and_manifest_replacement_does_not_change_pin(tmp_path, monkeypatch):
@@ -130,10 +152,11 @@ def test_reclassify_only_backfills_without_loading_model(tmp_path, monkeypatch):
     with sqlite3.connect(db_path) as conn:
         conn.execute(
             "INSERT INTO reviews VALUES (?,?,?,?,?,?,?)",
-            ("0" * 64, "confirmed", "reviewer", review_perch.MODEL_NAME,
+            ("1".zfill(64), "confirmed", "reviewer", review_perch.MODEL_NAME,
              0.8, note, "2026-07-24T12:00:00+00:00"),
         )
         conn.commit()
+    monkeypatch.setattr(review_perch, "load_pinned_labels", lambda _: TEST_LABELS)
     monkeypatch.setattr(
         review_perch, "load_model",
         lambda _assets: (_ for _ in ()).throw(AssertionError("must not load model")),
@@ -185,6 +208,7 @@ def test_review_archive_is_hash_checked_insert_only_and_idempotent(tmp_path, mon
             ),
         )
 
+    monkeypatch.setattr(review_perch, "load_pinned_labels", lambda _: TEST_LABELS)
     monkeypatch.setattr(review_perch, "load_model", lambda _: (object(), object()))
     monkeypatch.setattr(
         review_perch,
@@ -192,7 +216,12 @@ def test_review_archive_is_hash_checked_insert_only_and_idempotent(tmp_path, mon
         lambda *args: {
             "status": "confirmed", "claim_score": 0.8, "claim_rank": 1,
             "label_count": 14795,
-            "top": [("Birdus example", 0.8)], "notes": "independent support",
+            "top": [
+                ("Birdus example", 0.8),
+                ("Icterus galbula", 0.1),
+                ("Turdus migratorius", 0.05),
+            ],
+            "notes": "independent support",
         },
     )
     assert review_perch.review_archive(
@@ -214,6 +243,7 @@ def test_review_archive_is_hash_checked_insert_only_and_idempotent(tmp_path, mon
         "corroborated", 1, 14795, "Birdus example", 0.8,
     )
 
+    monkeypatch.setattr(review_perch, "load_pinned_labels", lambda _: TEST_LABELS)
     monkeypatch.setattr(
         review_perch, "load_model",
         lambda _: (_ for _ in ()).throw(AssertionError("model reloaded")),
@@ -259,7 +289,12 @@ def _result():
     return {
         "status": "confirmed", "claim_score": .8, "claim_rank": 1,
         "label_count": 14795,
-        "top": [("Birdus example", .8)], "notes": "support",
+        "top": [
+            ("Birdus example", .8),
+            ("Icterus galbula", .1),
+            ("Turdus migratorius", .05),
+        ],
+        "notes": "support",
     }
 
 
@@ -267,6 +302,7 @@ def test_review_decodes_the_same_bytes_that_were_verified(tmp_path, monkeypatch)
     db_path, audio_root = tmp_path / "db.sqlite3", tmp_path / "audio"
     _review_db(db_path, audio_root)
     original = (audio_root / "clip-0.mp3").read_bytes()
+    monkeypatch.setattr(review_perch, "load_pinned_labels", lambda _: TEST_LABELS)
     monkeypatch.setattr(review_perch, "load_model", lambda _: (object(), object()))
 
     def infer(_model, _classes, audio_bytes, _scientific_name):
@@ -281,6 +317,7 @@ def test_review_decodes_the_same_bytes_that_were_verified(tmp_path, monkeypatch)
 def test_mid_batch_inference_failure_inserts_zero_reviews(tmp_path, monkeypatch):
     db_path, audio_root = tmp_path / "db.sqlite3", tmp_path / "audio"
     _review_db(db_path, audio_root, count=2)
+    monkeypatch.setattr(review_perch, "load_pinned_labels", lambda _: TEST_LABELS)
     monkeypatch.setattr(review_perch, "load_model", lambda _: (object(), object()))
     calls = 0
 
@@ -301,6 +338,7 @@ def test_mid_batch_inference_failure_inserts_zero_reviews(tmp_path, monkeypatch)
 def test_batch_constraint_failure_rolls_back_every_review(tmp_path, monkeypatch):
     db_path, audio_root = tmp_path / "db.sqlite3", tmp_path / "audio"
     _review_db(db_path, audio_root, count=2)
+    monkeypatch.setattr(review_perch, "load_pinned_labels", lambda _: TEST_LABELS)
     monkeypatch.setattr(review_perch, "load_model", lambda _: (object(), object()))
     calls = 0
 
@@ -333,7 +371,9 @@ def test_publish_mirror_direct_script_import_branch(tmp_path, monkeypatch):
     assert calls == [(source, target)]
 
 
-def test_no_pending_rows_still_refreshes_mirror_via_package_import(tmp_path):
+def test_no_pending_rows_still_refreshes_mirror_via_package_import(
+    tmp_path, monkeypatch,
+):
     db_path, audio_root = tmp_path / "db.sqlite3", tmp_path / "audio"
     _review_db(db_path, audio_root)
     with sqlite3.connect(db_path) as conn:
@@ -341,6 +381,7 @@ def test_no_pending_rows_still_refreshes_mirror_via_package_import(tmp_path):
             "INSERT INTO reviews VALUES (?,?,?,?,?,?,?)",
             ("1".zfill(64), "confirmed", "reviewer", "model", .8, "notes", "now"),
         )
+    monkeypatch.setattr(review_perch, "load_pinned_labels", lambda _: TEST_LABELS)
     mirror = tmp_path / "mirror.sqlite3"
     assert review_perch.review_archive(db_path, audio_root, tmp_path, mirror, 25, False) == 0
     assert mirror.is_file()

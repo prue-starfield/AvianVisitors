@@ -13,11 +13,13 @@ import sqlite3
 import struct
 import sys
 from typing import Any
+import unicodedata
 
 try:
-    from . import corroboration
+    from . import corroboration, review_perch
 except ImportError:  # Direct script execution from this directory.
     import corroboration  # type: ignore[no-redef]
+    import review_perch  # type: ignore[no-redef]
 
 DEFAULT_DB = Path(
     "/Users/prue/Library/Application Support/AvianVisitorsArchive/detections.sqlite3"
@@ -42,9 +44,21 @@ def utc_now() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 
 
+def safe_notification_metadata(value: Any, *, field: str, maximum: int = 160) -> str:
+    """Reject protocol-breaking or invisible controls before message rendering."""
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise RuntimeError(f"unsafe notification metadata: {field}")
+    if len(value) > maximum or any(
+        unicodedata.category(char) in {"Cc", "Cf", "Cs", "Zl", "Zp"}
+        for char in value
+    ):
+        raise RuntimeError(f"unsafe notification metadata: {field}")
+    return value
+
+
 def markdown(value: str) -> str:
-    """Escape Discord/Telegram Markdown metacharacters in model labels."""
-    text = str(value)
+    """Escape Markdown only after transport controls have been rejected."""
+    text = safe_notification_metadata(value, field="markdown text")
     for char in ("\\", "*", "_", "`", "~", "|"):
         text = text.replace(char, "\\" + char)
     return text
@@ -103,12 +117,27 @@ def prepare_artwork(
     return destination.resolve(strict=True)
 
 
-def load_species(db_path: Path) -> dict[str, dict[str, Any]]:
+def load_species(
+    db_path: Path,
+    allowed_labels: frozenset[str] | set[str],
+) -> dict[str, dict[str, Any]]:
     if not db_path.is_file():
         raise RuntimeError(f"BirdNET archive mirror is unavailable: {db_path}")
+    if not allowed_labels:
+        raise RuntimeError("checksum-pinned Perch taxonomy is unavailable")
     uri = db_path.resolve().as_uri() + "?mode=ro"
     with sqlite3.connect(uri, uri=True, timeout=10) as conn:
         conn.row_factory = sqlite3.Row
+        conn.create_function(
+            "valid_current_interpretation",
+            7,
+            lambda outcome, claim_score, claim_rank, label_count, top_label,
+            top_score, provenance: int(corroboration.valid_interpretation(
+                outcome, claim_score, claim_rank, label_count, top_label,
+                top_score, provenance, allowed_labels,
+            )),
+            deterministic=True,
+        )
         conn.execute("PRAGMA query_only=ON")
         integrity = conn.execute("PRAGMA quick_check").fetchone()[0]
         if integrity != "ok":
@@ -130,10 +159,15 @@ def load_species(db_path: Path) -> dict[str, dict[str, Any]]:
                    GROUP BY scientific_name, common_name
                ), reviewed AS (
                    SELECT p.*, i.outcome, i.claim_score, i.claim_rank,
-                          i.label_count, i.top_label, i.top_score
+                          i.label_count, i.top_label, i.top_score,
+                          i.top_score_provenance
                    FROM published p
                    JOIN review_interpretations i USING(detection_id)
                    WHERE i.policy_version = ?
+                     AND valid_current_interpretation(
+                         i.outcome,i.claim_score,i.claim_rank,i.label_count,
+                         i.top_label,i.top_score,i.top_score_provenance
+                     ) = 1
                ), review_stats AS (
                    SELECT scientific_name, common_name, count(*) AS reviewed,
                           sum(outcome='corroborated') AS corroborated,
@@ -163,7 +197,8 @@ def load_species(db_path: Path) -> dict[str, dict[str, Any]]:
                       ranked.claim_rank AS review_rank,
                       ranked.label_count AS review_label_count,
                       ranked.top_label AS review_top_label,
-                      ranked.top_score AS review_top_score
+                      ranked.top_score AS review_top_score,
+                      ranked.top_score_provenance AS review_top_score_provenance
                FROM species_stats s
                JOIN review_stats rs USING(scientific_name, common_name)
                JOIN ranked USING(scientific_name, common_name)
@@ -171,22 +206,56 @@ def load_species(db_path: Path) -> dict[str, dict[str, Any]]:
                ORDER BY s.first_heard, s.scientific_name""",
             (PUBLICATION_MIN_CONFIDENCE, corroboration.POLICY_VERSION),
         ).fetchall()
-    return {
-        row["scientific_name"]: {
-            "common_name": row["common_name"],
-            "first_heard": row["first_heard"],
+
+    species: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        scientific_name = safe_notification_metadata(
+            row["scientific_name"], field="scientific_name",
+        )
+        if scientific_name not in allowed_labels:
+            raise RuntimeError("unsafe notification metadata: unpinned scientific_name")
+        common_name = safe_notification_metadata(
+            row["common_name"], field="common_name",
+        )
+        first_heard = safe_notification_metadata(
+            row["first_heard"], field="first_heard", maximum=64,
+        )
+        try:
+            dt.datetime.fromisoformat(first_heard)
+        except ValueError as exc:
+            raise RuntimeError("unsafe notification metadata: first_heard") from exc
+        evidence_id = safe_notification_metadata(
+            row["evidence_id"], field="evidence_id", maximum=64,
+        )
+        if not re.fullmatch(r"[0-9a-f]{64}", evidence_id):
+            raise RuntimeError("unsafe notification metadata: evidence_id")
+        top_label = safe_notification_metadata(
+            row["review_top_label"], field="review_top_label",
+        )
+        if top_label not in allowed_labels:
+            raise RuntimeError("unsafe notification metadata: unpinned review_top_label")
+        standing = safe_notification_metadata(
+            row["standing"], field="standing", maximum=32,
+        )
+        if standing not in corroboration.OUTCOMES:
+            raise RuntimeError("unsafe notification metadata: standing")
+        species[scientific_name] = {
+            "common_name": common_name,
+            "first_heard": first_heard,
             "best_confidence": float(row["best_confidence"]),
             "recognitions": int(row["recognitions"]),
-            "evidence_id": row["evidence_id"],
-            "standing": row["standing"],
+            "evidence_id": evidence_id,
+            "standing": standing,
             "review_score": float(row["review_score"]),
             "review_rank": int(row["review_rank"]),
             "review_label_count": int(row["review_label_count"]),
-            "review_top_label": row["review_top_label"],
+            "review_top_label": top_label,
             "review_top_score": float(row["review_top_score"]),
+            "review_top_score_provenance": row[
+                "review_top_score_provenance"
+            ],
         }
-        for row in rows
-    }
+    return species
 
 
 def read_state(path: Path) -> dict[str, Any] | None:
@@ -230,9 +299,49 @@ def write_state(path: Path, species: dict[str, dict[str, Any]]) -> None:
     os.replace(temporary, path)
 
 
+def _validate_alert_details(scientific_name: str, details: dict[str, Any]) -> None:
+    safe_notification_metadata(scientific_name, field="scientific_name")
+    safe_notification_metadata(details.get("common_name"), field="common_name")
+    first_heard = safe_notification_metadata(
+        details.get("first_heard"), field="first_heard", maximum=64,
+    )
+    try:
+        dt.datetime.fromisoformat(first_heard)
+    except ValueError as exc:
+        raise RuntimeError("unsafe notification metadata: first_heard") from exc
+    evidence_id = safe_notification_metadata(
+        details.get("evidence_id"), field="evidence_id", maximum=64,
+    )
+    if not re.fullmatch(r"[0-9a-f]{64}", evidence_id):
+        raise RuntimeError("unsafe notification metadata: evidence_id")
+    safe_notification_metadata(
+        details.get("review_top_label"), field="review_top_label",
+    )
+    try:
+        expected = corroboration.classify_outcome(
+            details["review_score"], details["review_rank"],
+            details["review_top_score"],
+        )
+        confidence = float(details["best_confidence"])
+        recognitions = int(details["recognitions"])
+        label_count = int(details["review_label_count"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError("unsafe notification metadata: numeric evidence") from exc
+    if (
+        not 0 <= confidence <= 1
+        or recognitions < 1
+        or label_count != corroboration.EXPECTED_LABEL_COUNT
+        or details.get("standing") != expected
+        or details.get("review_top_score_provenance")
+        not in corroboration.TOP_SCORE_PROVENANCES
+    ):
+        raise RuntimeError("unsafe notification metadata: incoherent evidence")
+
+
 def alert_message(
     new_species: list[tuple[str, dict[str, Any]]],
     artwork_paths: list[Path],
+    media_root: Path = DEFAULT_MEDIA_ROOT,
 ) -> str:
     standings = {details["standing"] for _name, details in new_species}
     if standings == {"corroborated"}:
@@ -243,11 +352,17 @@ def alert_message(
         title = "⚠️ **New Listening Garden reviewed species candidates**"
     lines = [title, ""]
     for scientific_name, details in new_species:
+        _validate_alert_details(scientific_name, details)
         score = round(details["best_confidence"] * 100)
         count = details["recognitions"]
         standing = str(details["standing"]).replace("_", " ").upper()
         review_score = details["review_score"] * 100
         top_score = details["review_top_score"] * 100
+        provenance = (
+            " · alternative score reconstructed from stored 0.1%-rounded notes"
+            if details["review_top_score_provenance"]
+            == "stored_review_notes_0.1pct" else ""
+        )
         alternative = ""
         if details["review_top_label"] != scientific_name:
             alternative = (
@@ -261,7 +376,7 @@ def alert_message(
                 f"Best BirdNET score: **{score}%** · {count} archived recognition{'s' if count != 1 else ''}",
                 f"Independent review: **{standing}** · Perch rank #{details['review_rank']:,} "
                 f"of {details['review_label_count']:,} · claimed-species model score "
-                f"{review_score:.1f}%{alternative}",
+                f"{review_score:.1f}%{alternative}{provenance}",
                 f"Inspect this evidence: {ARCHIVE_URL}detection/{details['evidence_id']}",
                 "",
             ]
@@ -271,8 +386,28 @@ def alert_message(
         "Uncorroborated and model-conflict claims remain visible in a separate "
         "candidate section and are not counted as a corroborated field-record species._"
     )
-    lines.extend(f"MEDIA:{path}" for path in artwork_paths)
-    return "\n".join(lines)
+    media_lines: list[str] = []
+    if artwork_paths:
+        root = media_root.expanduser().resolve(strict=True)
+        for path in artwork_paths:
+            resolved = path.expanduser().resolve(strict=True)
+            if (
+                root not in resolved.parents
+                or not resolved.is_file()
+                or resolved.suffix.lower() != ".png"
+            ):
+                raise RuntimeError("unsafe notification attachment path")
+            path_text = safe_notification_metadata(
+                str(resolved), field="attachment path", maximum=1024,
+            )
+            media_lines.append(f"MEDIA:{path_text}")
+    lines.extend(media_lines)
+    message = "\n".join(lines)
+    allowed_directives = set(media_lines)
+    for line in message.splitlines():
+        if line.startswith("MEDIA:") and line not in allowed_directives:
+            raise RuntimeError("unsafe notification transport directive")
+    return message
 
 
 def run(
@@ -281,8 +416,13 @@ def run(
     initialize: bool = False,
     art_root: Path = DEFAULT_ART_ROOT,
     media_root: Path = DEFAULT_MEDIA_ROOT,
+    allowed_labels: frozenset[str] | set[str] | None = None,
 ) -> str:
-    species = load_species(db_path)
+    labels = (
+        review_perch.load_pinned_labels(review_perch.DEFAULT_PERCH)
+        if allowed_labels is None else allowed_labels
+    )
+    species = load_species(db_path, labels)
     state = read_state(state_path)
     if initialize or state is None:
         write_state(state_path, species)
@@ -297,7 +437,7 @@ def run(
         prepare_artwork(scientific_name, art_root, media_root)
         for scientific_name, _details in additions
     ]
-    message = alert_message(additions, artwork_paths) if additions else ""
+    message = alert_message(additions, artwork_paths, media_root) if additions else ""
     merged = dict(seen)
     merged.update(species)
     write_state(state_path, merged)

@@ -206,7 +206,7 @@ AUDIO_QUALITY_TRIGGER_DDLS = {
     """,
 }
 
-REVIEW_INTERPRETATION_TABLE_DDL = """
+LEGACY_REVIEW_INTERPRETATION_TABLE_DDL = """
 CREATE TABLE review_interpretations (
     detection_id TEXT NOT NULL REFERENCES reviews(detection_id),
     policy_version TEXT NOT NULL,
@@ -220,6 +220,43 @@ CREATE TABLE review_interpretations (
     interpreted_at TEXT NOT NULL,
     PRIMARY KEY (detection_id, policy_version)
 )
+"""
+REVIEW_INTERPRETATION_TABLE_DDL = """
+CREATE TABLE review_interpretations (
+    detection_id TEXT NOT NULL REFERENCES reviews(detection_id),
+    policy_version TEXT NOT NULL
+        CHECK(typeof(policy_version)='text'
+              AND policy_version='perch-corroboration-v2'),
+    outcome TEXT NOT NULL
+        CHECK(typeof(outcome)='text'
+              AND outcome IN ('corroborated','uncorroborated','model_conflict')),
+    claim_score REAL NOT NULL
+        CHECK(typeof(claim_score)='real' AND claim_score BETWEEN 0 AND 1),
+    claim_rank INTEGER NOT NULL
+        CHECK(typeof(claim_rank)='integer' AND claim_rank BETWEEN 1 AND 14795),
+    label_count INTEGER NOT NULL
+        CHECK(typeof(label_count)='integer' AND label_count=14795
+              AND label_count >= claim_rank),
+    top_label TEXT NOT NULL
+        CHECK(typeof(top_label)='text' AND length(top_label) BETWEEN 1 AND 120
+              AND top_label=trim(top_label)
+              AND instr(top_label,char(10))=0 AND instr(top_label,char(13))=0
+              AND instr(top_label,char(8232))=0 AND instr(top_label,char(8233))=0),
+    top_score REAL NOT NULL
+        CHECK(typeof(top_score)='real' AND top_score BETWEEN 0 AND 1),
+    top_score_provenance TEXT NOT NULL
+        CHECK(typeof(top_score_provenance)='text' AND top_score_provenance IN
+              ('stored_review_notes_0.1pct','live_model_output_exact')),
+    interpreted_at TEXT NOT NULL
+        CHECK(typeof(interpreted_at)='text' AND length(interpreted_at) BETWEEN 1 AND 64
+              AND instr(interpreted_at,char(10))=0 AND instr(interpreted_at,char(13))=0),
+    CHECK(outcome = CASE
+        WHEN claim_rank=1 AND claim_score>=0.25 THEN 'corroborated'
+        WHEN claim_rank>3 AND claim_score<0.10 AND top_score>=0.25
+            THEN 'model_conflict'
+        ELSE 'uncorroborated' END),
+    PRIMARY KEY (detection_id, policy_version)
+) STRICT
 """
 REVIEW_INTERPRETATION_INDEX_DDL = """
 CREATE INDEX review_interpretations_policy_idx
@@ -413,13 +450,59 @@ def validate_review_interpretation_schema(conn: sqlite3.Connection) -> None:
         _attest_schema_object(conn, "trigger", name, ddl)
 
 
+def _migrate_legacy_review_interpretations(conn: sqlite3.Connection) -> None:
+    """Atomically tighten the one known legacy table without trusting its rows."""
+    _attest_schema_object(
+        conn, "table", "review_interpretations",
+        LEGACY_REVIEW_INTERPRETATION_TABLE_DDL,
+    )
+    _attest_schema_object(
+        conn, "index", "review_interpretations_policy_idx",
+        REVIEW_INTERPRETATION_INDEX_DDL,
+    )
+    for name, ddl in REVIEW_INTERPRETATION_TRIGGER_DDLS.items():
+        _attest_schema_object(conn, "trigger", name, ddl)
+    before = conn.execute("SELECT count(*) FROM review_interpretations").fetchone()[0]
+    for name in REVIEW_INTERPRETATION_TRIGGER_DDLS:
+        # Names are module-level constants, never user input; assert the invariant
+        # explicitly because SQLite cannot parametrise DDL object identifiers.
+        if not name.replace("_", "").isalnum():
+            raise RuntimeError(f"refusing to drop non-identifier trigger name: {name!r}")
+        conn.execute(f'DROP TRIGGER "{name}"')
+    conn.execute("DROP INDEX review_interpretations_policy_idx")
+    conn.execute(
+        "ALTER TABLE review_interpretations RENAME TO review_interpretations_legacy"
+    )
+    conn.execute(REVIEW_INTERPRETATION_TABLE_DDL)
+    conn.execute(
+        """INSERT INTO review_interpretations
+           (detection_id,policy_version,outcome,claim_score,claim_rank,label_count,
+            top_label,top_score,top_score_provenance,interpreted_at)
+           SELECT detection_id,policy_version,outcome,claim_score,claim_rank,
+                  label_count,top_label,top_score,'stored_review_notes_0.1pct',
+                  interpreted_at
+           FROM review_interpretations_legacy
+           ORDER BY detection_id,policy_version"""
+    )
+    after = conn.execute("SELECT count(*) FROM review_interpretations").fetchone()[0]
+    if after != before:
+        raise RuntimeError("review_interpretations migration changed row count")
+    conn.execute("DROP TABLE review_interpretations_legacy")
+
+
 def ensure_review_interpretation_schema(conn: sqlite3.Connection) -> None:
-    """Atomically install or attest the append-only corroboration schema."""
+    """Atomically install, migrate, or attest the corroboration schema."""
     if conn.in_transaction:
         raise RuntimeError("review-interpretation migration requires a clean transaction boundary")
     conn.execute("PRAGMA foreign_keys=ON")
     conn.execute("BEGIN IMMEDIATE")
     try:
+        table_sql = _schema_object_sql(conn, "table", "review_interpretations")
+        if table_sql is not None and _normalise_schema_sql(
+            table_sql
+        ) == _normalise_schema_sql(LEGACY_REVIEW_INTERPRETATION_TABLE_DDL):
+            _migrate_legacy_review_interpretations(conn)
+
         objects = [
             *(("trigger", name, ddl) for name, ddl in REVIEW_TRIGGER_DDLS.items()),
             ("table", "review_interpretations", REVIEW_INTERPRETATION_TABLE_DDL),

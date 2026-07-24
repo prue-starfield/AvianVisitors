@@ -30,6 +30,23 @@ PINNED_ASSET_SHA256 = {
 }
 
 
+def load_pinned_labels(asset_root: Path) -> frozenset[str]:
+    """Load only the taxonomy asset, bound directly to its versioned checksum."""
+    path = asset_root / "labels.csv"
+    try:
+        content = path.read_bytes()
+    except OSError as exc:
+        raise RuntimeError(f"Perch taxonomy asset is unavailable: {path}") from exc
+    if hashlib.sha256(content).hexdigest() != PINNED_ASSET_SHA256["labels.csv"]:
+        raise RuntimeError("Perch taxonomy checksum mismatch")
+    lines = content.decode("utf-8").splitlines()
+    if len(lines) != corroboration.EXPECTED_LABEL_COUNT + 1:
+        raise RuntimeError("Perch taxonomy label count is invalid")
+    if lines[0] != "inat2024_fsd50k" or len(set(lines[1:])) != len(lines[1:]):
+        raise RuntimeError("Perch taxonomy namespace is invalid")
+    return frozenset(lines[1:])
+
+
 def verify_model_assets(asset_root: Path) -> tuple[bytes, bytes]:
     model = asset_root / "perch_v2.onnx"
     labels = asset_root / "labels.csv"
@@ -160,6 +177,7 @@ def infer_review(model, classes, audio_bytes: bytes, scientific_name: str) -> di
     )
     return {
         "status": status,
+        "claim_label": scientific_name,
         "claim_score": claim_score,
         "claim_rank": claim_rank,
         "label_count": len(labels),
@@ -187,6 +205,7 @@ def review_archive(
 ) -> int:
     if not db_path.is_file():
         raise RuntimeError(f"canonical archive database is unavailable: {db_path}")
+    allowed_labels = load_pinned_labels(asset_root)
     conn = sqlite3.connect(str(db_path), timeout=30)
     conn.row_factory = sqlite3.Row
     try:
@@ -216,7 +235,9 @@ def review_archive(
             ))
             if result["claim_score"] is not None and result["claim_rank"] is not None:
                 interpretations.append((
-                    row["detection_id"], corroboration.interpret_result(result), reviewed_at,
+                    row["detection_id"],
+                    corroboration.interpret_result(result, allowed_labels),
+                    reviewed_at,
                 ))
             if verbose:
                 print(
@@ -227,6 +248,7 @@ def review_archive(
             corroboration.backfill_interpretations(
                 conn,
                 interpreted_at=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                allowed_labels=allowed_labels,
             )
             conn.executemany(
                 """INSERT INTO reviews
@@ -246,10 +268,15 @@ def review_archive(
     return reviewed
 
 
-def reclassify_archive(db_path: Path, mirror_path: Path | None) -> int:
+def reclassify_archive(
+    db_path: Path,
+    mirror_path: Path | None,
+    asset_root: Path = DEFAULT_PERCH,
+) -> int:
     """Apply the current interpretation policy without rerunning inference."""
     if not db_path.is_file():
         raise RuntimeError(f"archive database is unavailable: {db_path}")
+    allowed_labels = load_pinned_labels(asset_root)
     conn = sqlite3.connect(db_path, timeout=30)
     try:
         conn.execute("PRAGMA foreign_keys=ON")
@@ -263,6 +290,7 @@ def reclassify_archive(db_path: Path, mirror_path: Path | None) -> int:
                 interpreted_at=dt.datetime.now(dt.timezone.utc).isoformat(
                     timespec="seconds"
                 ),
+                allowed_labels=allowed_labels,
             )
     finally:
         conn.close()
@@ -300,7 +328,7 @@ def main() -> int:
             return 0
         mirror = None if str(args.mirror) == "" else args.mirror
         if args.reclassify_only:
-            reviewed = reclassify_archive(args.db, mirror)
+            reviewed = reclassify_archive(args.db, mirror, args.assets)
         else:
             reviewed = review_archive(
                 args.db, args.audio_root, args.assets,

@@ -12,10 +12,17 @@ import sqlite3
 import sys
 from typing import Any
 
+try:
+    from . import corroboration
+    from .sync_archive import ensure_review_interpretation_schema
+except ImportError:  # Direct script execution from this directory.
+    import corroboration  # type: ignore[no-redef]
+    from sync_archive import ensure_review_interpretation_schema
+
 DEFAULT_DEST = Path("/Volumes/Crucial Data/Hermes/bird-archive")
 DEFAULT_MIRROR = Path.home() / "Library/Application Support/AvianVisitorsArchive/detections.sqlite3"
 DEFAULT_PERCH = Path.home() / "Library/Application Support/AvianVisitorsArchive/perch/assets"
-MODEL_NAME = "Google Perch 2.0 ONNX (inat2024_fsd50k)"
+MODEL_NAME = corroboration.PERCH_MODEL_NAME
 MODEL_SHA_FILE = "SHA256SUMS"
 PINNED_ASSET_SHA256 = {
     "perch_v2.onnx": "bf0c8467a924cb074663970ca4a0ab1e143602121930209657d0dff5d5cefa1f",
@@ -131,6 +138,7 @@ def infer_review(model, classes, audio_bytes: bytes, scientific_name: str) -> di
             "status": "uncertain",
             "claim_score": None,
             "claim_rank": None,
+            "label_count": len(labels),
             "top": top,
             "notes": f"Perch taxonomy has no exact label for {scientific_name}; no automated conclusion.",
         }
@@ -154,6 +162,7 @@ def infer_review(model, classes, audio_bytes: bytes, scientific_name: str) -> di
         "status": status,
         "claim_score": claim_score,
         "claim_rank": claim_rank,
+        "label_count": len(labels),
         "top": top,
         "notes": notes,
     }
@@ -183,8 +192,10 @@ def review_archive(
     try:
         if conn.execute("PRAGMA quick_check").fetchone()[0] != "ok":
             raise RuntimeError("canonical archive failed quick_check")
+        ensure_review_interpretation_schema(conn)
         rows = pending_rows(conn, limit)
         prepared: list[tuple[Any, ...]] = []
+        interpretations: list[tuple[str, corroboration.Interpretation, str]] = []
         model_and_classes = load_model(asset_root) if rows else None
         for row in rows:
             audio_path = safe_audio_path(audio_root, row["audio_relpath"])
@@ -197,30 +208,67 @@ def review_archive(
             result = infer_review(
                 *model_and_classes, audio_bytes, row["scientific_name"],
             )
+            reviewed_at = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
             prepared.append((
                 row["detection_id"], result["status"], "automated independent model",
                 MODEL_NAME, result["claim_score"], result["notes"],
-                dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                reviewed_at,
             ))
+            if result["claim_score"] is not None and result["claim_rank"] is not None:
+                interpretations.append((
+                    row["detection_id"], corroboration.interpret_result(result), reviewed_at,
+                ))
             if verbose:
                 print(
                     f"{row['detection_id']} {row['common_name']}: {result['status']} "
                     f"score={result['claim_score']} rank={result['claim_rank']}"
                 )
-        before = conn.total_changes
         with conn:
+            corroboration.backfill_interpretations(
+                conn,
+                interpreted_at=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+            )
             conn.executemany(
                 """INSERT INTO reviews
                    (detection_id,status,reviewer,review_model,review_score,notes,reviewed_at)
                    VALUES (?,?,?,?,?,?,?)""",
                 prepared,
             )
-        reviewed = conn.total_changes - before
+            for detection_id, interpretation, interpreted_at in interpretations:
+                corroboration.insert_interpretation(
+                    conn, detection_id, interpretation, interpreted_at,
+                )
+        reviewed = len(prepared)
     finally:
         conn.close()
     if mirror_path is not None:
         publish_mirror(db_path, mirror_path)
     return reviewed
+
+
+def reclassify_archive(db_path: Path, mirror_path: Path | None) -> int:
+    """Apply the current interpretation policy without rerunning inference."""
+    if not db_path.is_file():
+        raise RuntimeError(f"archive database is unavailable: {db_path}")
+    conn = sqlite3.connect(db_path, timeout=30)
+    try:
+        conn.execute("PRAGMA foreign_keys=ON")
+        integrity = conn.execute("PRAGMA quick_check").fetchone()[0]
+        if integrity != "ok":
+            raise RuntimeError(f"archive database failed quick_check: {integrity}")
+        ensure_review_interpretation_schema(conn)
+        with conn:
+            inserted = corroboration.backfill_interpretations(
+                conn,
+                interpreted_at=dt.datetime.now(dt.timezone.utc).isoformat(
+                    timespec="seconds"
+                ),
+            )
+    finally:
+        conn.close()
+    if mirror_path is not None:
+        publish_mirror(db_path, mirror_path)
+    return inserted
 
 
 def parse_args() -> argparse.Namespace:
@@ -230,6 +278,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--assets", type=Path, default=DEFAULT_PERCH)
     parser.add_argument("--mirror", type=Path, default=DEFAULT_MIRROR)
     parser.add_argument("--limit", type=int, default=25, help="0 reviews every pending clip")
+    parser.add_argument(
+        "--reclassify-only", action="store_true",
+        help="apply the current interpretation policy to stored Perch reviews only",
+    )
     parser.add_argument("--verbose", action="store_true")
     return parser.parse_args()
 
@@ -246,13 +298,17 @@ def main() -> int:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             return 0
-        reviewed = review_archive(
-            args.db, args.audio_root, args.assets,
-            None if str(args.mirror) == "" else args.mirror,
-            args.limit, args.verbose,
-        )
+        mirror = None if str(args.mirror) == "" else args.mirror
+        if args.reclassify_only:
+            reviewed = reclassify_archive(args.db, mirror)
+        else:
+            reviewed = review_archive(
+                args.db, args.audio_root, args.assets,
+                mirror, args.limit, args.verbose,
+            )
     if args.verbose:
-        print(f"reviewed={reviewed}")
+        label = "reclassified" if args.reclassify_only else "reviewed"
+        print(f"{label}={reviewed}")
     return 0
 
 

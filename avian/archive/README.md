@@ -99,17 +99,27 @@ and sends no household audio to a cloud service. The trusted model and label
 digests are pinned in version-controlled code; the adjacent manifest is an audit
 copy, not the trust anchor.
 
-The automated conclusion policy is deliberately conservative because Perch
-classifier outputs are not calibrated probabilities:
+The stored `reviews` row is the immutable model output and its contemporaneous
+legacy conclusion. A second append-only `review_interpretations` table applies an
+explicit, versioned policy without rewriting that history. Policy
+`perch-corroboration-v2` is deliberately conservative because Perch classifier
+outputs are model activations, not calibrated probabilities:
 
-- `confirmed` — the BirdNET species is Perch's top result at 25% or higher;
-- `rejected` — a different species scores at least 75%, while the BirdNET species
-  is below 10% and outside Perch's top three;
-- `uncertain` — every other result, including close sibling-species disagreements.
+- `corroborated` — Perch ranks the BirdNET species first at 25% or higher;
+- `model_conflict` — the BirdNET species is below 10% and outside Perch's top
+  three while another label reaches at least 25%;
+- `uncorroborated` — every other usable result, including weak top-three matches
+  and close sibling-species disagreements.
+
+Species standing is equally explicit: one corroborated clip moves a taxon into
+the corroborated field index; taxa with no corroborated clip remain in the
+separate candidate index. No raw claim is hidden or deleted. First-species alerts
+wait for a versioned interpretation, state the claimed-species rank before its
+model score, and label material disagreement as model conflict.
 
 The archive website's evidence panel displays the exact clip, immutable digest,
-BirdNET score, Perch status/score/rank, and top alternatives. A deep link uses the
-immutable detection ID: `/birds/detection/<64 hex characters>`. Deployments may
+BirdNET score, versioned Perch outcome/rank, and leading alternative. A deep link
+uses the immutable detection ID: `/birds/detection/<64 hex characters>`. Deployments may
 retain a narrowly validated redirect from the former `?detection=` URL while old
 bookmarks age out.
 

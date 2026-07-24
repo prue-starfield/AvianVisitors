@@ -206,6 +206,80 @@ AUDIO_QUALITY_TRIGGER_DDLS = {
     """,
 }
 
+REVIEW_INTERPRETATION_TABLE_DDL = """
+CREATE TABLE review_interpretations (
+    detection_id TEXT NOT NULL REFERENCES reviews(detection_id),
+    policy_version TEXT NOT NULL,
+    outcome TEXT NOT NULL CHECK(outcome IN
+        ('corroborated', 'uncorroborated', 'model_conflict')),
+    claim_score REAL NOT NULL CHECK(claim_score BETWEEN 0 AND 1),
+    claim_rank INTEGER NOT NULL CHECK(claim_rank > 0),
+    label_count INTEGER NOT NULL CHECK(label_count >= claim_rank),
+    top_label TEXT NOT NULL,
+    top_score REAL NOT NULL CHECK(top_score BETWEEN 0 AND 1),
+    interpreted_at TEXT NOT NULL,
+    PRIMARY KEY (detection_id, policy_version)
+)
+"""
+REVIEW_INTERPRETATION_INDEX_DDL = """
+CREATE INDEX review_interpretations_policy_idx
+    ON review_interpretations(policy_version, outcome, detection_id)
+"""
+REVIEW_TRIGGER_DDLS = {
+    "reviews_no_update": """
+        CREATE TRIGGER reviews_no_update
+        BEFORE UPDATE ON reviews
+        BEGIN
+            SELECT RAISE(ABORT, 'reviews is append-only');
+        END
+    """,
+    "reviews_no_delete": """
+        CREATE TRIGGER reviews_no_delete
+        BEFORE DELETE ON reviews
+        BEGIN
+            SELECT RAISE(ABORT, 'reviews is append-only');
+        END
+    """,
+    "reviews_no_replace": """
+        CREATE TRIGGER reviews_no_replace
+        BEFORE INSERT ON reviews
+        WHEN EXISTS (
+            SELECT 1 FROM reviews WHERE detection_id=NEW.detection_id
+        )
+        BEGIN
+            SELECT RAISE(ABORT, 'reviews is append-only');
+        END
+    """,
+}
+REVIEW_INTERPRETATION_TRIGGER_DDLS = {
+    "review_interpretations_no_update": """
+        CREATE TRIGGER review_interpretations_no_update
+        BEFORE UPDATE ON review_interpretations
+        BEGIN
+            SELECT RAISE(ABORT, 'review_interpretations is append-only');
+        END
+    """,
+    "review_interpretations_no_delete": """
+        CREATE TRIGGER review_interpretations_no_delete
+        BEFORE DELETE ON review_interpretations
+        BEGIN
+            SELECT RAISE(ABORT, 'review_interpretations is append-only');
+        END
+    """,
+    "review_interpretations_no_replace": """
+        CREATE TRIGGER review_interpretations_no_replace
+        BEFORE INSERT ON review_interpretations
+        WHEN EXISTS (
+            SELECT 1 FROM review_interpretations
+            WHERE detection_id=NEW.detection_id
+              AND policy_version=NEW.policy_version
+        )
+        BEGIN
+            SELECT RAISE(ABORT, 'review_interpretations is append-only');
+        END
+    """,
+}
+
 
 def _normalise_schema_sql(value: str) -> str:
     return re.sub(r"\s+", " ", value.strip().rstrip(";")).lower()
@@ -300,6 +374,72 @@ def ensure_audio_quality_schema(conn: sqlite3.Connection) -> None:
         conn.commit()
 
 
+def validate_review_interpretation_schema(conn: sqlite3.Connection) -> None:
+    """Fail closed unless the versioned corroboration schema is exact."""
+    actual_review_triggers = {
+        row[0] for row in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='reviews'"
+        )
+    }
+    if actual_review_triggers != set(REVIEW_TRIGGER_DDLS):
+        raise RuntimeError("noncanonical reviews trigger set")
+    for name, ddl in REVIEW_TRIGGER_DDLS.items():
+        _attest_schema_object(conn, "trigger", name, ddl)
+    _attest_schema_object(
+        conn, "table", "review_interpretations", REVIEW_INTERPRETATION_TABLE_DDL,
+    )
+    _attest_schema_object(
+        conn, "index", "review_interpretations_policy_idx",
+        REVIEW_INTERPRETATION_INDEX_DDL,
+    )
+    actual_indexes = {
+        row[1] for row in conn.execute("PRAGMA index_list(review_interpretations)")
+    }
+    expected_indexes = {
+        "review_interpretations_policy_idx",
+        "sqlite_autoindex_review_interpretations_1",
+    }
+    if actual_indexes != expected_indexes:
+        raise RuntimeError("noncanonical review_interpretations indexes")
+    actual_triggers = {
+        row[0] for row in conn.execute(
+            """SELECT name FROM sqlite_master
+               WHERE type='trigger' AND tbl_name='review_interpretations'"""
+        )
+    }
+    if actual_triggers != set(REVIEW_INTERPRETATION_TRIGGER_DDLS):
+        raise RuntimeError("noncanonical review_interpretations trigger set")
+    for name, ddl in REVIEW_INTERPRETATION_TRIGGER_DDLS.items():
+        _attest_schema_object(conn, "trigger", name, ddl)
+
+
+def ensure_review_interpretation_schema(conn: sqlite3.Connection) -> None:
+    """Atomically install or attest the append-only corroboration schema."""
+    if conn.in_transaction:
+        raise RuntimeError("review-interpretation migration requires a clean transaction boundary")
+    conn.execute("PRAGMA foreign_keys=ON")
+    conn.execute("BEGIN IMMEDIATE")
+    try:
+        objects = [
+            *(("trigger", name, ddl) for name, ddl in REVIEW_TRIGGER_DDLS.items()),
+            ("table", "review_interpretations", REVIEW_INTERPRETATION_TABLE_DDL),
+            ("index", "review_interpretations_policy_idx", REVIEW_INTERPRETATION_INDEX_DDL),
+            *(("trigger", name, ddl) for name, ddl in REVIEW_INTERPRETATION_TRIGGER_DDLS.items()),
+        ]
+        for object_type, name, ddl in objects:
+            actual = _schema_object_sql(conn, object_type, name)
+            if actual is None:
+                conn.execute(ddl)
+            elif _normalise_schema_sql(actual) != _normalise_schema_sql(ddl):
+                raise RuntimeError(f"noncanonical archive schema object: {name}")
+        validate_review_interpretation_schema(conn)
+    except Exception:
+        conn.rollback()
+        raise
+    else:
+        conn.commit()
+
+
 def now_iso() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 
@@ -322,6 +462,7 @@ def detection_id(values: Sequence[object]) -> str:
 def initialise_archive(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
     ensure_audio_quality_schema(conn)
+    ensure_review_interpretation_schema(conn)
 
 
 def import_snapshot(

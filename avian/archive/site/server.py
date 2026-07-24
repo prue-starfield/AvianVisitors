@@ -40,7 +40,31 @@ PUBLIC_AUDIO_QUALITY_SCHEMA_HASHES = {
     "audio_quality_no_explicit_rowid": "597d09ce3c3c11ae8f12fb9187990f38b8f23b7d901aa4a2da5e98d80f27c38a",
     "audio_quality_positive_rowid": "005d47c6514ad0507a70e3f019c6a8c4434b37889fa054135b05cc9f5e83d252",
 }
+PUBLIC_REVIEW_INTERPRETATION_SCHEMA_HASHES = {
+    "review_interpretations": "67f8d0f157191947d0d8b6644d2074d1d86a9a8b03a3e1e8c37ddb6545a7c7f5",
+    "review_interpretations_policy_idx": "eac467566460e7c89bbffb070439ae836b717e5b4f687d72d4b4843d4d35c29a",
+    "review_interpretations_no_update": "efe613ec0faa00f9abfc140fde1ddf221aa824292876c794213dfc985aa683ec",
+    "review_interpretations_no_delete": "a9f62a0c24c48251beb26d7cd13d696d7f608a7a58b57d53eccee133d8951018",
+    "review_interpretations_no_replace": "936d6eaf0d104cd3ee15945e425aeca8152acb4adb2fa81946fc57062aa75c11",
+}
+PUBLIC_REVIEW_GUARD_SCHEMA_HASHES = {
+    "reviews_no_update": "74314dcc9be778c8958fa352a0736833237c8a37b45adbae430be98708d1b2b1",
+    "reviews_no_delete": "f00b471843ebfbb068ca1aa1f6645b2546c8d8be135d08fcd38791656e9a5cd7",
+    "reviews_no_replace": "827005e60b478b65560386ccc7322e89efaae8d10cc57348cd16ebf3c6a373e6",
+}
 PUBLIC_REVIEW_MODEL = "Google Perch 2.0 ONNX (inat2024_fsd50k)"
+PUBLIC_REVIEW_POLICY_VERSION = "perch-corroboration-v2"
+PUBLIC_REVIEW_OUTCOMES = frozenset({
+    "corroborated", "uncorroborated", "model_conflict",
+})
+REVIEW_STATUS_SQL = (
+    "COALESCE(i.outcome, CASE WHEN r.detection_id IS NOT NULL THEN 'pending' "
+    "WHEN d.confidence < 0.90 THEN 'pending' ELSE 'unreviewed' END)"
+)
+REVIEW_INTERPRETATION_JOIN_SQL = (
+    "LEFT JOIN review_interpretations i ON i.detection_id=d.detection_id "
+    f"AND i.policy_version='{PUBLIC_REVIEW_POLICY_VERSION}'"
+)
 PUBLIC_AUDIO_QUALITY_ALGORITHM = "frame-level-percentiles-v1"
 PERCH_LABELS_PATH = (
     Path.home() / "Library/Application Support/AvianVisitorsArchive/perch/assets/labels.csv"
@@ -310,11 +334,84 @@ def validate_public_archive_schema(path: Path) -> None:
         if triggers != expected_triggers:
             raise RuntimeError("published archive lacks append-only quality guards")
 
+        for name, expected_hash in PUBLIC_REVIEW_GUARD_SCHEMA_HASHES.items():
+            schema_row = db.execute(
+                "SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?",
+                (name,),
+            ).fetchone()
+            if (
+                schema_row is None
+                or not schema_row["sql"]
+                or _normalised_schema_hash(schema_row["sql"]) != expected_hash
+            ):
+                raise RuntimeError(
+                    f"published archive has noncanonical schema object: {name}"
+                )
+        review_triggers = {
+            row["name"] for row in db.execute(
+                "SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='reviews'"
+            )
+        }
+        if review_triggers != set(PUBLIC_REVIEW_GUARD_SCHEMA_HASHES):
+            raise RuntimeError("published archive lacks append-only review guards")
+
+        expected_interpretation_columns = (
+            "detection_id", "policy_version", "outcome", "claim_score",
+            "claim_rank", "label_count", "top_label", "top_score",
+            "interpreted_at",
+        )
+        for name, expected_hash in PUBLIC_REVIEW_INTERPRETATION_SCHEMA_HASHES.items():
+            object_type = (
+                "table" if name == "review_interpretations"
+                else "index" if name == "review_interpretations_policy_idx"
+                else "trigger"
+            )
+            schema_row = db.execute(
+                "SELECT sql FROM sqlite_master WHERE type=? AND name=?",
+                (object_type, name),
+            ).fetchone()
+            if (
+                schema_row is None
+                or not schema_row["sql"]
+                or _normalised_schema_hash(schema_row["sql"]) != expected_hash
+            ):
+                raise RuntimeError(
+                    f"published archive has noncanonical schema object: {name}"
+                )
+        interpretation_columns = tuple(
+            row["name"] for row in db.execute(
+                "PRAGMA table_info(review_interpretations)"
+            )
+        )
+        if interpretation_columns != expected_interpretation_columns:
+            raise RuntimeError("published archive lacks canonical review interpretation schema")
+        interpretation_indexes = {
+            row["name"] for row in db.execute(
+                "PRAGMA index_list(review_interpretations)"
+            )
+        }
+        if interpretation_indexes != {
+            "review_interpretations_policy_idx",
+            "sqlite_autoindex_review_interpretations_1",
+        }:
+            raise RuntimeError("published archive has noncanonical interpretation indexes")
+        interpretation_triggers = {
+            row["name"] for row in db.execute(
+                """SELECT name FROM sqlite_master
+                   WHERE type='trigger' AND tbl_name='review_interpretations'"""
+            )
+        }
+        if interpretation_triggers != {
+            "review_interpretations_no_update", "review_interpretations_no_delete",
+            "review_interpretations_no_replace",
+        }:
+            raise RuntimeError("published archive lacks append-only interpretation guards")
+
 
 def sanitize_public_scores(row: dict[str, Any]) -> dict[str, Any]:
     for key in (
         "confidence", "best_confidence", "mean_confidence", "review_score",
-        "confidence_threshold",
+        "review_top_score", "confidence_threshold",
     ):
         if key in row:
             row[key] = public_score(row[key])
@@ -341,6 +438,23 @@ def get_summary(db_path: Path) -> dict[str, Any]:
                FROM detections WHERE confidence BETWEEN ? AND 1.0""",
             (PUBLICATION_MIN_CONFIDENCE,),
         ).fetchone())
+        standings = db.execute(
+            f"""SELECT
+                 sum(CASE WHEN corroborated > 0 THEN 1 ELSE 0 END) AS corroborated_species,
+                 sum(CASE WHEN corroborated = 0 THEN 1 ELSE 0 END) AS uncorroborated_species
+               FROM (
+                 SELECT d.scientific_name,
+                        sum(CASE WHEN i.outcome='corroborated' THEN 1 ELSE 0 END)
+                          AS corroborated
+                 FROM detections d
+                 {REVIEW_INTERPRETATION_JOIN_SQL}
+                 WHERE d.confidence BETWEEN ? AND 1.0
+                 GROUP BY d.scientific_name
+               )""",
+            (PUBLICATION_MIN_CONFIDENCE,),
+        ).fetchone()
+        totals["corroborated_species"] = int(standings["corroborated_species"] or 0)
+        totals["uncorroborated_species"] = int(standings["uncorroborated_species"] or 0)
         today_row = dict(db.execute(
             """SELECT count(*) AS detections,
                       count(DISTINCT scientific_name) AS species
@@ -405,13 +519,21 @@ def get_today(db_path: Path) -> dict[str, Any]:
                ORDER BY detections DESC, common_name""",
             (today, PUBLICATION_MIN_CONFIDENCE),
         ))
+    standing_by_species = {
+        item["scientific_name"]: item["standing"]
+        for item in get_species(db_path)["species"]
+    }
     for row in rows:
         row["slug"] = canonical_species_slug(row["scientific_name"])
         row["art_slug"] = slugify(row["scientific_name"])
+        row["standing"] = standing_by_species.get(
+            row["scientific_name"], "uncorroborated"
+        )
     return {
         "date": today,
         "timezone": "America/New_York",
         "publication_policy": "publication-v1",
+        "review_policy_version": PUBLIC_REVIEW_POLICY_VERSION,
         "species": rows,
     }
 
@@ -441,21 +563,50 @@ def get_activity(db_path: Path, days: int) -> dict[str, Any]:
 def get_species(db_path: Path) -> dict[str, Any]:
     with db_connect(db_path) as db:
         species = rows_dict(db.execute(
-            """SELECT scientific_name, common_name, count(*) AS detections,
-                      count(DISTINCT date) AS days_heard,
-                      min(observed_at_local) AS first_heard,
-                      max(observed_at_local) AS last_heard,
-                      max(confidence) AS best_confidence,
-                      avg(confidence) AS mean_confidence
-               FROM detections WHERE confidence BETWEEN ? AND 1.0
-               GROUP BY scientific_name, common_name
-               ORDER BY days_heard DESC, detections DESC, common_name""",
+            f"""SELECT d.scientific_name, d.common_name, count(*) AS detections,
+                      count(DISTINCT d.date) AS days_heard,
+                      min(d.observed_at_local) AS first_heard,
+                      max(d.observed_at_local) AS last_heard,
+                      max(d.confidence) AS best_confidence,
+                      avg(d.confidence) AS mean_confidence,
+                      sum(CASE WHEN i.outcome='corroborated' THEN 1 ELSE 0 END)
+                        AS corroborated,
+                      sum(CASE WHEN i.outcome='uncorroborated' THEN 1 ELSE 0 END)
+                        AS uncorroborated,
+                      sum(CASE WHEN i.outcome='model_conflict' THEN 1 ELSE 0 END)
+                        AS model_conflict,
+                      sum(CASE WHEN i.outcome IS NULL AND
+                          (r.detection_id IS NOT NULL OR d.confidence < 0.90)
+                          THEN 1 ELSE 0 END) AS pending,
+                      sum(CASE WHEN i.outcome IS NULL AND r.detection_id IS NULL
+                          AND d.confidence >= 0.90 THEN 1 ELSE 0 END) AS unreviewed
+               FROM detections d
+               LEFT JOIN reviews r ON r.detection_id=d.detection_id
+                 AND (r.review_score IS NULL OR r.review_score BETWEEN 0.0 AND 1.0)
+               {REVIEW_INTERPRETATION_JOIN_SQL}
+               WHERE d.confidence BETWEEN ? AND 1.0
+               GROUP BY d.scientific_name, d.common_name
+               ORDER BY days_heard DESC, detections DESC, d.common_name""",
             (PUBLICATION_MIN_CONFIDENCE,),
         ))
     for row in species:
+        counts = {
+            outcome: int(row.pop(outcome) or 0)
+            for outcome in (
+                "corroborated", "uncorroborated", "model_conflict",
+                "pending", "unreviewed",
+            )
+        }
+        row["standing"] = (
+            "corroborated" if counts["corroborated"] else "uncorroborated"
+        )
+        row["review_counts"] = counts
         row["slug"] = canonical_species_slug(row["scientific_name"])
         row["art_slug"] = slugify(row["scientific_name"])
-    return {"species": species}
+    return {
+        "species": species,
+        "policy_version": PUBLIC_REVIEW_POLICY_VERSION,
+    }
 
 
 def get_species_detail(db_path: Path, slug: str) -> Optional[dict[str, Any]]:
@@ -485,38 +636,38 @@ def get_species_detail(db_path: Path, slug: str) -> Optional[dict[str, Any]]:
         if species is None:
             return None
         row = dict(db.execute(
-            """SELECT count(*) AS detections,
+            f"""SELECT count(*) AS detections,
                       count(DISTINCT d.date) AS days_heard,
                       min(d.observed_at_local) AS first_heard,
                       max(d.observed_at_local) AS last_heard,
                       max(d.confidence) AS best_confidence,
                       avg(d.confidence) AS mean_confidence,
                       sum(d.audio_sha256 IS NOT NULL) AS clips_preserved,
-                      sum(CASE WHEN COALESCE(r.status,
-                          CASE WHEN d.confidence < 0.90 THEN 'pending' ELSE 'unreviewed' END
-                      ) = 'confirmed' THEN 1 ELSE 0 END) AS confirmed,
-                      sum(CASE WHEN COALESCE(r.status,
-                          CASE WHEN d.confidence < 0.90 THEN 'pending' ELSE 'unreviewed' END
-                      ) = 'uncertain' THEN 1 ELSE 0 END) AS uncertain,
-                      sum(CASE WHEN COALESCE(r.status,
-                          CASE WHEN d.confidence < 0.90 THEN 'pending' ELSE 'unreviewed' END
-                      ) = 'rejected' THEN 1 ELSE 0 END) AS rejected,
-                      sum(CASE WHEN COALESCE(r.status,
-                          CASE WHEN d.confidence < 0.90 THEN 'pending' ELSE 'unreviewed' END
-                      ) = 'pending' THEN 1 ELSE 0 END) AS pending,
-                      sum(CASE WHEN COALESCE(r.status,
-                          CASE WHEN d.confidence < 0.90 THEN 'pending' ELSE 'unreviewed' END
-                      ) = 'unreviewed' THEN 1 ELSE 0 END) AS unreviewed
-               FROM detections d LEFT JOIN reviews r
-                  ON r.detection_id=d.detection_id
+                      sum(CASE WHEN i.outcome='corroborated' THEN 1 ELSE 0 END)
+                        AS corroborated,
+                      sum(CASE WHEN i.outcome='uncorroborated' THEN 1 ELSE 0 END)
+                        AS uncorroborated,
+                      sum(CASE WHEN i.outcome='model_conflict' THEN 1 ELSE 0 END)
+                        AS model_conflict,
+                      sum(CASE WHEN i.outcome IS NULL AND
+                          (r.detection_id IS NOT NULL OR d.confidence < 0.90)
+                          THEN 1 ELSE 0 END) AS pending,
+                      sum(CASE WHEN i.outcome IS NULL AND r.detection_id IS NULL
+                          AND d.confidence >= 0.90 THEN 1 ELSE 0 END) AS unreviewed
+               FROM detections d
+               LEFT JOIN reviews r ON r.detection_id=d.detection_id
                  AND (r.review_score IS NULL OR r.review_score BETWEEN 0.0 AND 1.0)
+               {REVIEW_INTERPRETATION_JOIN_SQL}
                WHERE d.scientific_name=? AND d.confidence BETWEEN ? AND 1.0""",
             (species["scientific_name"], PUBLICATION_MIN_CONFIDENCE),
         ).fetchone())
     sanitize_public_scores(row)
     review_counts = {
         status: int(row.pop(status) or 0)
-        for status in ("confirmed", "uncertain", "rejected", "pending", "unreviewed")
+        for status in (
+            "corroborated", "uncorroborated", "model_conflict",
+            "pending", "unreviewed",
+        )
     }
     return {
         "scientific_name": species["scientific_name"],
@@ -524,6 +675,10 @@ def get_species_detail(db_path: Path, slug: str) -> Optional[dict[str, Any]]:
         "slug": canonical_species_slug(species["scientific_name"]),
         "art_slug": slugify(species["scientific_name"]),
         **row,
+        "standing": (
+            "corroborated" if review_counts["corroborated"] else "uncorroborated"
+        ),
+        "review_policy_version": PUBLIC_REVIEW_POLICY_VERSION,
         "review_counts": review_counts,
     }
 
@@ -617,16 +772,23 @@ def get_detections(
         conditions.append("(d.common_name LIKE ? OR d.scientific_name LIKE ?)")
         like = "%" + query[:80].replace("%", "") + "%"
         values += [like, like]
-    status_expr = "COALESCE(r.status, CASE WHEN d.confidence < 0.90 THEN 'pending' ELSE 'unreviewed' END)"
+    status_expr = REVIEW_STATUS_SQL
     if review:
-        if review not in {"pending", "unreviewed", "confirmed", "rejected", "uncertain"}:
+        if review not in {
+            "pending", "unreviewed", "corroborated",
+            "uncorroborated", "model_conflict",
+        }:
             raise ValueError("invalid review filter")
         conditions.append(status_expr + " = ?")
         values.append(review)
     where = " AND ".join(conditions)
     with db_connect(db_path) as db:
         total = db.execute(
-            f"SELECT count(*) FROM detections d WHERE {where}",
+            f"""SELECT count(*) FROM detections d
+                LEFT JOIN reviews r ON r.detection_id=d.detection_id
+                  AND (r.review_score IS NULL OR r.review_score BETWEEN 0.0 AND 1.0)
+                {REVIEW_INTERPRETATION_JOIN_SQL}
+                WHERE {where}""",
             values,
         ).fetchone()[0]
         result = rows_dict(db.execute(
@@ -635,6 +797,11 @@ def get_detections(
                        d.audio_relpath, d.audio_sha256, d.audio_bytes,
                        {status_expr} AS review_status,
                        r.review_model, r.review_score, r.notes,
+                       i.policy_version AS review_policy_version,
+                       i.claim_rank AS review_rank,
+                       i.label_count AS review_label_count,
+                       i.top_label AS review_top_label,
+                       i.top_score AS review_top_score,
                        q.algorithm_version AS quality_algorithm,
                        q.sample_rate AS quality_sample_rate,
                        q.duration_seconds AS quality_duration_seconds,
@@ -646,6 +813,7 @@ def get_detections(
                 LEFT JOIN reviews r
                   ON r.detection_id=d.detection_id
                  AND (r.review_score IS NULL OR r.review_score BETWEEN 0.0 AND 1.0)
+                {REVIEW_INTERPRETATION_JOIN_SQL}
                 LEFT JOIN audio_quality q
                   ON q.detection_id=d.detection_id AND q.algorithm_version=?
                 WHERE {where}
@@ -666,6 +834,33 @@ def prepare_detection_rows(
         relpath = row.pop("audio_relpath", None)
         row["confidence"] = public_score(row.get("confidence"))
         row["review_score"] = public_score(row.get("review_score"))
+        policy = row.get("review_policy_version")
+        rank = public_positive_int(row.get("review_rank"), 100_000)
+        label_count = public_positive_int(row.get("review_label_count"), 100_000)
+        top_score = public_score(row.get("review_top_score"))
+        top_label = row.get("review_top_label")
+        valid_interpretation = (
+            policy == PUBLIC_REVIEW_POLICY_VERSION
+            and row.get("review_status") in PUBLIC_REVIEW_OUTCOMES
+            and label_count == 14_795
+            and rank is not None
+            and rank <= label_count
+            and isinstance(top_label, str)
+            and top_label in pinned_perch_taxa()
+            and top_score is not None
+        )
+        if valid_interpretation:
+            row["review_rank"] = rank
+            row["review_label_count"] = label_count
+            row["review_top_score"] = top_score
+        else:
+            if row.get("review_status") in PUBLIC_REVIEW_OUTCOMES:
+                row["review_status"] = "pending"
+            row["review_policy_version"] = None
+            row["review_rank"] = None
+            row["review_label_count"] = None
+            row["review_top_label"] = None
+            row["review_top_score"] = None
         row["timezone"] = public_timezone(row.get("timezone"))
         row["audio_bytes"] = public_positive_int(
             row.get("audio_bytes"), MAX_PUBLIC_AUDIO_BYTES,
@@ -739,7 +934,8 @@ def _descending_number(value: Any) -> tuple[bool, float]:
 def related_sort_key(row: dict[str, Any], sort: str) -> tuple[Any, ...]:
     status = str(row.get("review_status") or "")
     status_rank = {
-        "confirmed": 0, "uncertain": 1, "pending": 2, "unreviewed": 2,
+        "corroborated": 0, "uncorroborated": 1,
+        "pending": 2, "unreviewed": 2, "model_conflict": 3,
     }.get(status, 3)
     recency = (
         _descending_text(row.get("date")),
@@ -785,10 +981,7 @@ def get_related_detections(
     except (ValueError, OverflowError) as exc:
         raise ValueError("invalid related pagination") from exc
 
-    status_expr = (
-        "COALESCE(r.status, CASE WHEN d.confidence < 0.90 "
-        "THEN 'pending' ELSE 'unreviewed' END)"
-    )
+    status_expr = REVIEW_STATUS_SQL
 
     with db_connect(db_path) as db:
         current = db.execute(
@@ -807,6 +1000,11 @@ def get_related_detections(
                        d.audio_relpath,d.audio_sha256,d.audio_bytes,
                        {status_expr} AS review_status,
                        r.review_model,r.review_score,r.notes,
+                       i.policy_version AS review_policy_version,
+                       i.claim_rank AS review_rank,
+                       i.label_count AS review_label_count,
+                       i.top_label AS review_top_label,
+                       i.top_score AS review_top_score,
                        q.algorithm_version AS quality_algorithm,
                        q.sample_rate AS quality_sample_rate,
                        q.duration_seconds AS quality_duration_seconds,
@@ -818,6 +1016,7 @@ def get_related_detections(
                 LEFT JOIN reviews r
                   ON r.detection_id=d.detection_id
                  AND (r.review_score IS NULL OR r.review_score BETWEEN 0.0 AND 1.0)
+                {REVIEW_INTERPRETATION_JOIN_SQL}
                 LEFT JOIN audio_quality q
                   ON q.detection_id=d.detection_id AND q.algorithm_version=?
                 WHERE d.scientific_name=? AND d.detection_id<>?

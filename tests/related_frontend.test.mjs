@@ -117,13 +117,13 @@ test('revision refresh pauses players before replacing the queue', async () => {
 test('non-Perch reviewer is labelled generically', () => {
   const h = harness();
   h.context.item = {
-    detection_id: 'b'.repeat(64), review_status: 'confirmed',
+    detection_id: 'b'.repeat(64), review_status: 'corroborated',
     review_kind: 'independent', review_score: 0.9, confidence: 0.8,
     audio_quality: null, date: '2026-07-20', time: '12:00:00',
     observed_at_local: '2026-07-20T12:00:00', common_name: 'Robin',
   };
   const card = vm.runInContext('comparisonCard(item, 1)', h.context);
-  assert.match(card, /Independent review supports/);
+  assert.match(card, /Independent review corroborates/);
   assert.match(card, /Independent review claim score/);
   assert.doesNotMatch(card, /Perch claim score/);
 });

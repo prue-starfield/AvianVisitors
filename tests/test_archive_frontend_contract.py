@@ -31,7 +31,7 @@ def test_frontend_uses_real_species_and_detection_links():
     app = (STATIC / "app.js").read_text()
     assert 'Routes.href("species-detail"' in app
     assert 'Routes.href("detection-detail"' in app
-    assert '<a class="bird-card"' in app
+    assert '<a class="bird-card' in app
     assert '<a class="species-row"' in app
     assert 'class="ledger-bird-link"' in app
     assert 'class="evidence-link"' in app
@@ -118,8 +118,14 @@ if (state.explore.q !== 'second') throw new Error('stale state won');
     assert result.returncode == 0, result.stderr
 
 
-def test_detection_view_is_audio_first_and_species_view_has_occurrences():
+def test_detection_view_has_exact_taxon_art_audio_and_species_occurrences():
     html = (STATIC / "index.html").read_text()
+    app = (STATIC / "app.js").read_text()
+    assert 'id="detectionArtwork"' in html
+    assert 'id="detectionArt"' in html
+    assert 'art.src = artURL(item.art_slug)' in app
+    assert 'makeIllustrationsSelfHealing(artwork)' in app
+    assert 'Field-guide illustration of ${item.common_name}' in app
     assert 'id="detectionAudioLabel"' in html
     assert 'aria-labelledby="detectionAudioLabel"' in html
     assert 'label for="detectionAudio"' not in html
@@ -149,3 +155,23 @@ def test_mobile_navigation_and_accessible_focus_styles_exist():
     assert ".table-wrap table{min-width:0" in styles
     assert ".table-wrap tbody tr{display:grid" in styles
     assert re.search(r"\.hero,\.route-header\{[^}]*overflow:hidden", styles)
+
+
+def test_species_index_and_evidence_make_uncorroborated_claims_visually_explicit():
+    html = (STATIC / "index.html").read_text()
+    app = (STATIC / "app.js").read_text()
+    styles = (STATIC / "styles.css").read_text()
+    assert 'id="corroboratedSpeciesIndex"' in html
+    assert 'id="uncorroboratedSpeciesIndex"' in html
+    assert "Corroborated species" in html
+    assert "Uncorroborated candidates" in html
+    assert 'bird.standing === "corroborated"' in app
+    assert 'bird.standing !== "corroborated"' in app
+    assert 'bird.days_heard === 1 ? "day" : "days"' in app
+    assert 'bird.detections === 1 ? "recognition" : "recognitions"' in app
+    assert "model_conflict" in app
+    assert "rank #${formatNumber(item.review_rank)}" in app
+    assert "model score—not probability" in app
+    assert ".candidate-species-section" in styles
+    assert ".review-callout.model_conflict" in styles
+    assert ".review-callout.uncorroborated" in styles

@@ -118,6 +118,41 @@ def test_model_asset_manifest_rejects_malformed_lines(tmp_path, manifest):
         review_perch.verify_model_assets(tmp_path)
 
 
+def test_reclassify_only_backfills_without_loading_model(tmp_path, monkeypatch):
+    db_path, audio_root = tmp_path / "db.sqlite3", tmp_path / "audio"
+    _review_db(db_path, audio_root, count=1)
+    note = (
+        "Perch independently supports the BirdNET species claim. Claimed species rank "
+        "1 of 14795 with score 80.0%. Perch top results: Birdus example 80.0%; "
+        "Icterus galbula 10.0%; Turdus migratorius 5.0%. Scores are independent "
+        "classifier outputs, not calibrated probabilities."
+    )
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            "INSERT INTO reviews VALUES (?,?,?,?,?,?,?)",
+            ("0" * 64, "confirmed", "reviewer", review_perch.MODEL_NAME,
+             0.8, note, "2026-07-24T12:00:00+00:00"),
+        )
+        conn.commit()
+    monkeypatch.setattr(
+        review_perch, "load_model",
+        lambda _assets: (_ for _ in ()).throw(AssertionError("must not load model")),
+    )
+    published = []
+    monkeypatch.setattr(
+        review_perch, "publish_mirror",
+        lambda source, target: published.append((source, target)),
+    )
+
+    mirror = tmp_path / "mirror.sqlite3"
+    assert review_perch.reclassify_archive(db_path, mirror) == 1
+    assert published == [(db_path, mirror)]
+    with sqlite3.connect(db_path) as conn:
+        assert conn.execute(
+            "SELECT outcome FROM review_interpretations"
+        ).fetchone()[0] == "corroborated"
+
+
 def test_review_archive_is_hash_checked_insert_only_and_idempotent(tmp_path, monkeypatch):
     db_path = tmp_path / "detections.sqlite3"
     audio_root = tmp_path / "audio"
@@ -156,6 +191,7 @@ def test_review_archive_is_hash_checked_insert_only_and_idempotent(tmp_path, mon
         "infer_review",
         lambda *args: {
             "status": "confirmed", "claim_score": 0.8, "claim_rank": 1,
+            "label_count": 14795,
             "top": [("Birdus example", 0.8)], "notes": "independent support",
         },
     )
@@ -166,8 +202,16 @@ def test_review_archive_is_hash_checked_insert_only_and_idempotent(tmp_path, mon
         row = conn.execute(
             "SELECT status,review_model,review_score,notes FROM reviews"
         ).fetchone()
+        interpretation = conn.execute(
+            """SELECT policy_version,outcome,claim_rank,label_count,top_label,top_score
+               FROM review_interpretations"""
+        ).fetchone()
     assert row == (
         "confirmed", review_perch.MODEL_NAME, 0.8, "independent support",
+    )
+    assert interpretation == (
+        review_perch.corroboration.POLICY_VERSION,
+        "corroborated", 1, 14795, "Birdus example", 0.8,
     )
 
     monkeypatch.setattr(
@@ -214,6 +258,7 @@ def _review_db(db_path, audio_root, count=1):
 def _result():
     return {
         "status": "confirmed", "claim_score": .8, "claim_rank": 1,
+        "label_count": 14795,
         "top": [("Birdus example", .8)], "notes": "support",
     }
 

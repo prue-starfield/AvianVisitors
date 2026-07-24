@@ -101,14 +101,14 @@ def test_legacy_detection_queries_redirect_only_from_the_app_root():
 def test_explore_state_round_trips_and_clamps_page():
     parsed = run_routes(
         "routes.parseExplore('?q=Robin&species=Turdus%20migratorius&date_from=2026-07-18"
-        "&confidence_min=0.8&review=confirmed&page=3&ignored=secret')"
+        "&confidence_min=0.8&review=corroborated&page=3&ignored=secret')"
     )
     assert parsed == {
         "q": "Robin",
         "species": "Turdus migratorius",
         "date_from": "2026-07-18",
         "confidence_min": "0.8",
-        "review": "confirmed",
+        "review": "corroborated",
         "page": 3,
     }
     assert run_routes("routes.parseExplore('?page=-9&review=evil&confidence_min=0.42')") == {
@@ -119,7 +119,9 @@ def test_explore_state_round_trips_and_clamps_page():
         "review": "",
         "page": 1,
     }
-    for review in ("pending", "unreviewed", "confirmed", "uncertain", "rejected"):
+    for review in (
+        "pending", "unreviewed", "corroborated", "uncorroborated", "model_conflict",
+    ):
         assert run_routes(f"routes.parseExplore('?review={review}')")["review"] == review
     for confidence in ("0", "0.8", "0.9"):
         assert run_routes(
@@ -127,11 +129,11 @@ def test_explore_state_round_trips_and_clamps_page():
         )["confidence_min"] == confidence
     query = run_routes(
         "routes.exploreSearch({q:'Robin',species:'Turdus migratorius',date_from:'2026-07-18',"
-        "confidence_min:'0.8',review:'confirmed',page:3})"
+        "confidence_min:'0.8',review:'corroborated',page:3})"
     )
     assert query == (
         "?q=Robin&species=Turdus+migratorius&date_from=2026-07-18"
-        "&confidence_min=0.8&review=confirmed&page=3"
+        "&confidence_min=0.8&review=corroborated&page=3"
     )
 
 

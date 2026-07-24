@@ -10,7 +10,7 @@ from urllib.request import Request, urlopen
 
 import pytest
 
-from avian.archive import sync_archive
+from avian.archive import corroboration, sync_archive
 from avian.archive.sync_archive import SCHEMA, ensure_audio_quality_schema
 from avian.archive.site import server as site
 
@@ -32,6 +32,29 @@ def insert_detection(conn, did, date, time, sci, common, confidence, relpath=Non
     )
 
 
+def insert_interpretation(
+    conn, did, outcome, claim_score, claim_rank, top_label, top_score,
+):
+    conn.execute(
+        "INSERT INTO reviews VALUES (?,?,?,?,?,?,?)",
+        (
+            did, "uncertain", "automated independent model",
+            corroboration.PERCH_MODEL_NAME, claim_score, "review note",
+            "2026-07-24T12:00:00+00:00",
+        ),
+    )
+    conn.execute(
+        """INSERT INTO review_interpretations
+           (detection_id,policy_version,outcome,claim_score,claim_rank,label_count,
+            top_label,top_score,interpreted_at)
+           VALUES (?,?,?,?,?,?,?,?,?)""",
+        (
+            did, corroboration.POLICY_VERSION, outcome, claim_score, claim_rank,
+            14795, top_label, top_score, "2026-07-24T12:00:00+00:00",
+        ),
+    )
+
+
 @pytest.fixture()
 def archive_site(tmp_path):
     db_path = tmp_path / "archive.sqlite3"
@@ -47,8 +70,7 @@ def archive_site(tmp_path):
     today = site.now_local().date()
     yesterday = today - dt.timedelta(days=1)
     with sqlite3.connect(db_path) as conn:
-        conn.executescript(SCHEMA)
-        ensure_audio_quality_schema(conn)
+        sync_archive.initialise_archive(conn)
         insert_detection(
             conn, "a" * 64, today.isoformat(), "06:15:00",
             "Turdus migratorius", "American Robin", 0.88,
@@ -264,10 +286,12 @@ def test_species_detail_endpoint_returns_summary_without_private_fields(archive_
         "best_confidence": 0.94,
         "mean_confidence": pytest.approx(0.91),
         "clips_preserved": 1,
+        "standing": "uncorroborated",
+        "review_policy_version": corroboration.POLICY_VERSION,
         "review_counts": {
-            "confirmed": 0,
-            "uncertain": 0,
-            "rejected": 0,
+            "corroborated": 0,
+            "uncorroborated": 0,
+            "model_conflict": 0,
             "pending": 1,
             "unreviewed": 1,
         },
@@ -276,6 +300,58 @@ def test_species_detail_endpoint_returns_summary_without_private_fields(archive_
     assert "latitude" not in serialised
     assert "longitude" not in serialised
     assert "audio_relpath" not in serialised
+
+
+def test_species_and_detection_apis_expose_versioned_corroboration_standing(archive_site):
+    base, db_path = archive_site
+    today = site.now_local().date().isoformat()
+    with sqlite3.connect(db_path) as conn:
+        insert_interpretation(
+            conn, "a" * 64, "corroborated", 0.676, 1,
+            "Turdus migratorius", 0.676,
+        )
+        insert_interpretation(
+            conn, "c" * 64, "model_conflict", 0.021, 8,
+            "Catharus fuscescens", 0.475,
+        )
+        insert_detection(
+            conn, "e" * 64, today, "20:34:15", "Pandion haliaetus", "Osprey", 0.8078,
+        )
+        insert_interpretation(
+            conn, "e" * 64, "uncorroborated", 0.0784806982, 2,
+            "Icterus galbula", 0.099,
+        )
+        conn.commit()
+
+    species = get_json(base + "/api/species")[2]
+    by_name = {row["common_name"]: row for row in species["species"]}
+    assert species["policy_version"] == corroboration.POLICY_VERSION
+    assert by_name["American Robin"]["standing"] == "corroborated"
+    assert by_name["American Robin"]["review_counts"] == {
+        "corroborated": 1,
+        "uncorroborated": 0,
+        "model_conflict": 0,
+        "pending": 0,
+        "unreviewed": 1,
+    }
+    assert by_name["Osprey"]["standing"] == "uncorroborated"
+    assert by_name["Osprey"]["review_counts"]["uncorroborated"] == 1
+    assert by_name["Northern Cardinal"]["standing"] == "uncorroborated"
+    assert by_name["Northern Cardinal"]["review_counts"]["model_conflict"] == 1
+
+    detection = get_json(base + "/api/detections/" + "e" * 64)[2]["detection"]
+    assert detection["review_status"] == "uncorroborated"
+    assert detection["review_policy_version"] == corroboration.POLICY_VERSION
+    assert detection["review_rank"] == 2
+    assert detection["review_label_count"] == 14795
+    assert detection["review_top_label"] == "Icterus galbula"
+    assert detection["review_top_score"] == 0.099
+
+    filtered = get_json(base + "/api/detections?review=model_conflict")[2]
+    assert [row["common_name"] for row in filtered["detections"]] == ["Northern Cardinal"]
+    summary = get_json(base + "/api/summary")[2]
+    assert summary["totals"]["corroborated_species"] == 1
+    assert summary["totals"]["uncorroborated_species"] == 2
 
 
 def test_species_detail_endpoint_rejects_invalid_or_missing_slug(archive_site):
@@ -405,7 +481,7 @@ def test_public_dtos_redact_adversarial_operator_metadata(archive_site):
             assert marker_part not in serialised
 
     detection = payloads[1]["detection"]
-    assert detection["review_status"] == "uncertain"
+    assert detection["review_status"] == "pending"
     assert detection["review_score"] == 0.42
     assert detection["review_model"] == "Independent review"
     assert detection["notes"] is None
@@ -526,6 +602,20 @@ def test_related_calls_are_bounded_ranked_and_quality_sanitised(archive_site):
             ],
         )
         conn.executemany(
+            """INSERT INTO review_interpretations
+               (detection_id,policy_version,outcome,claim_score,claim_rank,
+                label_count,top_label,top_score,interpreted_at)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            [
+                ("b" * 64, corroboration.POLICY_VERSION, "corroborated", 0.90,
+                 1, 14795, "Turdus migratorius", 0.90, "now"),
+                ("e" * 64, corroboration.POLICY_VERSION, "corroborated", 0.80,
+                 1, 14795, "Turdus migratorius", 0.80, "now"),
+                ("f" * 64, corroboration.POLICY_VERSION, "uncorroborated", 0.99,
+                 2, 14795, "Icterus galbula", 0.995, "now"),
+            ],
+        )
+        conn.executemany(
             """INSERT INTO audio_quality
                (detection_id,algorithm_version,sample_rate,duration_seconds,
                 noise_floor_dbfs,signal_level_dbfs,signal_contrast_db,
@@ -617,6 +707,13 @@ def test_related_calls_label_non_perch_reviewer_generically(archive_site):
     assert detail["notes"] is None
 
 
+def test_public_schema_gate_accepts_writer_schema(tmp_path):
+    db_path = tmp_path / "writer.sqlite3"
+    with sqlite3.connect(db_path) as conn:
+        sync_archive.initialise_archive(conn)
+    site.validate_public_archive_schema(db_path)
+
+
 def test_public_schema_gate_rejects_pre_feature_archive(tmp_path):
     db_path = tmp_path / "legacy.sqlite3"
     with sqlite3.connect(db_path) as conn:
@@ -635,6 +732,19 @@ def test_public_schema_fingerprints_match_writer_contract():
         name: site._normalised_schema_hash(sql)
         for name, sql in writer_objects.items()
     } == site.PUBLIC_AUDIO_QUALITY_SCHEMA_HASHES
+    interpretation_objects = {
+        "review_interpretations": sync_archive.REVIEW_INTERPRETATION_TABLE_DDL,
+        "review_interpretations_policy_idx": sync_archive.REVIEW_INTERPRETATION_INDEX_DDL,
+        **sync_archive.REVIEW_INTERPRETATION_TRIGGER_DDLS,
+    }
+    assert {
+        name: site._normalised_schema_hash(sql)
+        for name, sql in interpretation_objects.items()
+    } == site.PUBLIC_REVIEW_INTERPRETATION_SCHEMA_HASHES
+    assert {
+        name: site._normalised_schema_hash(sql)
+        for name, sql in sync_archive.REVIEW_TRIGGER_DDLS.items()
+    } == site.PUBLIC_REVIEW_GUARD_SCHEMA_HASHES
 
 
 @pytest.mark.parametrize("mutation", [

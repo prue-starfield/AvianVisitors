@@ -15,7 +15,7 @@
 
   var SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
   var DETECTION_ID_PATTERN = /^[a-f0-9]{64}$/;
-  var REVIEW_VALUES = ["pending", "unreviewed", "confirmed", "uncertain", "rejected"];
+  var REVIEW_VALUES = ["pending", "unreviewed", "corroborated", "uncorroborated", "model_conflict"];
   var CONFIDENCE_VALUES = ["0", "0.8", "0.9"];
   var PAGE_SIZE = 50;
   var MAX_OFFSET = 1000000;

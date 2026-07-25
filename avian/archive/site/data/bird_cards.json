@@ -1,0 +1,4564 @@
+{
+  "catalogue_version": "2026-07-25.2",
+  "schema_version": 1,
+  "sources": {
+    "audubon-american-crow": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-american-crow",
+      "publisher": "National Audubon Society",
+      "title": "American Crow field guide",
+      "url": "https://www.audubon.org/field-guide/bird/american-crow"
+    },
+    "audubon-american-goldfinch": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-american-goldfinch",
+      "publisher": "National Audubon Society",
+      "title": "American Goldfinch field guide",
+      "url": "https://www.audubon.org/field-guide/bird/american-goldfinch"
+    },
+    "audubon-american-redstart": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-american-redstart",
+      "publisher": "National Audubon Society",
+      "title": "American Redstart field guide",
+      "url": "https://www.audubon.org/field-guide/bird/american-redstart"
+    },
+    "audubon-american-robin": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-american-robin",
+      "publisher": "National Audubon Society",
+      "title": "American Robin field guide",
+      "url": "https://www.audubon.org/field-guide/bird/american-robin"
+    },
+    "audubon-barn-swallow": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-barn-swallow",
+      "publisher": "National Audubon Society",
+      "title": "Barn Swallow field guide",
+      "url": "https://www.audubon.org/field-guide/bird/barn-swallow"
+    },
+    "audubon-black-capped-chickadee": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-black-capped-chickadee",
+      "publisher": "National Audubon Society",
+      "title": "Black-capped Chickadee field guide",
+      "url": "https://www.audubon.org/field-guide/bird/black-capped-chickadee"
+    },
+    "audubon-blue-gray-gnatcatcher": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-blue-gray-gnatcatcher",
+      "publisher": "National Audubon Society",
+      "title": "Blue-gray Gnatcatcher field guide",
+      "url": "https://www.audubon.org/field-guide/bird/blue-gray-gnatcatcher"
+    },
+    "audubon-broad-winged-hawk": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-broad-winged-hawk",
+      "publisher": "National Audubon Society",
+      "title": "Broad-winged Hawk field guide",
+      "url": "https://www.audubon.org/field-guide/bird/broad-winged-hawk"
+    },
+    "audubon-carolina-chickadee": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-carolina-chickadee",
+      "publisher": "National Audubon Society",
+      "title": "Carolina Chickadee field guide",
+      "url": "https://www.audubon.org/field-guide/bird/carolina-chickadee"
+    },
+    "audubon-cedar-waxwing": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-cedar-waxwing",
+      "publisher": "National Audubon Society",
+      "title": "Cedar Waxwing field guide",
+      "url": "https://www.audubon.org/field-guide/bird/cedar-waxwing"
+    },
+    "audubon-chimney-swift": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-chimney-swift",
+      "publisher": "National Audubon Society",
+      "title": "Chimney Swift field guide",
+      "url": "https://www.audubon.org/field-guide/bird/chimney-swift"
+    },
+    "audubon-chipping-sparrow": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-chipping-sparrow",
+      "publisher": "National Audubon Society",
+      "title": "Chipping Sparrow field guide",
+      "url": "https://www.audubon.org/field-guide/bird/chipping-sparrow"
+    },
+    "audubon-common-raven": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-common-raven",
+      "publisher": "National Audubon Society",
+      "title": "Common Raven field guide",
+      "url": "https://www.audubon.org/field-guide/bird/common-raven"
+    },
+    "audubon-downy-woodpecker": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-downy-woodpecker",
+      "publisher": "National Audubon Society",
+      "title": "Downy Woodpecker field guide",
+      "url": "https://www.audubon.org/field-guide/bird/downy-woodpecker"
+    },
+    "audubon-eastern-bluebird": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-eastern-bluebird",
+      "publisher": "National Audubon Society",
+      "title": "Eastern Bluebird field guide",
+      "url": "https://www.audubon.org/field-guide/bird/eastern-bluebird"
+    },
+    "audubon-eastern-kingbird": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-eastern-kingbird",
+      "publisher": "National Audubon Society",
+      "title": "Eastern Kingbird field guide",
+      "url": "https://www.audubon.org/field-guide/bird/eastern-kingbird"
+    },
+    "audubon-eastern-phoebe": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-eastern-phoebe",
+      "publisher": "National Audubon Society",
+      "title": "Eastern Phoebe field guide",
+      "url": "https://www.audubon.org/field-guide/bird/eastern-phoebe"
+    },
+    "audubon-eastern-wood-pewee": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-eastern-wood-pewee",
+      "publisher": "National Audubon Society",
+      "title": "Eastern Wood-Pewee field guide",
+      "url": "https://www.audubon.org/field-guide/bird/eastern-wood-pewee"
+    },
+    "audubon-fish-crow": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-fish-crow",
+      "publisher": "National Audubon Society",
+      "title": "Fish Crow field guide",
+      "url": "https://www.audubon.org/field-guide/bird/fish-crow"
+    },
+    "audubon-gray-catbird": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-gray-catbird",
+      "publisher": "National Audubon Society",
+      "title": "Gray Catbird field guide",
+      "url": "https://www.audubon.org/field-guide/bird/gray-catbird"
+    },
+    "audubon-great-crested-flycatcher": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-great-crested-flycatcher",
+      "publisher": "National Audubon Society",
+      "title": "Great Crested Flycatcher field guide",
+      "url": "https://www.audubon.org/field-guide/bird/great-crested-flycatcher"
+    },
+    "audubon-hairy-woodpecker": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-hairy-woodpecker",
+      "publisher": "National Audubon Society",
+      "title": "Hairy Woodpecker field guide",
+      "url": "https://www.audubon.org/field-guide/bird/hairy-woodpecker"
+    },
+    "audubon-house-finch": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-house-finch",
+      "publisher": "National Audubon Society",
+      "title": "House Finch field guide",
+      "url": "https://www.audubon.org/field-guide/bird/house-finch"
+    },
+    "audubon-northern-cardinal": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-northern-cardinal",
+      "publisher": "National Audubon Society",
+      "title": "Northern Cardinal field guide",
+      "url": "https://www.audubon.org/field-guide/bird/northern-cardinal"
+    },
+    "audubon-northern-flicker": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-northern-flicker",
+      "publisher": "National Audubon Society",
+      "title": "Northern Flicker field guide",
+      "url": "https://www.audubon.org/field-guide/bird/northern-flicker"
+    },
+    "audubon-osprey": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-osprey",
+      "publisher": "National Audubon Society",
+      "title": "Osprey field guide",
+      "url": "https://www.audubon.org/field-guide/bird/osprey"
+    },
+    "audubon-ovenbird": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-ovenbird",
+      "publisher": "National Audubon Society",
+      "title": "Ovenbird field guide",
+      "url": "https://www.audubon.org/field-guide/bird/ovenbird"
+    },
+    "audubon-purple-martin": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-purple-martin",
+      "publisher": "National Audubon Society",
+      "title": "Purple Martin field guide",
+      "url": "https://www.audubon.org/field-guide/bird/purple-martin"
+    },
+    "audubon-red-bellied-woodpecker": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-red-bellied-woodpecker",
+      "publisher": "National Audubon Society",
+      "title": "Red-bellied Woodpecker field guide",
+      "url": "https://www.audubon.org/field-guide/bird/red-bellied-woodpecker"
+    },
+    "audubon-red-eyed-vireo": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-red-eyed-vireo",
+      "publisher": "National Audubon Society",
+      "title": "Red-eyed Vireo field guide",
+      "url": "https://www.audubon.org/field-guide/bird/red-eyed-vireo"
+    },
+    "audubon-red-shouldered-hawk": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-red-shouldered-hawk",
+      "publisher": "National Audubon Society",
+      "title": "Red-shouldered Hawk field guide",
+      "url": "https://www.audubon.org/field-guide/bird/red-shouldered-hawk"
+    },
+    "audubon-red-tailed-hawk": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-red-tailed-hawk",
+      "publisher": "National Audubon Society",
+      "title": "Red-tailed Hawk field guide",
+      "url": "https://www.audubon.org/field-guide/bird/red-tailed-hawk"
+    },
+    "audubon-ruby-throated-hummingbird": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-ruby-throated-hummingbird",
+      "publisher": "National Audubon Society",
+      "title": "Ruby-throated Hummingbird field guide",
+      "url": "https://www.audubon.org/field-guide/bird/ruby-throated-hummingbird"
+    },
+    "audubon-scarlet-tanager": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-scarlet-tanager",
+      "publisher": "National Audubon Society",
+      "title": "Scarlet Tanager field guide",
+      "url": "https://www.audubon.org/field-guide/bird/scarlet-tanager"
+    },
+    "audubon-song-sparrow": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-song-sparrow",
+      "publisher": "National Audubon Society",
+      "title": "Song Sparrow field guide",
+      "url": "https://www.audubon.org/field-guide/bird/song-sparrow"
+    },
+    "audubon-tufted-titmouse": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-tufted-titmouse",
+      "publisher": "National Audubon Society",
+      "title": "Tufted Titmouse field guide",
+      "url": "https://www.audubon.org/field-guide/bird/tufted-titmouse"
+    },
+    "audubon-veery": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-veery",
+      "publisher": "National Audubon Society",
+      "title": "Veery field guide",
+      "url": "https://www.audubon.org/field-guide/bird/veery"
+    },
+    "audubon-white-breasted-nuthatch": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-white-breasted-nuthatch",
+      "publisher": "National Audubon Society",
+      "title": "White-breasted Nuthatch field guide",
+      "url": "https://www.audubon.org/field-guide/bird/white-breasted-nuthatch"
+    },
+    "audubon-wood-thrush": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-wood-thrush",
+      "publisher": "National Audubon Society",
+      "title": "Wood Thrush field guide",
+      "url": "https://www.audubon.org/field-guide/bird/wood-thrush"
+    },
+    "audubon-yellow-throated-vireo": {
+      "accessed_at": "2026-07-25",
+      "id": "audubon-yellow-throated-vireo",
+      "publisher": "National Audubon Society",
+      "title": "Yellow-throated Vireo field guide",
+      "url": "https://www.audubon.org/field-guide/bird/yellow-throated-vireo"
+    },
+    "birdlife-american-crow-corvus-brachyrhynchos": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-american-crow-corvus-brachyrhynchos",
+      "publisher": "BirdLife International DataZone",
+      "title": "American Crow species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/american-crow-corvus-brachyrhynchos"
+    },
+    "birdlife-american-goldfinch-spinus-tristis": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-american-goldfinch-spinus-tristis",
+      "publisher": "BirdLife International DataZone",
+      "title": "American Goldfinch species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/american-goldfinch-spinus-tristis"
+    },
+    "birdlife-american-redstart-setophaga-ruticilla": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-american-redstart-setophaga-ruticilla",
+      "publisher": "BirdLife International DataZone",
+      "title": "American Redstart species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/american-redstart-setophaga-ruticilla"
+    },
+    "birdlife-american-robin-turdus-migratorius": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-american-robin-turdus-migratorius",
+      "publisher": "BirdLife International DataZone",
+      "title": "American Robin species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/american-robin-turdus-migratorius"
+    },
+    "birdlife-barn-swallow-hirundo-rustica": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-barn-swallow-hirundo-rustica",
+      "publisher": "BirdLife International DataZone",
+      "title": "Barn Swallow species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/barn-swallow-hirundo-rustica"
+    },
+    "birdlife-black-capped-chickadee-poecile-atricapillus": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-black-capped-chickadee-poecile-atricapillus",
+      "publisher": "BirdLife International DataZone",
+      "title": "Black-capped Chickadee species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/black-capped-chickadee-poecile-atricapillus"
+    },
+    "birdlife-blue-grey-gnatcatcher-polioptila-caerulea": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-blue-grey-gnatcatcher-polioptila-caerulea",
+      "publisher": "BirdLife International DataZone",
+      "title": "Blue-gray Gnatcatcher species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/blue-grey-gnatcatcher-polioptila-caerulea"
+    },
+    "birdlife-broad-winged-hawk-buteo-platypterus": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-broad-winged-hawk-buteo-platypterus",
+      "publisher": "BirdLife International DataZone",
+      "title": "Broad-winged Hawk species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/broad-winged-hawk-buteo-platypterus"
+    },
+    "birdlife-carolina-chickadee-poecile-carolinensis": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-carolina-chickadee-poecile-carolinensis",
+      "publisher": "BirdLife International DataZone",
+      "title": "Carolina Chickadee species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/carolina-chickadee-poecile-carolinensis"
+    },
+    "birdlife-cedar-waxwing-bombycilla-cedrorum": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-cedar-waxwing-bombycilla-cedrorum",
+      "publisher": "BirdLife International DataZone",
+      "title": "Cedar Waxwing species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/cedar-waxwing-bombycilla-cedrorum"
+    },
+    "birdlife-chimney-swift-chaetura-pelagica": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-chimney-swift-chaetura-pelagica",
+      "publisher": "BirdLife International DataZone",
+      "title": "Chimney Swift species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/chimney-swift-chaetura-pelagica"
+    },
+    "birdlife-chipping-sparrow-spizella-passerina": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-chipping-sparrow-spizella-passerina",
+      "publisher": "BirdLife International DataZone",
+      "title": "Chipping Sparrow species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/chipping-sparrow-spizella-passerina"
+    },
+    "birdlife-common-raven-corvus-corax": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-common-raven-corvus-corax",
+      "publisher": "BirdLife International DataZone",
+      "title": "Common Raven species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/common-raven-corvus-corax"
+    },
+    "birdlife-downy-woodpecker-dryobates-pubescens": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-downy-woodpecker-dryobates-pubescens",
+      "publisher": "BirdLife International DataZone",
+      "title": "Downy Woodpecker species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/downy-woodpecker-dryobates-pubescens"
+    },
+    "birdlife-eastern-bluebird-sialia-sialis": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-eastern-bluebird-sialia-sialis",
+      "publisher": "BirdLife International DataZone",
+      "title": "Eastern Bluebird species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/eastern-bluebird-sialia-sialis"
+    },
+    "birdlife-eastern-kingbird-tyrannus-tyrannus": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-eastern-kingbird-tyrannus-tyrannus",
+      "publisher": "BirdLife International DataZone",
+      "title": "Eastern Kingbird species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/eastern-kingbird-tyrannus-tyrannus"
+    },
+    "birdlife-eastern-phoebe-sayornis-phoebe": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-eastern-phoebe-sayornis-phoebe",
+      "publisher": "BirdLife International DataZone",
+      "title": "Eastern Phoebe species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/eastern-phoebe-sayornis-phoebe"
+    },
+    "birdlife-eastern-wood-pewee-contopus-virens": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-eastern-wood-pewee-contopus-virens",
+      "publisher": "BirdLife International DataZone",
+      "title": "Eastern Wood-Pewee species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/eastern-wood-pewee-contopus-virens"
+    },
+    "birdlife-fish-crow-corvus-ossifragus": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-fish-crow-corvus-ossifragus",
+      "publisher": "BirdLife International DataZone",
+      "title": "Fish Crow species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/fish-crow-corvus-ossifragus"
+    },
+    "birdlife-great-crested-flycatcher-myiarchus-crinitus": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-great-crested-flycatcher-myiarchus-crinitus",
+      "publisher": "BirdLife International DataZone",
+      "title": "Great Crested Flycatcher species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/great-crested-flycatcher-myiarchus-crinitus"
+    },
+    "birdlife-grey-catbird-dumetella-carolinensis": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-grey-catbird-dumetella-carolinensis",
+      "publisher": "BirdLife International DataZone",
+      "title": "Gray Catbird species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/grey-catbird-dumetella-carolinensis"
+    },
+    "birdlife-hairy-woodpecker-leuconotopicus-villosus": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-hairy-woodpecker-leuconotopicus-villosus",
+      "publisher": "BirdLife International DataZone",
+      "title": "Hairy Woodpecker species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/hairy-woodpecker-leuconotopicus-villosus"
+    },
+    "birdlife-house-finch-haemorhous-mexicanus": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-house-finch-haemorhous-mexicanus",
+      "publisher": "BirdLife International DataZone",
+      "title": "House Finch species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/house-finch-haemorhous-mexicanus"
+    },
+    "birdlife-northern-cardinal-cardinalis-cardinalis": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-northern-cardinal-cardinalis-cardinalis",
+      "publisher": "BirdLife International DataZone",
+      "title": "Northern Cardinal species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/northern-cardinal-cardinalis-cardinalis"
+    },
+    "birdlife-osprey-pandion-haliaetus": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-osprey-pandion-haliaetus",
+      "publisher": "BirdLife International DataZone",
+      "title": "Osprey species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/osprey-pandion-haliaetus"
+    },
+    "birdlife-ovenbird-seiurus-aurocapilla": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-ovenbird-seiurus-aurocapilla",
+      "publisher": "BirdLife International DataZone",
+      "title": "Ovenbird species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/ovenbird-seiurus-aurocapilla"
+    },
+    "birdlife-purple-martin-progne-subis": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-purple-martin-progne-subis",
+      "publisher": "BirdLife International DataZone",
+      "title": "Purple Martin species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/purple-martin-progne-subis"
+    },
+    "birdlife-red-bellied-woodpecker-melanerpes-carolinus": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-red-bellied-woodpecker-melanerpes-carolinus",
+      "publisher": "BirdLife International DataZone",
+      "title": "Red-bellied Woodpecker species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/red-bellied-woodpecker-melanerpes-carolinus"
+    },
+    "birdlife-red-eyed-vireo-vireo-olivaceus": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-red-eyed-vireo-vireo-olivaceus",
+      "publisher": "BirdLife International DataZone",
+      "title": "Red-eyed Vireo species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/red-eyed-vireo-vireo-olivaceus"
+    },
+    "birdlife-red-shouldered-hawk-buteo-lineatus": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-red-shouldered-hawk-buteo-lineatus",
+      "publisher": "BirdLife International DataZone",
+      "title": "Red-shouldered Hawk species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/red-shouldered-hawk-buteo-lineatus"
+    },
+    "birdlife-red-tailed-hawk-buteo-jamaicensis": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-red-tailed-hawk-buteo-jamaicensis",
+      "publisher": "BirdLife International DataZone",
+      "title": "Red-tailed Hawk species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/red-tailed-hawk-buteo-jamaicensis"
+    },
+    "birdlife-ruby-throated-hummingbird-archilochus-colubris": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-ruby-throated-hummingbird-archilochus-colubris",
+      "publisher": "BirdLife International DataZone",
+      "title": "Ruby-throated Hummingbird species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/ruby-throated-hummingbird-archilochus-colubris"
+    },
+    "birdlife-scarlet-tanager-piranga-olivacea": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-scarlet-tanager-piranga-olivacea",
+      "publisher": "BirdLife International DataZone",
+      "title": "Scarlet Tanager species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/scarlet-tanager-piranga-olivacea"
+    },
+    "birdlife-song-sparrow-melospiza-melodia": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-song-sparrow-melospiza-melodia",
+      "publisher": "BirdLife International DataZone",
+      "title": "Song Sparrow species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/song-sparrow-melospiza-melodia"
+    },
+    "birdlife-tufted-titmouse-baeolophus-bicolor": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-tufted-titmouse-baeolophus-bicolor",
+      "publisher": "BirdLife International DataZone",
+      "title": "Tufted Titmouse species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/tufted-titmouse-baeolophus-bicolor"
+    },
+    "birdlife-veery-catharus-fuscescens": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-veery-catharus-fuscescens",
+      "publisher": "BirdLife International DataZone",
+      "title": "Veery species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/veery-catharus-fuscescens"
+    },
+    "birdlife-white-breasted-nuthatch-sitta-carolinensis": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-white-breasted-nuthatch-sitta-carolinensis",
+      "publisher": "BirdLife International DataZone",
+      "title": "White-breasted Nuthatch species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/white-breasted-nuthatch-sitta-carolinensis"
+    },
+    "birdlife-wood-thrush-hylocichla-mustelina": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-wood-thrush-hylocichla-mustelina",
+      "publisher": "BirdLife International DataZone",
+      "title": "Wood Thrush species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/wood-thrush-hylocichla-mustelina"
+    },
+    "birdlife-yellow-shafted-flicker-colaptes-auratus": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-yellow-shafted-flicker-colaptes-auratus",
+      "publisher": "BirdLife International DataZone",
+      "title": "Yellow-shafted Flicker species factsheet (conservation scope for archive Northern Flicker)",
+      "url": "https://datazone.birdlife.org/species/factsheet/yellow-shafted-flicker-colaptes-auratus"
+    },
+    "birdlife-yellow-throated-vireo-vireo-flavifrons": {
+      "accessed_at": "2026-07-25",
+      "id": "birdlife-yellow-throated-vireo-vireo-flavifrons",
+      "publisher": "BirdLife International DataZone",
+      "title": "Yellow-throated Vireo species factsheet",
+      "url": "https://datazone.birdlife.org/species/factsheet/yellow-throated-vireo-vireo-flavifrons"
+    },
+    "cornell-american-crow-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-crow-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Crow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Crow/id"
+    },
+    "cornell-american-crow-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-crow-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Crow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Crow/lifehistory"
+    },
+    "cornell-american-crow-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-crow-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Crow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Crow/maps-range"
+    },
+    "cornell-american-crow-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-crow-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Crow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Crow/overview"
+    },
+    "cornell-american-goldfinch-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-goldfinch-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Goldfinch — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Goldfinch/id"
+    },
+    "cornell-american-goldfinch-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-goldfinch-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Goldfinch — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Goldfinch/lifehistory"
+    },
+    "cornell-american-goldfinch-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-goldfinch-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Goldfinch — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Goldfinch/maps-range"
+    },
+    "cornell-american-goldfinch-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-goldfinch-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Goldfinch — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Goldfinch/overview"
+    },
+    "cornell-american-redstart-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-redstart-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Redstart — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Redstart/id"
+    },
+    "cornell-american-redstart-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-redstart-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Redstart — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Redstart/lifehistory"
+    },
+    "cornell-american-redstart-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-redstart-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Redstart — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Redstart/maps-range"
+    },
+    "cornell-american-redstart-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-redstart-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Redstart — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Redstart/overview"
+    },
+    "cornell-american-robin-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-robin-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Robin — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Robin/id"
+    },
+    "cornell-american-robin-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-robin-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Robin — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Robin/lifehistory"
+    },
+    "cornell-american-robin-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-robin-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Robin — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Robin/maps-range"
+    },
+    "cornell-american-robin-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-american-robin-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "American Robin — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/American_Robin/overview"
+    },
+    "cornell-barn-swallow-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-barn-swallow-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Barn Swallow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Barn_Swallow/id"
+    },
+    "cornell-barn-swallow-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-barn-swallow-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Barn Swallow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Barn_Swallow/lifehistory"
+    },
+    "cornell-barn-swallow-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-barn-swallow-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Barn Swallow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Barn_Swallow/maps-range"
+    },
+    "cornell-barn-swallow-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-barn-swallow-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Barn Swallow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Barn_Swallow/overview"
+    },
+    "cornell-black-capped-chickadee-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-black-capped-chickadee-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Black-capped Chickadee — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Black-capped_Chickadee/id"
+    },
+    "cornell-black-capped-chickadee-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-black-capped-chickadee-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Black-capped Chickadee — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Black-capped_Chickadee/lifehistory"
+    },
+    "cornell-black-capped-chickadee-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-black-capped-chickadee-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Black-capped Chickadee — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Black-capped_Chickadee/maps-range"
+    },
+    "cornell-black-capped-chickadee-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-black-capped-chickadee-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Black-capped Chickadee — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Black-capped_Chickadee/overview"
+    },
+    "cornell-blue-gray-gnatcatcher-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-blue-gray-gnatcatcher-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Blue-gray Gnatcatcher — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Blue-gray_Gnatcatcher/id"
+    },
+    "cornell-blue-gray-gnatcatcher-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-blue-gray-gnatcatcher-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Blue-gray Gnatcatcher — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Blue-gray_Gnatcatcher/lifehistory"
+    },
+    "cornell-blue-gray-gnatcatcher-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-blue-gray-gnatcatcher-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Blue-gray Gnatcatcher — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Blue-gray_Gnatcatcher/maps-range"
+    },
+    "cornell-blue-gray-gnatcatcher-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-blue-gray-gnatcatcher-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Blue-gray Gnatcatcher — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Blue-gray_Gnatcatcher/overview"
+    },
+    "cornell-broad-winged-hawk-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-broad-winged-hawk-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Broad-winged Hawk — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Broad-winged_Hawk/id"
+    },
+    "cornell-broad-winged-hawk-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-broad-winged-hawk-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Broad-winged Hawk — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Broad-winged_Hawk/lifehistory"
+    },
+    "cornell-broad-winged-hawk-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-broad-winged-hawk-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Broad-winged Hawk — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Broad-winged_Hawk/maps-range"
+    },
+    "cornell-broad-winged-hawk-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-broad-winged-hawk-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Broad-winged Hawk — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Broad-winged_Hawk/overview"
+    },
+    "cornell-carolina-chickadee-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-carolina-chickadee-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Carolina Chickadee — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Carolina_Chickadee/id"
+    },
+    "cornell-carolina-chickadee-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-carolina-chickadee-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Carolina Chickadee — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Carolina_Chickadee/lifehistory"
+    },
+    "cornell-carolina-chickadee-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-carolina-chickadee-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Carolina Chickadee — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Carolina_Chickadee/maps-range"
+    },
+    "cornell-carolina-chickadee-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-carolina-chickadee-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Carolina Chickadee — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Carolina_Chickadee/overview"
+    },
+    "cornell-cedar-waxwing-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-cedar-waxwing-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Cedar Waxwing — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Cedar_Waxwing/id"
+    },
+    "cornell-cedar-waxwing-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-cedar-waxwing-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Cedar Waxwing — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Cedar_Waxwing/lifehistory"
+    },
+    "cornell-cedar-waxwing-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-cedar-waxwing-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Cedar Waxwing — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Cedar_Waxwing/maps-range"
+    },
+    "cornell-cedar-waxwing-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-cedar-waxwing-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Cedar Waxwing — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Cedar_Waxwing/overview"
+    },
+    "cornell-chimney-swift-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-chimney-swift-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Chimney Swift — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Chimney_Swift/id"
+    },
+    "cornell-chimney-swift-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-chimney-swift-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Chimney Swift — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Chimney_Swift/lifehistory"
+    },
+    "cornell-chimney-swift-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-chimney-swift-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Chimney Swift — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Chimney_Swift/maps-range"
+    },
+    "cornell-chimney-swift-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-chimney-swift-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Chimney Swift — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Chimney_Swift/overview"
+    },
+    "cornell-chipping-sparrow-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-chipping-sparrow-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Chipping Sparrow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Chipping_Sparrow/id"
+    },
+    "cornell-chipping-sparrow-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-chipping-sparrow-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Chipping Sparrow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Chipping_Sparrow/lifehistory"
+    },
+    "cornell-chipping-sparrow-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-chipping-sparrow-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Chipping Sparrow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Chipping_Sparrow/maps-range"
+    },
+    "cornell-chipping-sparrow-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-chipping-sparrow-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Chipping Sparrow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Chipping_Sparrow/overview"
+    },
+    "cornell-common-raven-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-common-raven-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Common Raven — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Common_Raven/id"
+    },
+    "cornell-common-raven-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-common-raven-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Common Raven — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Common_Raven/lifehistory"
+    },
+    "cornell-common-raven-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-common-raven-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Common Raven — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Common_Raven/maps-range"
+    },
+    "cornell-common-raven-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-common-raven-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Common Raven — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Common_Raven/overview"
+    },
+    "cornell-downy-woodpecker-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-downy-woodpecker-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Downy Woodpecker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Downy_Woodpecker/id"
+    },
+    "cornell-downy-woodpecker-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-downy-woodpecker-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Downy Woodpecker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Downy_Woodpecker/lifehistory"
+    },
+    "cornell-downy-woodpecker-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-downy-woodpecker-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Downy Woodpecker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Downy_Woodpecker/maps-range"
+    },
+    "cornell-downy-woodpecker-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-downy-woodpecker-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Downy Woodpecker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Downy_Woodpecker/overview"
+    },
+    "cornell-eastern-bluebird-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-bluebird-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Bluebird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Bluebird/id"
+    },
+    "cornell-eastern-bluebird-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-bluebird-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Bluebird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Bluebird/lifehistory"
+    },
+    "cornell-eastern-bluebird-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-bluebird-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Bluebird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Bluebird/maps-range"
+    },
+    "cornell-eastern-bluebird-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-bluebird-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Bluebird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Bluebird/overview"
+    },
+    "cornell-eastern-kingbird-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-kingbird-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Kingbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Kingbird/id"
+    },
+    "cornell-eastern-kingbird-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-kingbird-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Kingbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Kingbird/lifehistory"
+    },
+    "cornell-eastern-kingbird-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-kingbird-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Kingbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Kingbird/maps-range"
+    },
+    "cornell-eastern-kingbird-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-kingbird-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Kingbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Kingbird/overview"
+    },
+    "cornell-eastern-phoebe-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-phoebe-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Phoebe — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Phoebe/id"
+    },
+    "cornell-eastern-phoebe-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-phoebe-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Phoebe — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Phoebe/lifehistory"
+    },
+    "cornell-eastern-phoebe-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-phoebe-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Phoebe — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Phoebe/maps-range"
+    },
+    "cornell-eastern-phoebe-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-phoebe-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Phoebe — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Phoebe/overview"
+    },
+    "cornell-eastern-wood-pewee-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-wood-pewee-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Wood-Pewee — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Wood-Pewee/id"
+    },
+    "cornell-eastern-wood-pewee-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-wood-pewee-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Wood-Pewee — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Wood-Pewee/lifehistory"
+    },
+    "cornell-eastern-wood-pewee-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-wood-pewee-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Wood-Pewee — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Wood-Pewee/maps-range"
+    },
+    "cornell-eastern-wood-pewee-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-eastern-wood-pewee-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Eastern Wood-Pewee — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Eastern_Wood-Pewee/overview"
+    },
+    "cornell-fish-crow-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-fish-crow-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Fish Crow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Fish_Crow/id"
+    },
+    "cornell-fish-crow-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-fish-crow-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Fish Crow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Fish_Crow/lifehistory"
+    },
+    "cornell-fish-crow-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-fish-crow-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Fish Crow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Fish_Crow/maps-range"
+    },
+    "cornell-fish-crow-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-fish-crow-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Fish Crow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Fish_Crow/overview"
+    },
+    "cornell-gray-catbird-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-gray-catbird-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Gray Catbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Gray_Catbird/id"
+    },
+    "cornell-gray-catbird-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-gray-catbird-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Gray Catbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Gray_Catbird/lifehistory"
+    },
+    "cornell-gray-catbird-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-gray-catbird-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Gray Catbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Gray_Catbird/maps-range"
+    },
+    "cornell-gray-catbird-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-gray-catbird-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Gray Catbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Gray_Catbird/overview"
+    },
+    "cornell-great-crested-flycatcher-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-great-crested-flycatcher-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Great Crested Flycatcher — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Great_Crested_Flycatcher/id"
+    },
+    "cornell-great-crested-flycatcher-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-great-crested-flycatcher-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Great Crested Flycatcher — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Great_Crested_Flycatcher/lifehistory"
+    },
+    "cornell-great-crested-flycatcher-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-great-crested-flycatcher-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Great Crested Flycatcher — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Great_Crested_Flycatcher/maps-range"
+    },
+    "cornell-great-crested-flycatcher-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-great-crested-flycatcher-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Great Crested Flycatcher — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Great_Crested_Flycatcher/overview"
+    },
+    "cornell-hairy-woodpecker-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-hairy-woodpecker-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Hairy Woodpecker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Hairy_Woodpecker/id"
+    },
+    "cornell-hairy-woodpecker-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-hairy-woodpecker-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Hairy Woodpecker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Hairy_Woodpecker/lifehistory"
+    },
+    "cornell-hairy-woodpecker-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-hairy-woodpecker-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Hairy Woodpecker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Hairy_Woodpecker/maps-range"
+    },
+    "cornell-hairy-woodpecker-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-hairy-woodpecker-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Hairy Woodpecker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Hairy_Woodpecker/overview"
+    },
+    "cornell-house-finch-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-house-finch-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "House Finch — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/House_Finch/id"
+    },
+    "cornell-house-finch-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-house-finch-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "House Finch — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/House_Finch/lifehistory"
+    },
+    "cornell-house-finch-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-house-finch-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "House Finch — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/House_Finch/maps-range"
+    },
+    "cornell-house-finch-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-house-finch-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "House Finch — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/House_Finch/overview"
+    },
+    "cornell-northern-cardinal-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-northern-cardinal-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Northern Cardinal — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Northern_Cardinal/id"
+    },
+    "cornell-northern-cardinal-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-northern-cardinal-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Northern Cardinal — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Northern_Cardinal/lifehistory"
+    },
+    "cornell-northern-cardinal-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-northern-cardinal-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Northern Cardinal — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Northern_Cardinal/maps-range"
+    },
+    "cornell-northern-cardinal-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-northern-cardinal-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Northern Cardinal — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Northern_Cardinal/overview"
+    },
+    "cornell-northern-flicker-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-northern-flicker-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Northern Flicker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Northern_Flicker/id"
+    },
+    "cornell-northern-flicker-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-northern-flicker-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Northern Flicker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Northern_Flicker/lifehistory"
+    },
+    "cornell-northern-flicker-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-northern-flicker-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Northern Flicker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Northern_Flicker/maps-range"
+    },
+    "cornell-northern-flicker-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-northern-flicker-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Northern Flicker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Northern_Flicker/overview"
+    },
+    "cornell-osprey-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-osprey-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Osprey — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Osprey/id"
+    },
+    "cornell-osprey-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-osprey-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Osprey — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Osprey/lifehistory"
+    },
+    "cornell-osprey-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-osprey-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Osprey — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Osprey/maps-range"
+    },
+    "cornell-osprey-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-osprey-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Osprey — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Osprey/overview"
+    },
+    "cornell-ovenbird-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-ovenbird-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Ovenbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Ovenbird/id"
+    },
+    "cornell-ovenbird-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-ovenbird-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Ovenbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Ovenbird/lifehistory"
+    },
+    "cornell-ovenbird-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-ovenbird-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Ovenbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Ovenbird/maps-range"
+    },
+    "cornell-ovenbird-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-ovenbird-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Ovenbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Ovenbird/overview"
+    },
+    "cornell-purple-martin-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-purple-martin-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Purple Martin — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Purple_Martin/id"
+    },
+    "cornell-purple-martin-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-purple-martin-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Purple Martin — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Purple_Martin/lifehistory"
+    },
+    "cornell-purple-martin-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-purple-martin-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Purple Martin — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Purple_Martin/maps-range"
+    },
+    "cornell-purple-martin-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-purple-martin-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Purple Martin — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Purple_Martin/overview"
+    },
+    "cornell-red-bellied-woodpecker-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-bellied-woodpecker-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-bellied Woodpecker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-bellied_Woodpecker/id"
+    },
+    "cornell-red-bellied-woodpecker-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-bellied-woodpecker-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-bellied Woodpecker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-bellied_Woodpecker/lifehistory"
+    },
+    "cornell-red-bellied-woodpecker-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-bellied-woodpecker-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-bellied Woodpecker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-bellied_Woodpecker/maps-range"
+    },
+    "cornell-red-bellied-woodpecker-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-bellied-woodpecker-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-bellied Woodpecker — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-bellied_Woodpecker/overview"
+    },
+    "cornell-red-eyed-vireo-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-eyed-vireo-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-eyed Vireo — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-eyed_Vireo/id"
+    },
+    "cornell-red-eyed-vireo-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-eyed-vireo-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-eyed Vireo — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-eyed_Vireo/lifehistory"
+    },
+    "cornell-red-eyed-vireo-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-eyed-vireo-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-eyed Vireo — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-eyed_Vireo/maps-range"
+    },
+    "cornell-red-eyed-vireo-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-eyed-vireo-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-eyed Vireo — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-eyed_Vireo/overview"
+    },
+    "cornell-red-shouldered-hawk-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-shouldered-hawk-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-shouldered Hawk — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-shouldered_Hawk/id"
+    },
+    "cornell-red-shouldered-hawk-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-shouldered-hawk-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-shouldered Hawk — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-shouldered_Hawk/lifehistory"
+    },
+    "cornell-red-shouldered-hawk-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-shouldered-hawk-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-shouldered Hawk — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-shouldered_Hawk/maps-range"
+    },
+    "cornell-red-shouldered-hawk-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-shouldered-hawk-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-shouldered Hawk — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-shouldered_Hawk/overview"
+    },
+    "cornell-red-tailed-hawk-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-tailed-hawk-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-tailed Hawk — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-tailed_Hawk/id"
+    },
+    "cornell-red-tailed-hawk-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-tailed-hawk-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-tailed Hawk — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-tailed_Hawk/lifehistory"
+    },
+    "cornell-red-tailed-hawk-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-tailed-hawk-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-tailed Hawk — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-tailed_Hawk/maps-range"
+    },
+    "cornell-red-tailed-hawk-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-red-tailed-hawk-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Red-tailed Hawk — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Red-tailed_Hawk/overview"
+    },
+    "cornell-ruby-throated-hummingbird-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-ruby-throated-hummingbird-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Ruby-throated Hummingbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Ruby-throated_Hummingbird/id"
+    },
+    "cornell-ruby-throated-hummingbird-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-ruby-throated-hummingbird-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Ruby-throated Hummingbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Ruby-throated_Hummingbird/lifehistory"
+    },
+    "cornell-ruby-throated-hummingbird-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-ruby-throated-hummingbird-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Ruby-throated Hummingbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Ruby-throated_Hummingbird/maps-range"
+    },
+    "cornell-ruby-throated-hummingbird-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-ruby-throated-hummingbird-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Ruby-throated Hummingbird — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Ruby-throated_Hummingbird/overview"
+    },
+    "cornell-scarlet-tanager-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-scarlet-tanager-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Scarlet Tanager — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Scarlet_Tanager/id"
+    },
+    "cornell-scarlet-tanager-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-scarlet-tanager-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Scarlet Tanager — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Scarlet_Tanager/lifehistory"
+    },
+    "cornell-scarlet-tanager-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-scarlet-tanager-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Scarlet Tanager — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Scarlet_Tanager/maps-range"
+    },
+    "cornell-scarlet-tanager-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-scarlet-tanager-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Scarlet Tanager — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Scarlet_Tanager/overview"
+    },
+    "cornell-song-sparrow-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-song-sparrow-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Song Sparrow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Song_Sparrow/id"
+    },
+    "cornell-song-sparrow-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-song-sparrow-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Song Sparrow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Song_Sparrow/lifehistory"
+    },
+    "cornell-song-sparrow-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-song-sparrow-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Song Sparrow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Song_Sparrow/maps-range"
+    },
+    "cornell-song-sparrow-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-song-sparrow-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Song Sparrow — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Song_Sparrow/overview"
+    },
+    "cornell-tufted-titmouse-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-tufted-titmouse-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Tufted Titmouse — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Tufted_Titmouse/id"
+    },
+    "cornell-tufted-titmouse-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-tufted-titmouse-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Tufted Titmouse — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Tufted_Titmouse/lifehistory"
+    },
+    "cornell-tufted-titmouse-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-tufted-titmouse-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Tufted Titmouse — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Tufted_Titmouse/maps-range"
+    },
+    "cornell-tufted-titmouse-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-tufted-titmouse-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Tufted Titmouse — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Tufted_Titmouse/overview"
+    },
+    "cornell-veery-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-veery-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Veery — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Veery/id"
+    },
+    "cornell-veery-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-veery-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Veery — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Veery/lifehistory"
+    },
+    "cornell-veery-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-veery-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Veery — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Veery/maps-range"
+    },
+    "cornell-veery-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-veery-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Veery — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Veery/overview"
+    },
+    "cornell-white-breasted-nuthatch-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-white-breasted-nuthatch-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "White-breasted Nuthatch — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/White-breasted_Nuthatch/id"
+    },
+    "cornell-white-breasted-nuthatch-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-white-breasted-nuthatch-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "White-breasted Nuthatch — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/White-breasted_Nuthatch/lifehistory"
+    },
+    "cornell-white-breasted-nuthatch-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-white-breasted-nuthatch-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "White-breasted Nuthatch — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/White-breasted_Nuthatch/maps-range"
+    },
+    "cornell-white-breasted-nuthatch-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-white-breasted-nuthatch-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "White-breasted Nuthatch — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/White-breasted_Nuthatch/overview"
+    },
+    "cornell-wood-thrush-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-wood-thrush-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Wood Thrush — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Wood_Thrush/id"
+    },
+    "cornell-wood-thrush-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-wood-thrush-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Wood Thrush — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Wood_Thrush/lifehistory"
+    },
+    "cornell-wood-thrush-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-wood-thrush-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Wood Thrush — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Wood_Thrush/maps-range"
+    },
+    "cornell-wood-thrush-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-wood-thrush-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Wood Thrush — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Wood_Thrush/overview"
+    },
+    "cornell-yellow-throated-vireo-id": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-yellow-throated-vireo-id",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Yellow-throated Vireo — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Yellow-throated_Vireo/id"
+    },
+    "cornell-yellow-throated-vireo-lifehistory": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-yellow-throated-vireo-lifehistory",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Yellow-throated Vireo — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Yellow-throated_Vireo/lifehistory"
+    },
+    "cornell-yellow-throated-vireo-maps-range": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-yellow-throated-vireo-maps-range",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Yellow-throated Vireo — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Yellow-throated_Vireo/maps-range"
+    },
+    "cornell-yellow-throated-vireo-overview": {
+      "accessed_at": "2026-07-25",
+      "id": "cornell-yellow-throated-vireo-overview",
+      "publisher": "Cornell Lab of Ornithology",
+      "title": "Yellow-throated Vireo — All About Birds",
+      "url": "https://www.allaboutbirds.org/guide/Yellow-throated_Vireo/overview"
+    }
+  },
+  "species": {
+    "Archilochus colubris": {
+      "clutch_size": {
+        "max": 2,
+        "min": 2,
+        "sources": [
+          "audubon-ruby-throated-hummingbird",
+          "cornell-ruby-throated-hummingbird-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-ruby-throated-hummingbird-archilochus-colubris"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-ruby-throated-hummingbird",
+          "cornell-ruby-throated-hummingbird-lifehistory"
+        ],
+        "value": "Mostly nectar and insects."
+      },
+      "fact": {
+        "sources": [
+          "audubon-ruby-throated-hummingbird",
+          "cornell-ruby-throated-hummingbird-overview"
+        ],
+        "value": "The Ruby-throated Hummingbird is the only breeding hummingbird in eastern North America."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-ruby-throated-hummingbird",
+          "cornell-ruby-throated-hummingbird-lifehistory"
+        ],
+        "value": "Gardens, wood edges."
+      },
+      "length_cm": {
+        "max": 9,
+        "min": 7,
+        "sources": [
+          "cornell-ruby-throated-hummingbird-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-ruby-throated-hummingbird",
+          "cornell-ruby-throated-hummingbird-maps-range"
+        ],
+        "value": "Nearly all of the Ruby-throated Hummingbird leave North America in the fall, overwintering from Mexico to Costa Rica or Panama. Some may cross the Gulf of Mexico but many migrate around, migrating along Texas coast. In spring, the male Ruby-throated Hummingbird moves north earlier than the female."
+      },
+      "nest": {
+        "sources": [
+          "audubon-ruby-throated-hummingbird",
+          "cornell-ruby-throated-hummingbird-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest site is in a tree or large shrub, 5-50 feet above the ground, usually 10-20 feet. The nest, built by the female Ruby-throated Hummingbird is a compact cup of grasses, plant fibers, spider webs, lined with plant down."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 11,
+        "min": 8,
+        "sources": [
+          "cornell-ruby-throated-hummingbird-id"
+        ]
+      }
+    },
+    "Baeolophus bicolor": {
+      "clutch_size": {
+        "max": 9,
+        "min": 3,
+        "sources": [
+          "audubon-tufted-titmouse",
+          "cornell-tufted-titmouse-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-tufted-titmouse-baeolophus-bicolor"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-tufted-titmouse",
+          "cornell-tufted-titmouse-lifehistory"
+        ],
+        "value": "Mostly insects and seeds."
+      },
+      "fact": {
+        "sources": [
+          "audubon-tufted-titmouse",
+          "cornell-tufted-titmouse-overview"
+        ],
+        "value": "This rather tame, active, crested little bird is common all year in eastern forests, where its whistled peter-peter-peter song may be heard even during mid-winter thaws."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-tufted-titmouse",
+          "cornell-tufted-titmouse-lifehistory"
+        ],
+        "value": "Woodlands, shade trees, groves."
+      },
+      "length_cm": {
+        "max": 16,
+        "min": 14,
+        "sources": [
+          "cornell-tufted-titmouse-id"
+        ]
+      },
+      "migration": {
+        "category": "resident",
+        "sources": [
+          "audubon-tufted-titmouse",
+          "cornell-tufted-titmouse-maps-range"
+        ],
+        "value": "Permanent resident. Young birds may disperse some distance away from where they were raised (in any direction, including north)."
+      },
+      "nest": {
+        "sources": [
+          "audubon-tufted-titmouse",
+          "cornell-tufted-titmouse-lifehistory"
+        ],
+        "type": "cavity",
+        "value": "Nest site is in hole in tree, either natural cavity or old woodpecker hole; averages about 35' above the ground, ranging from 3' to 90' up. Unlike the chickadees, apparently does not excavate its own nest hole. Nest (probably built by female) has foundation of grass, moss, leaves, bark strips, lined with soft materials, especially animal hair."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 26,
+        "min": 20,
+        "sources": [
+          "cornell-tufted-titmouse-id"
+        ]
+      }
+    },
+    "Bombycilla cedrorum": {
+      "clutch_size": {
+        "max": 6,
+        "min": 2,
+        "sources": [
+          "audubon-cedar-waxwing",
+          "cornell-cedar-waxwing-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-cedar-waxwing-bombycilla-cedrorum"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-cedar-waxwing",
+          "cornell-cedar-waxwing-lifehistory"
+        ],
+        "value": "Mostly berries and insects."
+      },
+      "fact": {
+        "sources": [
+          "audubon-cedar-waxwing",
+          "cornell-cedar-waxwing-overview"
+        ],
+        "value": "With thin, lisping cries, flocks of the Cedar Waxwing descend on berry-laden trees and hedges, to flutter among the branches as they feast."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-cedar-waxwing",
+          "cornell-cedar-waxwing-lifehistory"
+        ],
+        "value": "Open woodlands, fruiting trees, orchards; in winter, widespread, including towns."
+      },
+      "length_cm": {
+        "max": 17,
+        "min": 14,
+        "sources": [
+          "audubon-cedar-waxwing",
+          "cornell-cedar-waxwing-id"
+        ]
+      },
+      "migration": {
+        "category": "nomadic",
+        "sources": [
+          "audubon-cedar-waxwing",
+          "cornell-cedar-waxwing-maps-range"
+        ],
+        "value": "Migratory flocks of 30-100 begin to form in August. The Cedar Waxwing migrate southward in the winter, but move about irregularly; both breeding and wintering areas may change from year to year, depending on food supplies. Some may linger south of breeding range into late spring or early summer."
+      },
+      "nest": {
+        "sources": [
+          "audubon-cedar-waxwing",
+          "cornell-cedar-waxwing-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest: Placed in tree, on horizontal limb or in fork, usually 6-20 ft above the ground but can be lower or much higher (up to 50'). The female Cedar Waxwing do most of the nest building, loosely built open cup of grass, weeds, twigs, plant fibers, lined with finer materials such as moss, rootlets, fine grass, hair."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 30,
+        "min": 22,
+        "sources": [
+          "audubon-cedar-waxwing",
+          "cornell-cedar-waxwing-id"
+        ]
+      }
+    },
+    "Buteo jamaicensis": {
+      "clutch_size": {
+        "max": 5,
+        "min": 1,
+        "sources": [
+          "audubon-red-tailed-hawk",
+          "cornell-red-tailed-hawk-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2024",
+        "sources": [
+          "birdlife-red-tailed-hawk-buteo-jamaicensis"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-red-tailed-hawk",
+          "cornell-red-tailed-hawk-lifehistory"
+        ],
+        "value": "Varied, includes small mammals, birds, and reptiles."
+      },
+      "fact": {
+        "sources": [
+          "audubon-red-tailed-hawk",
+          "cornell-red-tailed-hawk-overview"
+        ],
+        "value": "This is the most widespread and familiar large hawk in North America, bulky and broad-winged, designed for effortless soaring."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-red-tailed-hawk",
+          "cornell-red-tailed-hawk-lifehistory"
+        ],
+        "value": "Open country, woodlands, prairie groves, mountains, plains, roadsides."
+      },
+      "length_cm": {
+        "max": 66,
+        "min": 43,
+        "sources": [
+          "audubon-red-tailed-hawk",
+          "cornell-red-tailed-hawk-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-red-tailed-hawk",
+          "cornell-red-tailed-hawk-maps-range"
+        ],
+        "value": "Northern Red-tailed Hawks may migrate far to the south, while many at central or southern latitudes (especially adults) are permanent residents. Most migration is relatively late in the fall and early in the spring."
+      },
+      "nest": {
+        "sources": [
+          "audubon-red-tailed-hawk",
+          "cornell-red-tailed-hawk-lifehistory"
+        ],
+        "type": "platform",
+        "value": "Nest site is variable. Usually in a tree, up to 120 ft above ground; nest tree often taller than surrounding trees. Nest (built by both sexes) is a bulky bowl of sticks, lined with finer materials, often with leafy green branches added."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 132,
+        "min": 114,
+        "sources": [
+          "audubon-red-tailed-hawk",
+          "cornell-red-tailed-hawk-id"
+        ]
+      }
+    },
+    "Buteo lineatus": {
+      "clutch_size": {
+        "max": 4,
+        "min": 2,
+        "sources": [
+          "audubon-red-shouldered-hawk",
+          "cornell-red-shouldered-hawk-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-red-shouldered-hawk-buteo-lineatus"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-red-shouldered-hawk",
+          "cornell-red-shouldered-hawk-lifehistory"
+        ],
+        "value": "Includes small mammals, amphibians, reptiles, birds."
+      },
+      "fact": {
+        "sources": [
+          "audubon-red-shouldered-hawk",
+          "cornell-red-shouldered-hawk-overview"
+        ],
+        "value": "A hawk of the woodlands, often heard before it is seen."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-red-shouldered-hawk",
+          "cornell-red-shouldered-hawk-lifehistory"
+        ],
+        "value": "Bottomland woods, wooded streamsides, swamps."
+      },
+      "length_cm": {
+        "max": 61,
+        "min": 41,
+        "sources": [
+          "audubon-red-shouldered-hawk",
+          "cornell-red-shouldered-hawk-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-red-shouldered-hawk",
+          "cornell-red-shouldered-hawk-maps-range"
+        ],
+        "value": "Mostly a permanent resident in west and south; northern birds migrate, but do not travel far. Some movement in winter as far south as central Mexico."
+      },
+      "nest": {
+        "sources": [
+          "audubon-red-shouldered-hawk",
+          "cornell-red-shouldered-hawk-lifehistory"
+        ],
+        "type": "platform",
+        "value": "Nest site is usually in deciduous tree, sometimes in conifer, located in fork of main trunk or at base of branches against trunk, usually 35-65' above ground. Nest (built by both sexes) is platform of sticks and other material, lined with bark, moss, and sprigs of green vegetation. Nest may be reused for more than one season."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 111,
+        "min": 94,
+        "sources": [
+          "audubon-red-shouldered-hawk",
+          "cornell-red-shouldered-hawk-id"
+        ]
+      }
+    },
+    "Buteo platypterus": {
+      "clutch_size": {
+        "max": 4,
+        "min": 1,
+        "sources": [
+          "audubon-broad-winged-hawk",
+          "cornell-broad-winged-hawk-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2024",
+        "sources": [
+          "birdlife-broad-winged-hawk-buteo-platypterus"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-broad-winged-hawk",
+          "cornell-broad-winged-hawk-lifehistory"
+        ],
+        "value": "Includes small mammals, amphibians, reptiles, birds."
+      },
+      "fact": {
+        "sources": [
+          "audubon-broad-winged-hawk",
+          "cornell-broad-winged-hawk-overview"
+        ],
+        "value": "The Broad-winged Hawk is a small hawk, common in eastern woodlands in summer."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-broad-winged-hawk",
+          "cornell-broad-winged-hawk-lifehistory"
+        ],
+        "value": "Woods, groves."
+      },
+      "length_cm": {
+        "max": 44,
+        "min": 33,
+        "sources": [
+          "audubon-broad-winged-hawk",
+          "cornell-broad-winged-hawk-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-broad-winged-hawk",
+          "cornell-broad-winged-hawk-maps-range"
+        ],
+        "value": "A long-distance migrant, most going to South America for the winter. Migrates in flocks called \"kettles\". Birds from throughout the east travel southwest or south to go around, not across, the Gulf of Mexico."
+      },
+      "nest": {
+        "sources": [
+          "audubon-broad-winged-hawk",
+          "cornell-broad-winged-hawk-lifehistory"
+        ],
+        "type": "platform",
+        "value": "Nest site is usually in the lower part of a large tree (either deciduous or coniferous), typically 25-40' above ground. Nest (built by both sexes) is a rather small platform of sticks, lined with softer materials such as bark and moss. Leafy green twigs often added during nesting cycle."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 99,
+        "min": 81,
+        "sources": [
+          "audubon-broad-winged-hawk",
+          "cornell-broad-winged-hawk-id"
+        ]
+      }
+    },
+    "Cardinalis cardinalis": {
+      "clutch_size": {
+        "max": 5,
+        "min": 2,
+        "sources": [
+          "audubon-northern-cardinal",
+          "cornell-northern-cardinal-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2018",
+        "sources": [
+          "birdlife-northern-cardinal-cardinalis-cardinalis"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-northern-cardinal",
+          "cornell-northern-cardinal-lifehistory"
+        ],
+        "value": "Mostly seeds, insects, berries."
+      },
+      "fact": {
+        "sources": [
+          "audubon-northern-cardinal",
+          "cornell-northern-cardinal-overview"
+        ],
+        "value": "One of our most popular birds, the Northern Cardinal, is the official state bird of no fewer than seven eastern states."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-northern-cardinal",
+          "cornell-northern-cardinal-lifehistory"
+        ],
+        "value": "Woodland edges, thickets, suburban gardens, towns, desert washes."
+      },
+      "length_cm": {
+        "max": 23,
+        "min": 21,
+        "sources": [
+          "audubon-northern-cardinal",
+          "cornell-northern-cardinal-id"
+        ]
+      },
+      "migration": {
+        "category": "resident",
+        "sources": [
+          "audubon-northern-cardinal",
+          "cornell-northern-cardinal-maps-range"
+        ],
+        "value": "Permanent resident throughout its range."
+      },
+      "nest": {
+        "sources": [
+          "audubon-northern-cardinal",
+          "cornell-northern-cardinal-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest: Usually well hidden in dense shrubs, vines, or low trees, placed 3-10 ft above ground, sometimes higher. Nest (built by female) is open cup made of twigs, weeds, grass, bark strips, leaves, rootlets, lined with fine grass or hair."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 31,
+        "min": 25,
+        "sources": [
+          "audubon-northern-cardinal",
+          "cornell-northern-cardinal-id"
+        ]
+      }
+    },
+    "Catharus fuscescens": {
+      "clutch_size": {
+        "max": 5,
+        "min": 3,
+        "sources": [
+          "audubon-veery",
+          "cornell-veery-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2018",
+        "sources": [
+          "birdlife-veery-catharus-fuscescens"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-veery",
+          "cornell-veery-lifehistory"
+        ],
+        "value": "The diet of a Veery is mainly insects during the breeding season, including beetles, ants, small wasps, caterpillars, crickets, and others, also spiders, centipedes, snails; rarely eats small frogs or salamanders."
+      },
+      "fact": {
+        "sources": [
+          "audubon-veery",
+          "cornell-veery-overview"
+        ],
+        "value": "In moist leafy woods across the northern states and southern Canada, the breezy spiraling song of this thrush is a common sound in summer."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-veery",
+          "cornell-veery-lifehistory"
+        ],
+        "value": "Damp deciduous woods."
+      },
+      "length_cm": {
+        "max": 19,
+        "min": 17,
+        "sources": [
+          "audubon-veery",
+          "cornell-veery-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-veery",
+          "cornell-veery-maps-range"
+        ],
+        "value": "The Veery migrates mostly at night. Winters east of the Andes in South America. Those nesting in western United States apparently migrate east in fall before turning south, as they are virtually unrecorded in the southwest United States south of breeding areas."
+      },
+      "nest": {
+        "sources": [
+          "audubon-veery",
+          "cornell-veery-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest: Typically placed on or near the ground in dense forest. Nests above ground are usually in base of shrub or sapling, less than 5 ft up; nests on ground are often placed against stump or log, or in clump of grass or weeds. Nest (built by female) has foundation of dead leaves, cup made of weeds, twigs, fine strips of bark, lined with rootlets and bark fibers."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 31,
+        "min": 28,
+        "sources": [
+          "audubon-veery",
+          "cornell-veery-id"
+        ]
+      }
+    },
+    "Chaetura pelagica": {
+      "clutch_size": {
+        "max": 6,
+        "min": 3,
+        "sources": [
+          "audubon-chimney-swift",
+          "cornell-chimney-swift-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2018",
+        "sources": [
+          "birdlife-chimney-swift-chaetura-pelagica"
+        ],
+        "status": "Vulnerable",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-chimney-swift",
+          "cornell-chimney-swift-lifehistory"
+        ],
+        "value": "Diet consists primarily of flying insects."
+      },
+      "fact": {
+        "sources": [
+          "audubon-chimney-swift",
+          "cornell-chimney-swift-overview"
+        ],
+        "value": "Chimney Swift is the only swift that occurs regularly in the east."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-chimney-swift",
+          "cornell-chimney-swift-lifehistory"
+        ],
+        "value": "Open sky, especially over cities and towns."
+      },
+      "length_cm": {
+        "max": 15,
+        "min": 12,
+        "sources": [
+          "audubon-chimney-swift",
+          "cornell-chimney-swift-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-chimney-swift",
+          "cornell-chimney-swift-maps-range"
+        ],
+        "value": "Migrates in flocks, apparently by day. A long-distance migrant, the Chimney Swift winters in eastern Peru and perhaps elsewhere in the Amazon Basin of South America."
+      },
+      "nest": {
+        "sources": [
+          "audubon-chimney-swift",
+          "cornell-chimney-swift-lifehistory"
+        ],
+        "type": "other",
+        "value": "The nest, built by both sexes, is shaped like half a saucer and made of twigs glued together with the birds’ saliva, with adults breaking off short dead twigs while zooming past in flight."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 32,
+        "min": 27,
+        "sources": [
+          "audubon-chimney-swift",
+          "cornell-chimney-swift-id"
+        ]
+      }
+    },
+    "Colaptes auratus": {
+      "clutch_size": {
+        "max": 12,
+        "min": 3,
+        "sources": [
+          "audubon-northern-flicker",
+          "cornell-northern-flicker-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-yellow-shafted-flicker-colaptes-auratus",
+          "audubon-northern-flicker"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List (Yellow-shafted taxon)"
+      },
+      "diet": {
+        "sources": [
+          "audubon-northern-flicker",
+          "cornell-northern-flicker-lifehistory"
+        ],
+        "value": "Mostly ants and other insects."
+      },
+      "fact": {
+        "sources": [
+          "audubon-northern-flicker",
+          "cornell-northern-flicker-overview"
+        ],
+        "value": "This brown woodpecker flashes bright colors under the wings and tail when it flies."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-northern-flicker",
+          "cornell-northern-flicker-lifehistory"
+        ],
+        "value": "Open forests, woodlots, groves, towns, semi-open country."
+      },
+      "length_cm": {
+        "max": 31,
+        "min": 28,
+        "sources": [
+          "audubon-northern-flicker",
+          "cornell-northern-flicker-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-northern-flicker",
+          "cornell-northern-flicker-maps-range"
+        ],
+        "value": "Northern Yellow-shafted Flickers from Alaska and Canada are strongly migratory, most traveling east and then south. Big flights move down the Atlantic Coast in the fall, migrating by day. Red-shafted Flickers often migrate shorter distances, moving southward and from mountains into lowlands; some spread eastward on the Great Plains in winter."
+      },
+      "nest": {
+        "sources": [
+          "audubon-northern-flicker",
+          "cornell-northern-flicker-lifehistory"
+        ],
+        "type": "cavity",
+        "value": "Nest site is a cavity in a tree or post, rarely in a burrow in the ground."
+      },
+      "research_status": "verified",
+      "taxonomy_note": {
+        "sources": [
+          "birdlife-yellow-shafted-flicker-colaptes-auratus",
+          "audubon-northern-flicker"
+        ],
+        "value": "Archive identity: Northern Flicker (Colaptes auratus). BirdLife's cited global assessment applies to its Yellow-shafted Flicker taxon under the same scientific name."
+      },
+      "wingspan_cm": {
+        "max": 51,
+        "min": 43,
+        "sources": [
+          "audubon-northern-flicker",
+          "cornell-northern-flicker-id"
+        ]
+      }
+    },
+    "Contopus virens": {
+      "clutch_size": {
+        "max": 4,
+        "min": 2,
+        "sources": [
+          "audubon-eastern-wood-pewee",
+          "cornell-eastern-wood-pewee-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-eastern-wood-pewee-contopus-virens"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-eastern-wood-pewee",
+          "cornell-eastern-wood-pewee-lifehistory"
+        ],
+        "value": "The Eastern Wood-Pewee feeds almost entirely on insects and other arthropods, taking only small numbers of berries."
+      },
+      "fact": {
+        "sources": [
+          "audubon-eastern-wood-pewee",
+          "cornell-eastern-wood-pewee-overview"
+        ],
+        "value": "In eastern woods in the summer, the plaintive whistled pee-a-wee of the Eastern Wood-Pewee is often heard before the bird is seen."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-eastern-wood-pewee",
+          "cornell-eastern-wood-pewee-lifehistory"
+        ],
+        "value": "Woodlands, groves."
+      },
+      "length_cm": {
+        "max": 17,
+        "min": 15,
+        "sources": [
+          "audubon-eastern-wood-pewee",
+          "cornell-eastern-wood-pewee-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-eastern-wood-pewee",
+          "cornell-eastern-wood-pewee-maps-range"
+        ],
+        "value": "Strictly a summer resident in North America, arriving on breeding grounds mostly in May, very few remaining after the beginning of October. Probably migrates at night."
+      },
+      "nest": {
+        "sources": [
+          "audubon-eastern-wood-pewee",
+          "cornell-eastern-wood-pewee-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest site is in tree (usually deciduous), saddled on a horizontal branch well out from the trunk. Nest (probably built by female alone) is compact open cup of grass, plant fibers, and spiderwebs, the outside usually decorated with lichens. Nest seems small for size of bird."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 28,
+        "min": 25,
+        "sources": [
+          "audubon-eastern-wood-pewee",
+          "cornell-eastern-wood-pewee-id"
+        ]
+      }
+    },
+    "Corvus brachyrhynchos": {
+      "clutch_size": {
+        "max": 9,
+        "min": 3,
+        "sources": [
+          "audubon-american-crow",
+          "cornell-american-crow-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2018",
+        "sources": [
+          "birdlife-american-crow-corvus-brachyrhynchos"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-american-crow",
+          "cornell-american-crow-lifehistory"
+        ],
+        "value": "Omnivorous."
+      },
+      "fact": {
+        "sources": [
+          "audubon-american-crow",
+          "cornell-american-crow-overview"
+        ],
+        "value": "Crows are thought to be among our most intelligent birds, and the success of the American Crow in adapting to civilization would seem to confirm this."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-american-crow",
+          "cornell-american-crow-lifehistory"
+        ],
+        "value": "Woodlands, farms, fields, river groves, shores, towns."
+      },
+      "length_cm": {
+        "max": 53,
+        "min": 41,
+        "sources": [
+          "audubon-american-crow",
+          "cornell-american-crow-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-american-crow",
+          "cornell-american-crow-maps-range"
+        ],
+        "value": "Permanent resident in many areas; withdraws in fall from northern regions, and flocks spend the winter in some areas a short distance south of the breeding range."
+      },
+      "nest": {
+        "sources": [
+          "audubon-american-crow",
+          "cornell-american-crow-lifehistory"
+        ],
+        "type": "platform",
+        "value": "The nest site is located in a tree or large shrub, 10-70 ft above the ground, typically in a vertical fork or at the base of a branch against the trunk. Rarely nests on the ground or on a building ledge. Nest (built by both sexes) is a large, bulky basket of sticks, twigs, bark strips, weeds, and mud, lined with softer material such as grass, moss, plant fibers, and feathers."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 99,
+        "min": 86,
+        "sources": [
+          "audubon-american-crow",
+          "cornell-american-crow-id"
+        ]
+      }
+    },
+    "Corvus corax": {
+      "clutch_size": {
+        "max": 7,
+        "min": 3,
+        "sources": [
+          "audubon-common-raven",
+          "cornell-common-raven-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-common-raven-corvus-corax"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-common-raven",
+          "cornell-common-raven-lifehistory"
+        ],
+        "value": "Omnivorous."
+      },
+      "fact": {
+        "sources": [
+          "audubon-common-raven",
+          "cornell-common-raven-overview"
+        ],
+        "value": "Of the birds classified as perching birds or 'songbirds,' the Common Raven is the largest, the size of a hawk."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-common-raven",
+          "cornell-common-raven-lifehistory"
+        ],
+        "value": "Boreal and mountain forests, coastal cliffs, tundra, and desert."
+      },
+      "length_cm": {
+        "max": 69,
+        "min": 56,
+        "sources": [
+          "audubon-common-raven",
+          "cornell-common-raven-id"
+        ]
+      },
+      "migration": {
+        "category": "resident",
+        "sources": [
+          "audubon-common-raven",
+          "cornell-common-raven-maps-range"
+        ],
+        "value": "The Common Raven is mostly a permanent resident, but some wander in fall and winter, appearing south of the breeding range."
+      },
+      "nest": {
+        "sources": [
+          "audubon-common-raven",
+          "cornell-common-raven-lifehistory"
+        ],
+        "type": "platform",
+        "value": "Nest site is usually on a ledge of a rock cliff, or high in a tall tree (especially a conifer). May use the same site year after year, adding material on top of the old nest. Nest is a bulky basket of large sticks and twigs, with a deep depression in the center lined with grass, bark strips, moss, and animal hair."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 118,
+        "min": 116,
+        "sources": [
+          "audubon-common-raven",
+          "cornell-common-raven-id"
+        ]
+      }
+    },
+    "Corvus ossifragus": {
+      "clutch_size": {
+        "max": 5,
+        "min": 4,
+        "sources": [
+          "audubon-fish-crow",
+          "cornell-fish-crow-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-fish-crow-corvus-ossifragus"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-fish-crow",
+          "cornell-fish-crow-lifehistory"
+        ],
+        "value": "Omnivorous."
+      },
+      "fact": {
+        "sources": [
+          "audubon-fish-crow",
+          "cornell-fish-crow-overview"
+        ],
+        "value": "Like a smaller edition of the American Crow, but with a more nasal voice, and typically found near water, the Fish Crow is very common in parts of the southeast."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-fish-crow",
+          "cornell-fish-crow-lifehistory"
+        ],
+        "value": "Tidewater, river valleys, swamps, woodland, farmland."
+      },
+      "length_cm": {
+        "max": 41,
+        "min": 36,
+        "sources": [
+          "audubon-fish-crow",
+          "cornell-fish-crow-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-fish-crow",
+          "cornell-fish-crow-maps-range"
+        ],
+        "value": "Mostly permanent resident. Withdraws from some inland parts of range in winter."
+      },
+      "nest": {
+        "sources": [
+          "audubon-fish-crow",
+          "cornell-fish-crow-lifehistory"
+        ],
+        "type": "platform",
+        "value": "Nest site is in upright fork of tree or shrub. May be very low in coastal growth of pines, cedars, or quite high in deciduous trees in inland swamps; nest height may be 5-70' above ground or even higher. Nest (probably built by both sexes) is a bulky platform of sticks and strips of bark, lined with softer materials such as grass, rootlets, hair, feathers, paper, pine needles, even manure."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 85,
+        "min": 77,
+        "sources": [
+          "audubon-fish-crow",
+          "cornell-fish-crow-id"
+        ]
+      }
+    },
+    "Dryobates pubescens": {
+      "clutch_size": {
+        "max": 6,
+        "min": 3,
+        "sources": [
+          "audubon-downy-woodpecker",
+          "cornell-downy-woodpecker-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-downy-woodpecker-dryobates-pubescens"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-downy-woodpecker",
+          "cornell-downy-woodpecker-lifehistory"
+        ],
+        "value": "Mostly insects."
+      },
+      "fact": {
+        "sources": [
+          "audubon-downy-woodpecker",
+          "cornell-downy-woodpecker-overview"
+        ],
+        "value": "The smallest woodpecker in North America, the Downy Woodpecker is common and widespread, although it avoids the arid southwest."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-downy-woodpecker",
+          "cornell-downy-woodpecker-lifehistory"
+        ],
+        "value": "Forests, woodlots, willows, river groves, orchards, shade trees."
+      },
+      "length_cm": {
+        "max": 17.8,
+        "min": 12.7,
+        "sources": [
+          "audubon-downy-woodpecker",
+          "cornell-downy-woodpecker-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-downy-woodpecker",
+          "cornell-downy-woodpecker-maps-range"
+        ],
+        "value": "The Downy Woodpecker is a permanent resident in many areas, but northernmost populations may move some distance south in winter. Some birds from the Rockies and other western mountains may move down to valleys in winter, and may move short distance south as well."
+      },
+      "nest": {
+        "sources": [
+          "audubon-downy-woodpecker",
+          "cornell-downy-woodpecker-lifehistory"
+        ],
+        "type": "cavity",
+        "value": "Nest site is cavity (excavated by both sexes) in dead limb or dead tree, usually 12-30 ft above ground, sometimes 5-60 ft. Cavity entrance is often surrounded by fungus or lichen, helping to camouflage site."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 30,
+        "min": 24.9,
+        "sources": [
+          "audubon-downy-woodpecker",
+          "cornell-downy-woodpecker-id"
+        ]
+      }
+    },
+    "Dryobates villosus": {
+      "clutch_size": {
+        "max": 6,
+        "min": 3,
+        "sources": [
+          "audubon-hairy-woodpecker",
+          "cornell-hairy-woodpecker-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2020",
+        "sources": [
+          "birdlife-hairy-woodpecker-leuconotopicus-villosus"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-hairy-woodpecker",
+          "cornell-hairy-woodpecker-lifehistory"
+        ],
+        "value": "Mostly insects, although the Hairy Woodpecker feeds especially on larvae of wood-boring beetles, as well as other beetles, ants, caterpillars, and others."
+      },
+      "fact": {
+        "sources": [
+          "audubon-hairy-woodpecker",
+          "cornell-hairy-woodpecker-overview"
+        ],
+        "value": "The Hairy Woodpecker and the Downy Woodpecker are remarkably similar in pattern, differing mainly in size and bill shape."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-hairy-woodpecker",
+          "cornell-hairy-woodpecker-lifehistory"
+        ],
+        "value": "Forests, woodlands, river groves, shade trees are all favored by the Hairy Woodpecker."
+      },
+      "length_cm": {
+        "max": 26,
+        "min": 18,
+        "sources": [
+          "audubon-hairy-woodpecker",
+          "cornell-hairy-woodpecker-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-hairy-woodpecker",
+          "cornell-hairy-woodpecker-maps-range"
+        ],
+        "value": "Mostly a permanent resident, the Hairy Woodpecker can be found in various regions. Some birds from the northern edge of its range may move well south in winter, and a few from western mountains move to lower elevations."
+      },
+      "nest": {
+        "sources": [
+          "audubon-hairy-woodpecker",
+          "cornell-hairy-woodpecker-lifehistory"
+        ],
+        "type": "cavity",
+        "value": "The nest site is a cavity excavated by both sexes, mainly in deciduous trees in the east, and in aspens or dead conifers in the west. The cavity is usually located 4-60 ft above the ground."
+      },
+      "research_status": "verified",
+      "taxonomy_note": {
+        "sources": [
+          "audubon-hairy-woodpecker",
+          "birdlife-hairy-woodpecker-leuconotopicus-villosus",
+          "cornell-hairy-woodpecker-lifehistory"
+        ],
+        "value": "Archive taxonomy: Dryobates villosus. Cited Audubon and BirdLife sources may use the synonym Leuconotopicus villosus for the same Hairy Woodpecker taxon."
+      },
+      "wingspan_cm": {
+        "max": 41,
+        "min": 33,
+        "sources": [
+          "audubon-hairy-woodpecker",
+          "cornell-hairy-woodpecker-id"
+        ]
+      }
+    },
+    "Dumetella carolinensis": {
+      "clutch_size": {
+        "max": 6,
+        "min": 2,
+        "sources": [
+          "audubon-gray-catbird",
+          "cornell-gray-catbird-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-grey-catbird-dumetella-carolinensis"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-gray-catbird",
+          "cornell-gray-catbird-lifehistory"
+        ],
+        "value": "Mostly insects and berries."
+      },
+      "fact": {
+        "sources": [
+          "audubon-gray-catbird",
+          "cornell-gray-catbird-overview"
+        ],
+        "value": "Rather plain but with lots of personality, the Gray Catbird often hides in the shrubbery, making an odd variety of musical and harsh sounds -- including the catlike mewing responsible for its name."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-gray-catbird",
+          "cornell-gray-catbird-lifehistory"
+        ],
+        "value": "Undergrowth, brush, thorn scrub, suburban gardens."
+      },
+      "length_cm": {
+        "max": 24,
+        "min": 21,
+        "sources": [
+          "audubon-gray-catbird",
+          "cornell-gray-catbird-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-gray-catbird",
+          "cornell-gray-catbird-maps-range"
+        ],
+        "value": "Apparently migrates mostly at night. Birds breeding in the Northwest migrate east before turning south in the fall and are rarely seen in the Southwest."
+      },
+      "nest": {
+        "sources": [
+          "audubon-gray-catbird",
+          "cornell-gray-catbird-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest: Placed in dense shrubs, thickets, briar tangles, or low trees, usually 3-10 ft above the ground. Nest (built mostly by females) is a large, bulky cup of twigs, weeds, grass, leaves, and sometimes pieces of trash, lined with rootlets and other fine materials."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 30,
+        "min": 22,
+        "sources": [
+          "audubon-gray-catbird",
+          "cornell-gray-catbird-id"
+        ]
+      }
+    },
+    "Haemorhous mexicanus": {
+      "clutch_size": {
+        "max": 6,
+        "min": 2,
+        "sources": [
+          "audubon-house-finch",
+          "cornell-house-finch-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2018",
+        "sources": [
+          "birdlife-house-finch-haemorhous-mexicanus"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-house-finch",
+          "cornell-house-finch-lifehistory"
+        ],
+        "value": "Mostly seeds, buds, berries."
+      },
+      "fact": {
+        "sources": [
+          "audubon-house-finch",
+          "cornell-house-finch-overview"
+        ],
+        "value": "Adaptable, colorful, and cheery-voiced, the House Finch is common from coast to coast today, a familiar visitor to backyard feeders."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-house-finch",
+          "cornell-house-finch-lifehistory"
+        ],
+        "value": "Cities, suburbs, farms, canyons."
+      },
+      "length_cm": {
+        "max": 15,
+        "min": 13,
+        "sources": [
+          "audubon-house-finch",
+          "cornell-house-finch-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-house-finch",
+          "cornell-house-finch-maps-range"
+        ],
+        "value": "Mostly permanent resident in West, although some may move to lower elevations for winter. In the East, some are permanent residents but others migrate long distances south in fall. Migrates in flocks, mostly by day."
+      },
+      "nest": {
+        "sources": [
+          "audubon-house-finch",
+          "cornell-house-finch-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest: Wide variety of sites, especially in conifers, palms, ivy on buildings, cactus, holes in manmade structures, averaging about 12-15 ft above the ground. Sometimes use sites such as cavities, hanging planters, old nests of other birds. Nest (built mostly by female) is open cup of grass, weeds, fine twigs, leaves, rootlets, sometimes with feathers, string, or other debris added."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 25,
+        "min": 20,
+        "sources": [
+          "audubon-house-finch",
+          "cornell-house-finch-id"
+        ]
+      }
+    },
+    "Hirundo rustica": {
+      "clutch_size": {
+        "max": 7,
+        "min": 4,
+        "sources": [
+          "audubon-barn-swallow",
+          "cornell-barn-swallow-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2019",
+        "sources": [
+          "birdlife-barn-swallow-hirundo-rustica"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-barn-swallow",
+          "cornell-barn-swallow-lifehistory"
+        ],
+        "value": "Insects."
+      },
+      "fact": {
+        "sources": [
+          "audubon-barn-swallow",
+          "cornell-barn-swallow-overview"
+        ],
+        "value": "One of our most familiar birds in rural areas and semi-open country, this swallow is often seen skimming low over fields with a flowing, graceful flight."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-barn-swallow",
+          "cornell-barn-swallow-lifehistory"
+        ],
+        "value": "Open or semi-open land, farms, fields, marshes, lakes."
+      },
+      "length_cm": {
+        "max": 19,
+        "min": 15,
+        "sources": [
+          "cornell-barn-swallow-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-barn-swallow",
+          "cornell-barn-swallow-maps-range"
+        ],
+        "value": "Migrates in flocks, mostly by day. Southward migration is well under way by mid-August."
+      },
+      "nest": {
+        "sources": [
+          "audubon-barn-swallow",
+          "cornell-barn-swallow-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest: Original natural sites were in sheltered crevices in cliffs or shallow caves. Nest (built by both sexes) is a cup of mud and dried grass, lined with feathers."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 32,
+        "min": 29,
+        "sources": [
+          "cornell-barn-swallow-id"
+        ]
+      }
+    },
+    "Hylocichla mustelina": {
+      "clutch_size": {
+        "max": 4,
+        "min": 3,
+        "sources": [
+          "audubon-wood-thrush",
+          "cornell-wood-thrush-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2020",
+        "sources": [
+          "birdlife-wood-thrush-hylocichla-mustelina"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-wood-thrush",
+          "cornell-wood-thrush-lifehistory"
+        ],
+        "value": "Mostly insects and berries."
+      },
+      "fact": {
+        "sources": [
+          "audubon-wood-thrush",
+          "cornell-wood-thrush-overview"
+        ],
+        "value": "Seemingly not as shy as the other brown thrushes, not as bold as the Robin, the Wood Thrush seems intermediate between those two related groups."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-wood-thrush",
+          "cornell-wood-thrush-lifehistory"
+        ],
+        "value": "Mainly deciduous woodlands."
+      },
+      "length_cm": {
+        "max": 21,
+        "min": 19,
+        "sources": [
+          "cornell-wood-thrush-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-wood-thrush",
+          "cornell-wood-thrush-maps-range"
+        ],
+        "value": "Migrates mostly at night. Many migrate across Gulf of Mexico in spring and fall."
+      },
+      "nest": {
+        "sources": [
+          "audubon-wood-thrush",
+          "cornell-wood-thrush-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest: Placed in vertical fork of tree (usually deciduous) or saddled on horizontal branch, usually about 10-15' above the ground, sometimes lower, rarely as high as 50'. Nest (built by female) is rather like Robin's nest, an open cup of grass, leaves, moss, weeds, bark strips, mixed with mud; has lining of soft material such as rootlets. Often adds pieces of white paper or other trash to nest."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 34,
+        "min": 30,
+        "sources": [
+          "cornell-wood-thrush-id"
+        ]
+      }
+    },
+    "Melanerpes carolinus": {
+      "clutch_size": {
+        "max": 6,
+        "min": 2,
+        "sources": [
+          "audubon-red-bellied-woodpecker",
+          "cornell-red-bellied-woodpecker-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2024",
+        "sources": [
+          "birdlife-red-bellied-woodpecker-melanerpes-carolinus"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-red-bellied-woodpecker",
+          "cornell-red-bellied-woodpecker-lifehistory"
+        ],
+        "value": "The Red-bellied Woodpecker is omnivorous and an opportunistic generalist."
+      },
+      "fact": {
+        "sources": [
+          "audubon-red-bellied-woodpecker",
+          "cornell-red-bellied-woodpecker-overview"
+        ],
+        "value": "Widespread throughout the eastern and central United States, where its rolling calls are familiar sounds in swamps and riverside woods throughout the year."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-red-bellied-woodpecker",
+          "cornell-red-bellied-woodpecker-lifehistory"
+        ],
+        "value": "Woodlands, groves, orchards, towns."
+      },
+      "length_cm": {
+        "max": 24,
+        "min": 24,
+        "sources": [
+          "audubon-red-bellied-woodpecker",
+          "cornell-red-bellied-woodpecker-id"
+        ]
+      },
+      "migration": {
+        "category": "resident",
+        "sources": [
+          "audubon-red-bellied-woodpecker",
+          "cornell-red-bellied-woodpecker-maps-range"
+        ],
+        "value": "The Red-bellied Woodpecker is primarily a resident, wintering throughout its range. However, northern populations such as those in Michigan, may move south during harsh winters but much is unknown."
+      },
+      "nest": {
+        "sources": [
+          "audubon-red-bellied-woodpecker",
+          "cornell-red-bellied-woodpecker-lifehistory"
+        ],
+        "type": "cavity",
+        "value": "Nest site is in cavity excavated in dead wood (tree, pole, fence post, or stump), usually less than 50 ft above ground but can be as high as 120 ft."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 42,
+        "min": 33,
+        "sources": [
+          "audubon-red-bellied-woodpecker",
+          "cornell-red-bellied-woodpecker-id"
+        ]
+      }
+    },
+    "Melospiza melodia": {
+      "clutch_size": {
+        "max": 6,
+        "min": 2,
+        "sources": [
+          "audubon-song-sparrow",
+          "cornell-song-sparrow-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-song-sparrow-melospiza-melodia"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-song-sparrow",
+          "cornell-song-sparrow-lifehistory"
+        ],
+        "value": "Mostly insects and seeds."
+      },
+      "fact": {
+        "sources": [
+          "audubon-song-sparrow",
+          "cornell-song-sparrow-overview"
+        ],
+        "value": "Very widespread in North America, this melodious sparrow is among the most familiar birds in some areas, such as the Northeast and Midwest."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-song-sparrow",
+          "cornell-song-sparrow-lifehistory"
+        ],
+        "value": "Thickets, brush, marshes, roadsides, gardens."
+      },
+      "length_cm": {
+        "max": 17,
+        "min": 12,
+        "sources": [
+          "cornell-song-sparrow-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-song-sparrow",
+          "cornell-song-sparrow-maps-range"
+        ],
+        "value": "Present all year in many parts of range, but birds from northern interior move south to southern United States or extreme northern Mexico in winter."
+      },
+      "nest": {
+        "sources": [
+          "audubon-song-sparrow",
+          "cornell-song-sparrow-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest site varies, usually on ground under clump of grass or shrub, or less than 4' above the ground, sometimes up to 10' or higher. Rarely nests in cavities in trees. Nest (built mostly or entirely by female) is an open cup of weeds, grass, leaves, strips of bark, lined with fine grass, rootlets, animal hair."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 24,
+        "min": 18,
+        "sources": [
+          "cornell-song-sparrow-id"
+        ]
+      }
+    },
+    "Myiarchus crinitus": {
+      "clutch_size": {
+        "max": 6,
+        "min": 4,
+        "sources": [
+          "audubon-great-crested-flycatcher",
+          "cornell-great-crested-flycatcher-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-great-crested-flycatcher-myiarchus-crinitus"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-great-crested-flycatcher",
+          "cornell-great-crested-flycatcher-lifehistory"
+        ],
+        "value": "The Great Crested Flycatcher feeds on a wide variety of insects, including caterpillars, moths, butterflies, katydids, tree crickets, beetles, true bugs, and others."
+      },
+      "fact": {
+        "sources": [
+          "audubon-great-crested-flycatcher",
+          "cornell-great-crested-flycatcher-overview"
+        ],
+        "value": "In dense leafy forests of the east, the Great Crested Flycatcher lives within the canopy of tall trees in summer."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-great-crested-flycatcher",
+          "cornell-great-crested-flycatcher-lifehistory"
+        ],
+        "value": "The Great Crested Flycatcher can be found in woodlands or groves."
+      },
+      "length_cm": {
+        "max": 22,
+        "min": 20,
+        "sources": [
+          "audubon-great-crested-flycatcher",
+          "cornell-great-crested-flycatcher-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-great-crested-flycatcher",
+          "cornell-great-crested-flycatcher-maps-range"
+        ],
+        "value": "Winters mainly from Mexico to Colombia; also winters regularly in southern Florida. Migrates mostly at night."
+      },
+      "nest": {
+        "sources": [
+          "audubon-great-crested-flycatcher",
+          "cornell-great-crested-flycatcher-lifehistory"
+        ],
+        "type": "cavity",
+        "value": "Nest site is usually in hole in tree, either natural cavity or old woodpecker hole, usually 20-50 ft above the ground. Sometimes nests in artificial sites such as birdhouses, drainpipes, or hollow fence posts. Both sexes help build nest; in deep cavities, they may carry in large amounts of material, to bring the nest level up close to the entrance."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 38,
+        "min": 33,
+        "sources": [
+          "audubon-great-crested-flycatcher",
+          "cornell-great-crested-flycatcher-id"
+        ]
+      }
+    },
+    "Pandion haliaetus": {
+      "clutch_size": {
+        "max": 4,
+        "min": 1,
+        "sources": [
+          "audubon-osprey",
+          "cornell-osprey-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-osprey-pandion-haliaetus"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-osprey",
+          "cornell-osprey-lifehistory"
+        ],
+        "value": "Almost entirely fish."
+      },
+      "fact": {
+        "sources": [
+          "audubon-osprey",
+          "cornell-osprey-overview"
+        ],
+        "value": "A very distinctive fish-hawk, formerly classified with other hawks but now placed in a separate family of its own."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-osprey",
+          "cornell-osprey-lifehistory"
+        ],
+        "value": "Rivers, lakes, and coasts."
+      },
+      "length_cm": {
+        "max": 58,
+        "min": 54,
+        "sources": [
+          "audubon-osprey",
+          "cornell-osprey-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-osprey",
+          "cornell-osprey-maps-range"
+        ],
+        "value": "Some Osprey are permanent residents in southern Florida; migratory elsewhere. Migrants travel singly, not in flocks, often following coastlines, lake shores, rivers, or mountain ridges."
+      },
+      "nest": {
+        "sources": [
+          "audubon-osprey",
+          "cornell-osprey-lifehistory"
+        ],
+        "type": "platform",
+        "value": "Nest site is usually on top of large tree (often with dead or broken top) not far from water. Also nests on utility poles, duck blinds, other structures, including poles put up for them. Nest (built by both sexes) is bulky pile of sticks, lined with smaller materials. Birds may use same nest for years, adding material each year, so that nest becomes huge."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 180,
+        "min": 150,
+        "sources": [
+          "audubon-osprey",
+          "cornell-osprey-id"
+        ]
+      }
+    },
+    "Piranga olivacea": {
+      "clutch_size": {
+        "max": 5,
+        "min": 2,
+        "sources": [
+          "audubon-scarlet-tanager",
+          "cornell-scarlet-tanager-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-scarlet-tanager-piranga-olivacea"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-scarlet-tanager",
+          "cornell-scarlet-tanager-lifehistory"
+        ],
+        "value": "Mostly insects, some berries."
+      },
+      "fact": {
+        "sources": [
+          "audubon-scarlet-tanager",
+          "cornell-scarlet-tanager-overview"
+        ],
+        "value": "Male Scarlet Tanagers seem almost too bright and exotic for northeastern woodlands."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-scarlet-tanager",
+          "cornell-scarlet-tanager-lifehistory"
+        ],
+        "value": "Forests and shade trees (especially oaks)."
+      },
+      "length_cm": {
+        "max": 17,
+        "min": 16,
+        "sources": [
+          "cornell-scarlet-tanager-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-scarlet-tanager",
+          "cornell-scarlet-tanager-maps-range"
+        ],
+        "value": "Most spring migrants enter our area by coming north across Gulf of Mexico. Apparently migrates mostly at night."
+      },
+      "nest": {
+        "sources": [
+          "audubon-scarlet-tanager",
+          "cornell-scarlet-tanager-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest site is in tree (usually deciduous), typically 20-30' above ground, sometimes lower or much higher. Nest (built by female) is a shallow open cup of twigs, weeds, grass, lined with fine grass and rootlets."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 29,
+        "min": 25,
+        "sources": [
+          "cornell-scarlet-tanager-id"
+        ]
+      }
+    },
+    "Poecile atricapillus": {
+      "clutch_size": {
+        "max": 8,
+        "min": 6,
+        "sources": [
+          "audubon-black-capped-chickadee",
+          "cornell-black-capped-chickadee-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-black-capped-chickadee-poecile-atricapillus"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-black-capped-chickadee",
+          "cornell-black-capped-chickadee-lifehistory"
+        ],
+        "value": "Mostly insects, seeds, and berries."
+      },
+      "fact": {
+        "sources": [
+          "audubon-black-capped-chickadee",
+          "cornell-black-capped-chickadee-overview"
+        ],
+        "value": "Little flocks of Black-capped Chickadees enliven the winter woods with their active behavior and their cheery-sounding chick-a-dee callnotes as they fly from tree to tree, often accompanied by an assortment of nuthatches, creepers, kinglets, and other birds."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-black-capped-chickadee",
+          "cornell-black-capped-chickadee-lifehistory"
+        ],
+        "value": "Mixed and deciduous woods; willow thickets, groves, shade trees."
+      },
+      "length_cm": {
+        "max": 15,
+        "min": 12,
+        "sources": [
+          "audubon-black-capped-chickadee",
+          "cornell-black-capped-chickadee-id"
+        ]
+      },
+      "migration": {
+        "category": "resident",
+        "sources": [
+          "audubon-black-capped-chickadee",
+          "cornell-black-capped-chickadee-maps-range"
+        ],
+        "value": "Mostly a permanent resident, but occasionally stages \"invasions\" in fall, with large numbers seen flying southward (mostly in northeastern states and southeastern Canada). These invasions usually do not penetrate much beyond southern limit of breeding range."
+      },
+      "nest": {
+        "sources": [
+          "audubon-black-capped-chickadee",
+          "cornell-black-capped-chickadee-lifehistory"
+        ],
+        "type": "cavity",
+        "value": "Nest site is in a hole in a tree, typically an enlargement of a small natural cavity in rotten wood, sometimes an old woodpecker hole or nesting box; usually 5-20 ft above the ground. In a natural cavity, both sexes contribute to excavating or enlarging the interior. Nest (built by female) has a foundation of moss or other matter, a lining of softer material such as animal hair."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 20,
+        "min": 15,
+        "sources": [
+          "audubon-black-capped-chickadee",
+          "cornell-black-capped-chickadee-id"
+        ]
+      }
+    },
+    "Poecile carolinensis": {
+      "clutch_size": {
+        "max": 10,
+        "min": 3,
+        "sources": [
+          "audubon-carolina-chickadee",
+          "cornell-carolina-chickadee-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-carolina-chickadee-poecile-carolinensis"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-carolina-chickadee",
+          "cornell-carolina-chickadee-lifehistory"
+        ],
+        "value": "The Carolina Chickadee consumes mostly insects, seeds, and berries."
+      },
+      "fact": {
+        "sources": [
+          "audubon-carolina-chickadee",
+          "cornell-carolina-chickadee-overview"
+        ],
+        "value": "The Carolina Chickadee is very similar to the Black-capped Chickadee and replaces it in the southeastern states."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-carolina-chickadee",
+          "cornell-carolina-chickadee-lifehistory"
+        ],
+        "value": "Mixed and deciduous woods, river groves, shade trees."
+      },
+      "length_cm": {
+        "max": 12,
+        "min": 10,
+        "sources": [
+          "audubon-carolina-chickadee",
+          "cornell-carolina-chickadee-id"
+        ]
+      },
+      "migration": {
+        "category": "resident",
+        "sources": [
+          "audubon-carolina-chickadee",
+          "cornell-carolina-chickadee-maps-range"
+        ],
+        "value": "The Carolina Chickadee is a permanent resident, although it can, on occasion, drift outside of its typical range."
+      },
+      "nest": {
+        "sources": [
+          "audubon-carolina-chickadee",
+          "cornell-carolina-chickadee-lifehistory"
+        ],
+        "type": "cavity",
+        "value": "Nest site is in hole in tree, typically enlargement of small natural cavity in dead wood, sometimes old woodpecker hole or nesting box, usually 5-15 ft above the ground. In natural cavity, both sexes help excavate or enlarge the interior. Nest (probably built by female) has foundation of bark strips or other matter, lining of softer material such as plant down and animal hair."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 20,
+        "min": 15,
+        "sources": [
+          "audubon-carolina-chickadee",
+          "cornell-carolina-chickadee-id"
+        ]
+      }
+    },
+    "Polioptila caerulea": {
+      "clutch_size": {
+        "max": 6,
+        "min": 3,
+        "sources": [
+          "audubon-blue-gray-gnatcatcher",
+          "cornell-blue-gray-gnatcatcher-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-blue-grey-gnatcatcher-polioptila-caerulea"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-blue-gray-gnatcatcher",
+          "cornell-blue-gray-gnatcatcher-lifehistory"
+        ],
+        "value": "Mostly insects."
+      },
+      "fact": {
+        "sources": [
+          "audubon-blue-gray-gnatcatcher",
+          "cornell-blue-gray-gnatcatcher-overview"
+        ],
+        "value": "A tiny woodland bird with a long tail, usually seen flitting about in the treetops, giving a short whining call note."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-blue-gray-gnatcatcher",
+          "cornell-blue-gray-gnatcatcher-lifehistory"
+        ],
+        "value": "Open woods, oaks, pines, thickets."
+      },
+      "length_cm": {
+        "max": 11,
+        "min": 10,
+        "sources": [
+          "audubon-blue-gray-gnatcatcher",
+          "cornell-blue-gray-gnatcatcher-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-blue-gray-gnatcatcher",
+          "cornell-blue-gray-gnatcatcher-maps-range"
+        ],
+        "value": "Probably all in North America are migratory, with different individuals present in summer and winter. Some in Mexico and Bahamas may be permanent residents. Peak migration periods in many areas are April and September. May migrate by day."
+      },
+      "nest": {
+        "sources": [
+          "audubon-blue-gray-gnatcatcher",
+          "cornell-blue-gray-gnatcatcher-lifehistory"
+        ],
+        "type": "cup",
+        "value": "The nest site is in a tree, usually a deciduous one. Nest is often saddled on top of a horizontal limb of a tree, less usually in the fork of a horizontal limb; height above ground is quite variable, 2-80 ft up, but 20-40 ft may be typical. Nest (built by both sexes) is a compact open cup of grass, weeds, plant fibers, strips of bark, lined with plant down, animal hair, and feathers."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 16,
+        "min": 16,
+        "sources": [
+          "audubon-blue-gray-gnatcatcher",
+          "cornell-blue-gray-gnatcatcher-id"
+        ]
+      }
+    },
+    "Progne subis": {
+      "clutch_size": {
+        "max": 8,
+        "min": 3,
+        "sources": [
+          "audubon-purple-martin",
+          "cornell-purple-martin-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-purple-martin-progne-subis"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-purple-martin",
+          "cornell-purple-martin-lifehistory"
+        ],
+        "value": "Insects."
+      },
+      "fact": {
+        "sources": [
+          "audubon-purple-martin",
+          "cornell-purple-martin-overview"
+        ],
+        "value": "Graceful in flight, musical in its pre-dawn singing, this big swallow is one of our most popular birds."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-purple-martin",
+          "cornell-purple-martin-lifehistory"
+        ],
+        "value": "Towns, farms, semi-open country near water; in west, also mountain forest, saguaro desert."
+      },
+      "length_cm": {
+        "max": 20,
+        "min": 19,
+        "sources": [
+          "cornell-purple-martin-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-purple-martin",
+          "cornell-purple-martin-maps-range"
+        ],
+        "value": "A long-distance migrant, most wintering in Amazon Basin. Returns very early in spring in the east (often in February in southern states), usually later in spring in the west (mainly April and May)."
+      },
+      "nest": {
+        "sources": [
+          "audubon-purple-martin",
+          "cornell-purple-martin-lifehistory"
+        ],
+        "type": "cavity",
+        "value": "Usually nests in colonies, especially in east, where almost all are in multiple-roomed nest boxes put up for them. Western martins may nest in looser colonies or as isolated pairs. Nest: Natural sites are in cavities, mostly old woodpecker holes, in trees (or in giant cactus in southwest). In the east, most martins now use nest boxes. Sometimes nests in holes in buildings or cliffs. Nest (built by both sexes) is cup of leaves, grass, twigs, debris, and usually mud."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 41,
+        "min": 39,
+        "sources": [
+          "cornell-purple-martin-id"
+        ]
+      }
+    },
+    "Sayornis phoebe": {
+      "clutch_size": {
+        "max": 6,
+        "min": 2,
+        "sources": [
+          "audubon-eastern-phoebe",
+          "cornell-eastern-phoebe-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-eastern-phoebe-sayornis-phoebe"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-eastern-phoebe",
+          "cornell-eastern-phoebe-lifehistory"
+        ],
+        "value": "Mostly insects, some berries."
+      },
+      "fact": {
+        "sources": [
+          "audubon-eastern-phoebe",
+          "cornell-eastern-phoebe-overview"
+        ],
+        "value": "Despite its plain appearance, this flycatcher is often a favorite among eastern birdwatchers."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-eastern-phoebe",
+          "cornell-eastern-phoebe-lifehistory"
+        ],
+        "value": "Streamsides, farms, woodland edges."
+      },
+      "length_cm": {
+        "max": 17,
+        "min": 14,
+        "sources": [
+          "cornell-eastern-phoebe-id"
+        ]
+      },
+      "migration": {
+        "category": "short-distance",
+        "sources": [
+          "audubon-eastern-phoebe",
+          "cornell-eastern-phoebe-maps-range"
+        ],
+        "value": "The Eastern Phoebe migrates quite early in spring and late in fall, especially compared to other flycatchers."
+      },
+      "nest": {
+        "sources": [
+          "audubon-eastern-phoebe",
+          "cornell-eastern-phoebe-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest: Original sites were probably always on vertical streambanks or small rock outcrops in the woods, with a niche providing support below and some shelter above. Now often builds nest under bridges, in barns, in culverts, or in other artificial sites. Nest (built by female) is an open cup with a solid base of mud, built up with moss, leaves, and grass, lined with fine grass and animal hair."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 28,
+        "min": 26,
+        "sources": [
+          "cornell-eastern-phoebe-id"
+        ]
+      }
+    },
+    "Seiurus aurocapilla": {
+      "clutch_size": {
+        "max": 5,
+        "min": 4,
+        "sources": [
+          "audubon-ovenbird",
+          "cornell-ovenbird-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-ovenbird-seiurus-aurocapilla"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-ovenbird",
+          "cornell-ovenbird-lifehistory"
+        ],
+        "value": "During summer, the Ovenbird feeds on a wide variety of insects including adult beetles and their larvae, ants, caterpillars, flies, true bugs, and others; also worms, spiders, snails."
+      },
+      "fact": {
+        "sources": [
+          "audubon-ovenbird",
+          "cornell-ovenbird-overview"
+        ],
+        "value": "In shady woods, this odd warbler walks with deliberate steps on the forest floor, holding its short tail cocked up higher than its back."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-ovenbird",
+          "cornell-ovenbird-lifehistory"
+        ],
+        "value": "Near ground in leafy woods; in migration, thickets."
+      },
+      "length_cm": {
+        "max": 16,
+        "min": 14,
+        "sources": [
+          "audubon-ovenbird",
+          "cornell-ovenbird-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-ovenbird",
+          "cornell-ovenbird-maps-range"
+        ],
+        "value": "Migrates mostly at night. Ovenbirds nesting east of the Appalachians may go to the Caribbean for the winter, while those from west of the Appalachians are likely to migrate to Mexico or Central America."
+      },
+      "nest": {
+        "sources": [
+          "audubon-ovenbird",
+          "cornell-ovenbird-lifehistory"
+        ],
+        "type": "ground",
+        "value": "Nest: Placed on the ground where ground cover is sparse, especially near trails or roads. Female chooses site, builds domed nest from dead leaves, grass, bark, twigs; lines it with animal hair."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 25,
+        "min": 20,
+        "sources": [
+          "audubon-ovenbird",
+          "cornell-ovenbird-id"
+        ]
+      }
+    },
+    "Setophaga ruticilla": {
+      "clutch_size": {
+        "max": 5,
+        "min": 2,
+        "sources": [
+          "audubon-american-redstart",
+          "cornell-american-redstart-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-american-redstart-setophaga-ruticilla"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-american-redstart",
+          "cornell-american-redstart-lifehistory"
+        ],
+        "value": "The American Redstart feeds primarily on insects."
+      },
+      "fact": {
+        "sources": [
+          "audubon-american-redstart",
+          "cornell-american-redstart-overview"
+        ],
+        "value": "Warblers in general are often called 'the butterflies of the bird world,' but the American Redstart may live up to that nickname more than any other species."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-american-redstart",
+          "cornell-american-redstart-lifehistory"
+        ],
+        "value": "Second-growth woods, river groves."
+      },
+      "length_cm": {
+        "max": 13,
+        "min": 11,
+        "sources": [
+          "cornell-american-redstart-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-american-redstart",
+          "cornell-american-redstart-maps-range"
+        ],
+        "value": "Migrates mostly at night. Fall migration begins early, with many southbound in August; American Redstart also appears in small numbers of strays throughout the West, and a few may winter in southern California."
+      },
+      "nest": {
+        "sources": [
+          "audubon-american-redstart",
+          "cornell-american-redstart-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest site is picked by the female, usually in a fork of tree, 4-70 ft above the ground; rarely on the ground. Open cup nest (built by female) of plant fibers, grass, rootlets, decorated with lichen, birch bark, and feathers; lined with feathers. Sometimes will use old nests of other birds."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 19,
+        "min": 16,
+        "sources": [
+          "cornell-american-redstart-id"
+        ]
+      }
+    },
+    "Sialia sialis": {
+      "clutch_size": {
+        "max": 7,
+        "min": 3,
+        "sources": [
+          "audubon-eastern-bluebird",
+          "cornell-eastern-bluebird-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-eastern-bluebird-sialia-sialis"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-eastern-bluebird",
+          "cornell-eastern-bluebird-lifehistory"
+        ],
+        "value": "Mostly insects and berries."
+      },
+      "fact": {
+        "sources": [
+          "audubon-eastern-bluebird",
+          "cornell-eastern-bluebird-overview"
+        ],
+        "value": "This is the most widespread of the three bluebirds."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-eastern-bluebird",
+          "cornell-eastern-bluebird-lifehistory"
+        ],
+        "value": "Open country with scattered trees; farms, roadsides."
+      },
+      "length_cm": {
+        "max": 20,
+        "min": 15,
+        "sources": [
+          "audubon-eastern-bluebird",
+          "cornell-eastern-bluebird-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-eastern-bluebird",
+          "cornell-eastern-bluebird-maps-range"
+        ],
+        "value": "Permanent resident in many southern areas. In the north, arrives quite early in spring, and lingers late in fall."
+      },
+      "nest": {
+        "sources": [
+          "audubon-eastern-bluebird",
+          "cornell-eastern-bluebird-lifehistory"
+        ],
+        "type": "cavity",
+        "value": "Nest: Placed in a cavity, typically in a natural hollow in a tree, in an old woodpecker hole, or in a birdhouse. Nests are usually located relatively low (2-20 ft above the ground), occasionally reaching heights of up to 50 ft."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 33,
+        "min": 25,
+        "sources": [
+          "audubon-eastern-bluebird",
+          "cornell-eastern-bluebird-id"
+        ]
+      }
+    },
+    "Sitta carolinensis": {
+      "clutch_size": {
+        "max": 10,
+        "min": 5,
+        "sources": [
+          "audubon-white-breasted-nuthatch",
+          "cornell-white-breasted-nuthatch-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-white-breasted-nuthatch-sitta-carolinensis"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-white-breasted-nuthatch",
+          "cornell-white-breasted-nuthatch-lifehistory"
+        ],
+        "value": "Mostly insects, also seeds."
+      },
+      "fact": {
+        "sources": [
+          "audubon-white-breasted-nuthatch",
+          "cornell-white-breasted-nuthatch-overview"
+        ],
+        "value": "Readily attracted to bird feeders for sunflower seeds or suet, the White-breasted Nuthatch may spend much of its time industriously carrying seeds away to hide them in crevices."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-white-breasted-nuthatch",
+          "cornell-white-breasted-nuthatch-lifehistory"
+        ],
+        "value": "Forests, woodlots, groves, shade trees."
+      },
+      "length_cm": {
+        "max": 14,
+        "min": 13,
+        "sources": [
+          "cornell-white-breasted-nuthatch-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-white-breasted-nuthatch",
+          "cornell-white-breasted-nuthatch-maps-range"
+        ],
+        "value": "Usually a permanent resident. In occasional years, numbers may move south in the western and northern parts of the range, in an unexplained irruptive movement; this is far less frequent and less pronounced than in the Red-breasted Nuthatch."
+      },
+      "nest": {
+        "sources": [
+          "audubon-white-breasted-nuthatch",
+          "cornell-white-breasted-nuthatch-lifehistory"
+        ],
+        "type": "cavity",
+        "value": "Nest site is large natural cavity or old woodpecker hole, usually 15-60' above ground; may rarely use birdhouses; may sometimes excavate own nest cavity. Female builds nest in cavity, a simple cup of bark fibers, grasses, twigs, hair."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 27,
+        "min": 20,
+        "sources": [
+          "cornell-white-breasted-nuthatch-id"
+        ]
+      }
+    },
+    "Spinus tristis": {
+      "clutch_size": {
+        "max": 7,
+        "min": 2,
+        "sources": [
+          "audubon-american-goldfinch",
+          "cornell-american-goldfinch-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2025",
+        "sources": [
+          "birdlife-american-goldfinch-spinus-tristis"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-american-goldfinch",
+          "cornell-american-goldfinch-lifehistory"
+        ],
+        "value": "Mostly seeds, some insects."
+      },
+      "fact": {
+        "sources": [
+          "audubon-american-goldfinch",
+          "cornell-american-goldfinch-overview"
+        ],
+        "value": "A typical summer sight is a male American Goldfinch flying over a meadow, flashing golden in the sun, calling \"perchickory\" as it bounds up and down in flight."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-american-goldfinch",
+          "cornell-american-goldfinch-lifehistory"
+        ],
+        "value": "Patches of thistles and weeds, roadsides, open woods, edges."
+      },
+      "length_cm": {
+        "max": 13,
+        "min": 11,
+        "sources": [
+          "audubon-american-goldfinch",
+          "cornell-american-goldfinch-id"
+        ]
+      },
+      "migration": {
+        "category": "short-distance",
+        "sources": [
+          "audubon-american-goldfinch",
+          "cornell-american-goldfinch-maps-range"
+        ],
+        "value": "Irregular in migration, with more remaining in the North in winters with good food supply. Peak migration of the American Goldfinch is usually mid-fall and early spring, but some linger south of the nesting range to late spring or early summer. Migrates mostly by day."
+      },
+      "nest": {
+        "sources": [
+          "audubon-american-goldfinch",
+          "cornell-american-goldfinch-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest: Usually in deciduous shrubs or trees, sometimes in conifers or in dense weeds, usually less than 30 ft above the ground and placed in a horizontal or upright fork. Nest (built by female) is a solid, compact cup of plant fibers, spiderwebs, and plant down (especially from thistles); the nest is so well-made that it may even hold water."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 22,
+        "min": 20,
+        "sources": [
+          "audubon-american-goldfinch",
+          "cornell-american-goldfinch-id"
+        ]
+      }
+    },
+    "Spizella passerina": {
+      "clutch_size": {
+        "max": 5,
+        "min": 2,
+        "sources": [
+          "audubon-chipping-sparrow",
+          "cornell-chipping-sparrow-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-chipping-sparrow-spizella-passerina"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-chipping-sparrow",
+          "cornell-chipping-sparrow-lifehistory"
+        ],
+        "value": "Mostly insects and seeds."
+      },
+      "fact": {
+        "sources": [
+          "audubon-chipping-sparrow",
+          "cornell-chipping-sparrow-overview"
+        ],
+        "value": "Common over much of the continent is the little Chipping Sparrow."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-chipping-sparrow",
+          "cornell-chipping-sparrow-lifehistory"
+        ],
+        "value": "Open woods, conifers, orchards, farms, towns."
+      },
+      "length_cm": {
+        "max": 14,
+        "min": 13,
+        "sources": [
+          "audubon-chipping-sparrow",
+          "cornell-chipping-sparrow-id"
+        ]
+      },
+      "migration": {
+        "category": "short-distance",
+        "sources": [
+          "audubon-chipping-sparrow",
+          "cornell-chipping-sparrow-maps-range"
+        ],
+        "value": "The Chipping Sparrow often migrates in flocks. Migration is spread over a long period in both spring and fall."
+      },
+      "nest": {
+        "sources": [
+          "audubon-chipping-sparrow",
+          "cornell-chipping-sparrow-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest site varies. Nest (built by female) is a compact open cup made of grass, weeds, rootlets, lined with fine grass and animal hair. At one time, when Americans were more rural, the Chipping Sparrow was well known for using horsehair in its nest lining."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 21,
+        "min": 21,
+        "sources": [
+          "audubon-chipping-sparrow",
+          "cornell-chipping-sparrow-id"
+        ]
+      }
+    },
+    "Turdus migratorius": {
+      "clutch_size": {
+        "max": 7,
+        "min": 3,
+        "sources": [
+          "audubon-american-robin",
+          "cornell-american-robin-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-american-robin-turdus-migratorius"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-american-robin",
+          "cornell-american-robin-lifehistory"
+        ],
+        "value": "Mostly insects, berries, and earthworms."
+      },
+      "fact": {
+        "sources": [
+          "audubon-american-robin",
+          "cornell-american-robin-overview"
+        ],
+        "value": "A very familiar bird over most of North America, running and hopping on lawns with an upright stance, often nesting on porches and windowsills."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-american-robin",
+          "cornell-american-robin-lifehistory"
+        ],
+        "value": "Cities, towns, lawns, farmland, forests; in winter, berry-bearing trees."
+      },
+      "length_cm": {
+        "max": 28,
+        "min": 20,
+        "sources": [
+          "audubon-american-robin",
+          "cornell-american-robin-id"
+        ]
+      },
+      "migration": {
+        "category": "partial",
+        "sources": [
+          "audubon-american-robin",
+          "cornell-american-robin-maps-range"
+        ],
+        "value": "Migrates in flocks, often by day. Although some American Robins winter as far north as Canada, they are in localized concentrations then. With the breakup of flocks before the nesting season, when northerners see their \"first robin of spring,\" it may be a bird that has wintered only a few miles away, not one that has just arrived from southern climates. To the south, winter range is highly variable from year to year, depending on local food supplies."
+      },
+      "nest": {
+        "sources": [
+          "audubon-american-robin",
+          "cornell-american-robin-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest: The Female does most of the nest building with some help from the male. Site on horizontal branch of tree or shrub, usually 5-25' above ground, rarely on ground or up to 70' high; also nests on ledges of houses, barns, bridges. Nest is a cup of grasses, twigs, debris, worked into a solid foundation of mud, lined with fine grasses and plant fibers."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 40,
+        "min": 31,
+        "sources": [
+          "audubon-american-robin",
+          "cornell-american-robin-id"
+        ]
+      }
+    },
+    "Tyrannus tyrannus": {
+      "clutch_size": {
+        "max": 5,
+        "min": 2,
+        "sources": [
+          "audubon-eastern-kingbird",
+          "cornell-eastern-kingbird-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-eastern-kingbird-tyrannus-tyrannus"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-eastern-kingbird",
+          "cornell-eastern-kingbird-lifehistory"
+        ],
+        "value": "Mostly insects, some fruit."
+      },
+      "fact": {
+        "sources": [
+          "audubon-eastern-kingbird",
+          "cornell-eastern-kingbird-overview"
+        ],
+        "value": "The Eastern Kingbird is the only widespread kingbird in the east."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-eastern-kingbird",
+          "cornell-eastern-kingbird-lifehistory"
+        ],
+        "value": "Wood edges, river groves, farms, shelterbelts, orchards, and roadsides are all familiar habitats to the Eastern Kingbird."
+      },
+      "length_cm": {
+        "max": 23,
+        "min": 19,
+        "sources": [
+          "audubon-eastern-kingbird",
+          "cornell-eastern-kingbird-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-eastern-kingbird",
+          "cornell-eastern-kingbird-maps-range"
+        ],
+        "value": "A long-distance migrant, the Eastern Kingbird winters entirely in South America. It migrates in flocks, and unlike many of the migratory songbirds, kingbirds may travel mostly by day."
+      },
+      "nest": {
+        "sources": [
+          "audubon-eastern-kingbird",
+          "cornell-eastern-kingbird-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest site is usually in deciduous tree or large shrub, 7-30 ft above the ground, sometimes lower or much higher. Nest (built by female, perhaps with help from male) is a bulky cup of weed stalks, twigs, grass, lined with fine grass and sometimes animal hair."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 38,
+        "min": 33,
+        "sources": [
+          "audubon-eastern-kingbird",
+          "cornell-eastern-kingbird-id"
+        ]
+      }
+    },
+    "Vireo flavifrons": {
+      "clutch_size": {
+        "max": 5,
+        "min": 3,
+        "sources": [
+          "audubon-yellow-throated-vireo",
+          "cornell-yellow-throated-vireo-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2021",
+        "sources": [
+          "birdlife-yellow-throated-vireo-vireo-flavifrons"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-yellow-throated-vireo",
+          "cornell-yellow-throated-vireo-lifehistory"
+        ],
+        "value": "The Yellow-throated Vireo feeds mainly on insects."
+      },
+      "fact": {
+        "sources": [
+          "audubon-yellow-throated-vireo",
+          "cornell-yellow-throated-vireo-overview"
+        ],
+        "value": "In leafy eastern forests, especially among the tall oaks, the slow, husky phrases of the Yellow-throated Vireo can be heard in spring and summer."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-yellow-throated-vireo",
+          "cornell-yellow-throated-vireo-lifehistory"
+        ],
+        "value": "Deciduous woodlands, shade trees."
+      },
+      "length_cm": {
+        "max": 15,
+        "min": 13,
+        "sources": [
+          "audubon-yellow-throated-vireo",
+          "cornell-yellow-throated-vireo-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-yellow-throated-vireo",
+          "cornell-yellow-throated-vireo-maps-range"
+        ],
+        "value": "Migrates mostly at night. A rather early spring migrant in the South, often appearing in late March."
+      },
+      "nest": {
+        "sources": [
+          "audubon-yellow-throated-vireo",
+          "cornell-yellow-throated-vireo-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest: Placed in tree (usually deciduous), generally 20-40 ft above the ground but can be 3-60 ft up. Both sexes help build open thick-walled cup nest, supported by the rim woven onto a horizontal forked twig."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 23,
+        "min": 20,
+        "sources": [
+          "audubon-yellow-throated-vireo",
+          "cornell-yellow-throated-vireo-id"
+        ]
+      }
+    },
+    "Vireo olivaceus": {
+      "clutch_size": {
+        "max": 5,
+        "min": 3,
+        "sources": [
+          "audubon-red-eyed-vireo",
+          "cornell-red-eyed-vireo-lifehistory"
+        ]
+      },
+      "conservation": {
+        "assessed_at": "2019",
+        "sources": [
+          "birdlife-red-eyed-vireo-vireo-olivaceus"
+        ],
+        "status": "Least Concern",
+        "system": "IUCN Red List"
+      },
+      "diet": {
+        "sources": [
+          "audubon-red-eyed-vireo",
+          "cornell-red-eyed-vireo-lifehistory"
+        ],
+        "value": "Mostly insects; also berries."
+      },
+      "fact": {
+        "sources": [
+          "audubon-red-eyed-vireo",
+          "cornell-red-eyed-vireo-overview"
+        ],
+        "value": "The Red-eyed Vireo is one of the most numerous summer birds in eastern woods."
+      },
+      "habitat": {
+        "sources": [
+          "audubon-red-eyed-vireo",
+          "cornell-red-eyed-vireo-lifehistory"
+        ],
+        "value": "Woodlands, shade trees, groves."
+      },
+      "length_cm": {
+        "max": 15,
+        "min": 13,
+        "sources": [
+          "audubon-red-eyed-vireo",
+          "cornell-red-eyed-vireo-id"
+        ]
+      },
+      "migration": {
+        "category": "long-distance",
+        "sources": [
+          "audubon-red-eyed-vireo",
+          "cornell-red-eyed-vireo-maps-range"
+        ],
+        "value": "Migrates mostly at night. Peak migration periods in most areas are May and September. Those breeding in Northwest apparently move east in fall before turning south."
+      },
+      "nest": {
+        "sources": [
+          "audubon-red-eyed-vireo",
+          "cornell-red-eyed-vireo-lifehistory"
+        ],
+        "type": "cup",
+        "value": "Nest: Placed usually 5-30ft above the ground, sometimes 2-60ft up, in deciduous shrub or sapling. Nest (built by female) is a compact, dainty cup, with its rim woven onto a horizontal forked twig."
+      },
+      "research_status": "verified",
+      "wingspan_cm": {
+        "max": 28,
+        "min": 25,
+        "sources": [
+          "audubon-red-eyed-vireo",
+          "cornell-red-eyed-vireo-id"
+        ]
+      }
+    }
+  }
+}

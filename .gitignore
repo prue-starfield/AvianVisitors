@@ -51,8 +51,9 @@ whitelist_species_list.txt
 .DS_Store
 
 # --- AvianVisitors: local-only material, deliberately not shipped ---
-# Claude Code session data
+# Claude Code and local agent session/research data
 .claude/
+.hermes/
 # Large source / reference imagery kept on disk for working
 avian/assets/references/
 # Superseded assets retained locally

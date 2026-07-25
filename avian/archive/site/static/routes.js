@@ -51,6 +51,9 @@
     if (path === "/explore" || path === "/explore/") {
       return { name: "explore" };
     }
+    if (path === "/cards" || path === "/cards/") {
+      return { name: "cards" };
+    }
     if (path === "/species" || path === "/species/") {
       return { name: "species-index" };
     }
@@ -75,6 +78,7 @@
     params = params || {};
     if (name === "today") return "/birds/";
     if (name === "explore") return "/birds/explore";
+    if (name === "cards") return "/birds/cards";
     if (name === "species-index") return "/birds/species";
     if (name === "about") return "/birds/about";
     if (name === "species-detail" && SLUG_PATTERN.test(params.slug || "")) {

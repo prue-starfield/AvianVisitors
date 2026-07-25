@@ -1,0 +1,19 @@
+{
+  "catalogue_sha256": "ff46b01a07358e86406f7e765bd1dc927ec97d5994a653867a3a7ac164916029",
+  "reviewed_at": "2026-07-25T18:36:52-04:00",
+  "reviewers": [
+    {
+      "model": "openai/gpt-5.5-pro",
+      "provider": "openrouter",
+      "verdict": "passed"
+    },
+    {
+      "model": "x-ai/grok-4.5",
+      "provider": "openrouter",
+      "verdict": "passed"
+    }
+  ],
+  "schema_version": 1,
+  "unresolved_conflicts": [],
+  "verdict": "passed"
+}

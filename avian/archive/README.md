@@ -88,6 +88,54 @@ detections for the `America/New_York` calendar day, matching the e-ink frame.
 The mirror may trail the live microphone by one archive-sync interval, which is
 displayed prominently rather than hidden.
 
+## Sourced bird field cards
+
+The `/birds/cards` route publishes one natural-history card for every
+species claim in the public archive. Cards are ordered by **garden rarity**:
+fewest distinct days heard, then fewest archived recognitions, then most recently
+first heard, with species name as the final deterministic tie-breaker. This is a
+property-specific listening frequency—not global rarity, population trend, or
+conservation status. Conservation appears as a separate, explicitly named
+assessment system and date.
+
+Facts live outside the immutable detection database in:
+
+```text
+avian/archive/site/data/
+├── bird_cards.json         # versioned facts + field-level source IDs
+└── bird_cards.review.json  # catalogue SHA-256 + independent reviewer verdicts
+```
+
+Each verified entry requires cited habitat, ecological diet, wingspan and body
+length ranges in centimetres, nest architecture and site, clutch range,
+migration category and qualified prose, conservation scope/status/date, and a
+short natural-history field note. Source URLs must be HTTPS links to explicitly
+allow-listed institutions. The loader rejects duplicate JSON keys, unsafe URLs,
+control characters, uncited fields, invalid ranges, false precision, a review
+hash mismatch, unresolved conflicts, or fewer than two distinct passed model
+reviews. Startup fails closed if the tracked catalogue or review manifest is
+invalid.
+
+The card layer never rewrites BirdNET claims, Perch evidence, or archive taxonomy.
+A newly published species missing from the current catalogue is still returned
+immediately as `research_status: research_pending`; the UI shows a visible pending card
+rather than omitting the bird or inventing facts. Gallery and individual species
+pages use the same server-side card builder. Illustrations use the separate
+reference-grounded art pipeline; a missing or identity-rejected asset becomes a
+visible “voice-first species” placeholder while background retries continue. At
+publication, Fish Crow intentionally uses that fallback after two positive-reference
+renders were independently read as American Crow at low confidence—an honest limit
+for species normally separated by voice. The design is information-dense and
+field-guide inspired, but contains no Wingspan game food costs, points, powers,
+or copied card artwork.
+
+The API surface is:
+
+```text
+GET /api/cards
+GET /api/species/<canonical slug>  # includes the same bird_card payload
+```
+
 ## Independent Google Perch review
 
 `review_perch.py` runs Google Perch 2 locally through the official ONNX export.

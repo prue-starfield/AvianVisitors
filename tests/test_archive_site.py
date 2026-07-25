@@ -197,6 +197,54 @@ def test_summary_and_today_share_calendar_day_policy(archive_site):
     assert today["species"][0]["detections"] == 2
 
 
+def test_species_aggregation_uses_scientific_taxon_and_newest_common_name(archive_site):
+    _, db_path = archive_site
+    today = site.now_local().date().isoformat()
+    with sqlite3.connect(db_path) as conn:
+        insert_detection(
+            conn, "e" * 64, today, "05:00:00",
+            "Turdus migratorius", "Robin, historical label", 0.92,
+        )
+        conn.commit()
+
+    species = site.get_species(db_path)["species"]
+    robins = [row for row in species if row["scientific_name"] == "Turdus migratorius"]
+    assert len(robins) == 1
+    assert robins[0]["common_name"] == "American Robin"
+    assert robins[0]["detections"] == 3
+
+    today_rows = site.get_today(db_path)["species"]
+    today_robins = [row for row in today_rows if row["scientific_name"] == "Turdus migratorius"]
+    assert len(today_robins) == 1
+    assert today_robins[0]["common_name"] == "American Robin"
+    assert today_robins[0]["detections"] == 3
+
+
+def test_cards_api_orders_rarest_first_and_species_detail_includes_same_card(archive_site):
+    base, db_path = archive_site
+    today = site.now_local().date().isoformat()
+    with sqlite3.connect(db_path) as conn:
+        insert_detection(
+            conn, "e" * 64, today, "09:00:00",
+            "Ficta futura", "Future Bird", 0.92,
+        )
+        conn.commit()
+
+    status, _, payload = get_json(base + "/api/cards")
+    assert status == 200
+    assert payload["rarity_method"] == "garden-days-then-recognitions-v1"
+    assert [card["common_name"] for card in payload["cards"]] == [
+        "Future Bird", "Northern Cardinal", "American Robin",
+    ]
+    assert payload["cards"][0]["garden_rarity_rank"] == 1
+    assert payload["cards"][0]["bird_card"]["research_status"] == "research_pending"
+    assert payload["cards"][2]["bird_card"]["research_status"] == "verified"
+
+    slug = canonical_slug("Turdus migratorius")
+    _, _, detail = get_json(base + f"/api/species/{slug}")
+    assert detail["species"]["bird_card"] == payload["cards"][2]["bird_card"]
+
+
 def test_api_does_not_expose_coordinates_or_audio_paths(archive_site):
     base, _ = archive_site
     _, _, payload = get_json(base + "/api/detections?limit=10")
@@ -275,6 +323,11 @@ def test_species_detail_endpoint_returns_summary_without_private_fields(archive_
     slug = canonical_slug("Turdus migratorius")
     status, _, payload = get_json(base + f"/api/species/{slug}")
     assert status == 200
+    bird_card = payload["species"].pop("bird_card")
+    assert bird_card["research_status"] == "verified"
+    assert bird_card["catalogue_version"] == "2026-07-25.2"
+    assert "latitude" not in json.dumps(bird_card).lower()
+    assert "audio_relpath" not in json.dumps(bird_card).lower()
     assert payload["species"] == {
         "scientific_name": "Turdus migratorius",
         "common_name": "American Robin",

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "purpose": "Retained Cornell measurement evidence for morphometrics that the live All About Birds site blocks from automated retrieval.",
+  "retrieved_at": "2026-07-25",
+  "records": {
+    "Setophaga ruticilla": {
+      "source_url": "https://www.allaboutbirds.org/guide/American_Redstart/id",
+      "snapshot_url": "https://web.archive.org/web/20260330025044id_/https://www.allaboutbirds.org/guide/American_Redstart/id",
+      "captured_at": "20260330025044",
+      "digest": "KR3HBL4NVVOG6BMC6GMEZ4SOFKNXXSF4",
+      "excerpt": "Measurements Both Sexes Length: 4.3-5.1 in (11-13 cm) Weight: 0.2-0.3 oz (6-9 g) Wingspan: 6.3-7.5 in (16-19 cm)"
+    },
+    "Piranga olivacea": {
+      "source_url": "https://www.allaboutbirds.org/guide/Scarlet_Tanager/id",
+      "snapshot_url": "https://web.archive.org/web/20260212210502id_/https://www.allaboutbirds.org/guide/scarlet_tanager/id",
+      "captured_at": "20260212210502",
+      "digest": "MV3ENMISSIVAVFAIILAE5LJOD3OMNIAD",
+      "excerpt": "Measurements Both Sexes Length: 6.3-6.7 in (16-17 cm) Weight: 0.8-1.3 oz (23-38 g) Wingspan: 9.8-11.4 in (25-29 cm)"
+    },
+    "Melospiza melodia": {
+      "source_url": "https://www.allaboutbirds.org/guide/Song_Sparrow/id",
+      "snapshot_url": "https://web.archive.org/web/20260212131112id_/https://www.allaboutbirds.org/guide/Song_Sparrow/id",
+      "captured_at": "20260212131112",
+      "digest": "XQM2TMPOHUOXJM4DMKGEGDSMW3HWXUB7",
+      "excerpt": "Measurements Both Sexes Length: 4.7-6.7 in (12-17 cm) Weight: 0.4-1.9 oz (12-53 g) Wingspan: 7.1-9.4 in (18-24 cm)"
+    },
+    "Progne subis": {
+      "source_url": "https://www.allaboutbirds.org/guide/Purple_Martin/id",
+      "snapshot_url": "https://web.archive.org/web/20260119003311id_/https://www.allaboutbirds.org/guide/Purple_Martin/id",
+      "captured_at": "20260119003311",
+      "digest": "36GJ5W7M6TUN3AE767AXFUGXA3OTR6RE",
+      "excerpt": "Measurements Both Sexes Length: 7.5-7.9 in (19-20 cm) Weight: 1.6-2.1 oz (45-60 g) Wingspan: 15.3-16.1 in (39-41 cm)"
+    },
+    "Baeolophus bicolor": {
+      "source_url": "https://www.allaboutbirds.org/guide/Tufted_Titmouse/id",
+      "snapshot_url": "https://web.archive.org/web/20260406021016id_/https://www.allaboutbirds.org/guide/Tufted_Titmouse/id",
+      "captured_at": "20260406021016",
+      "digest": "OU5S4DFJU7VJZGNCI6JILDASR6GJXZZH",
+      "excerpt": "Measurements Both Sexes Length: 5.5-6.3 in (14-16 cm) Weight: 0.6-0.9 oz (18-26 g) Wingspan: 7.9-10.2 in (20-26 cm)"
+    },
+    "Hylocichla mustelina": {
+      "source_url": "https://www.allaboutbirds.org/guide/Wood_Thrush/id",
+      "snapshot_url": "https://web.archive.org/web/20260118120526id_/https://www.allaboutbirds.org/guide/wood_thrush/id",
+      "captured_at": "20260118120526",
+      "digest": "SHDYLLPEWFASX3OZ3T4BSXHIWOIPSDO6",
+      "excerpt": "Measurements Both Sexes Length: 7.5-8.3 in (19-21 cm) Weight: 1.4-1.8 oz (40-50 g) Wingspan: 11.8-13.4 in (30-34 cm)"
+    },
+    "Sayornis phoebe": {
+      "source_url": "https://www.allaboutbirds.org/guide/Eastern_Phoebe/id",
+      "snapshot_url": "https://web.archive.org/web/20250906181830id_/https://www.allaboutbirds.org/guide/Eastern_Phoebe/id",
+      "captured_at": "20250906181830",
+      "digest": "4BJYRKKRQUNXSVULSE2FKB275JA37VB7",
+      "excerpt": "Measurements Both Sexes Length: 5.5-6.7 in (14-17 cm) Weight: 0.6-0.7 oz (16-21 g) Wingspan: 10.2-11.0 in (26-28 cm)"
+    },
+    "Archilochus colubris": {
+      "source_url": "https://www.allaboutbirds.org/guide/Ruby-throated_Hummingbird/id",
+      "snapshot_url": "https://web.archive.org/web/20260122043654id_/https://www.allaboutbirds.org/guide/ruby-throated_hummingbird/id",
+      "captured_at": "20260122043654",
+      "digest": "PE4SV7J4S7RRTAEOAOQ64TTZZBIREEBY",
+      "excerpt": "Measurements Both Sexes Length: 2.8-3.5 in (7-9 cm) Weight: 0.1-0.2 oz (2-6 g) Wingspan: 3.1-4.3 in (8-11 cm)"
+    },
+    "Hirundo rustica": {
+      "source_url": "https://www.allaboutbirds.org/guide/Barn_Swallow/id",
+      "snapshot_url": "https://web.archive.org/web/20260117140807id_/https://www.allaboutbirds.org/guide/Barn_Swallow/id",
+      "captured_at": "20260117140807",
+      "digest": "5L7B6N5PNYJKBBTSQLZUX756WXPIPFSA",
+      "excerpt": "Measurements Both Sexes Length: 5.9-7.5 in (15-19 cm) Weight: 0.6-0.7 oz (17-20 g) Wingspan: 11.4-12.6 in (29-32 cm)"
+    },
+    "Sitta carolinensis": {
+      "source_url": "https://www.allaboutbirds.org/guide/White-breasted_Nuthatch/id",
+      "snapshot_url": "https://web.archive.org/web/20260119155401id_/https://www.allaboutbirds.org/guide/White-breasted_Nuthatch/id",
+      "captured_at": "20260119155401",
+      "digest": "VGUXT3T4SH26XK3FVH2PWNS2YXE5NAUX",
+      "excerpt": "Measurements Both Sexes Length: 5.1-5.5 in (13-14 cm) Weight: 0.6-1.1 oz (18-30 g) Wingspan: 7.9-10.6 in (20-27 cm)"
+    }
+  }
+}

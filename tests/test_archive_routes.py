@@ -24,6 +24,7 @@ def test_parse_route_supports_public_and_direct_paths():
         "/index.html": {"name": "today"},
         "/": {"name": "today"},
         "/birds/explore": {"name": "explore"},
+        "/birds/cards": {"name": "cards"},
         "/birds/species": {"name": "species-index"},
         "/birds/species/turdus-migratorius": {
             "name": "species-detail",
@@ -59,6 +60,7 @@ def test_route_grammar_allows_only_one_optional_trailing_slash():
 def test_canonical_hrefs_are_safe_and_prefixed():
     assert run_routes("routes.href('today')") == "/birds/"
     assert run_routes("routes.href('explore')") == "/birds/explore"
+    assert run_routes("routes.href('cards')") == "/birds/cards"
     assert run_routes("routes.href('species-index')") == "/birds/species"
     assert run_routes("routes.href('species-detail',{slug:'corvus'})") == (
         "/birds/species/corvus"

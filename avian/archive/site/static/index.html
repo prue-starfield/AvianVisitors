@@ -23,7 +23,7 @@
     <div class="archive-status" id="archiveStatus" aria-live="polite"><i class="pulse" aria-hidden="true"></i><div><strong><span class="wide-status">Reading the </span>archive</strong><small>Checking the latest mirror…</small></div></div>
   </header>
   <nav class="primary-nav" aria-label="Primary navigation">
-    <a href="/birds/" data-route="today">Today</a><a href="/birds/explore" data-route="explore">Explore</a><a href="/birds/species" data-route="species-index">Species</a><a href="/birds/about" data-route="about">About</a>
+    <a href="/birds/" data-route="today">Today</a><a href="/birds/explore" data-route="explore">Explore</a><a href="/birds/cards" data-route="cards">Cards</a><a href="/birds/species" data-route="species-index">Species</a><a href="/birds/about" data-route="about">About</a>
   </nav>
 
   <main id="main">
@@ -42,13 +42,23 @@
       </section>
     </section>
 
+    <section id="viewCards" class="route-view" hidden>
+      <header class="route-header card-route-header"><p class="kicker">The garden deck</p><h1>Every bird,<br><em>rarest first</em></h1><p>Natural-history cards for every published species claim in the Listening Garden—ordered by how seldom we have heard them here.</p></header>
+      <section class="page-section card-cabinet" aria-labelledby="cardGalleryTitle">
+        <header class="section-head"><div><p class="kicker">Garden rarity</p><h2 id="cardGalleryTitle">The field-card cabinet</h2></div><p><strong>Rarest in this archive</strong><br>Fewest distinct days heard, then recognitions. This is not global conservation rarity.</p></header>
+        <aside class="policy-note card-method"><strong>Facts, not game statistics.</strong> Inspired by the information density of a Wingspan card, these use our own design and sourced natural history. Uncorroborated BirdNET candidates remain visibly marked.</aside>
+        <p id="cardGalleryStatus" class="visually-hidden" role="status" aria-live="polite">Opening the researched field-card cabinet…</p>
+        <div id="birdCardGallery" class="field-card-grid"><p class="loading">Opening the researched field-card cabinet…</p></div>
+      </section>
+    </section>
+
     <section id="viewSpecies" class="route-view" hidden>
       <header class="route-header"><p class="kicker">Field index</p><h1>Species in the record</h1><p>Independent evidence separates the field record from candidates still asking to be believed.</p></header>
       <section class="page-section"><header class="section-head"><div><p class="kicker">Independent support</p><h2>Corroborated species</h2></div><p>At least one preserved recognition was ranked first by the pinned Perch model with adequate signal.</p></header><div id="corroboratedSpeciesIndex" class="species-index"><p class="loading">Opening the corroborated field index…</p></div></section>
       <section class="page-section candidate-species-section"><header class="section-head"><div><p class="kicker">Claims kept visible</p><h2>Uncorroborated candidates</h2></div><p>BirdNET claims lacking independent support. Weak near-matches and explicit model conflicts remain preserved here—not laundered into the field record and not deleted.</p></header><div id="uncorroboratedSpeciesIndex" class="species-index"><p class="loading">Reviewing candidate claims…</p></div></section>
     </section>
 
-    <section id="viewSpeciesDetail" class="route-view" hidden><nav class="breadcrumb" aria-label="Breadcrumb"><a href="/birds/species">Species index</a><span aria-hidden="true">/</span><span id="speciesCrumb">Field entry</span></nav><article class="species-profile"><img id="speciesArt" alt=""><div><p class="kicker">Species field entry</p><h1 id="speciesTitle">Loading species…</h1><p id="speciesLatin" class="latin"></p><div class="profile-stats"><div><strong id="speciesRecognitions">—</strong><span>recognitions</span></div><div><strong id="speciesDays">—</strong><span>days heard</span></div><div><strong id="speciesFirstHeard">—</strong><span>first heard</span></div><div><strong id="speciesLastHeard">—</strong><span>last heard</span></div></div><div id="speciesReviewSummary" class="review-summary"></div><a id="speciesInstancesLink" class="instances-link" href="/birds/species#speciesOccurrences">View all recognitions ↓</a></div></article><section id="speciesOccurrences" class="page-section species-occurrences" aria-labelledby="speciesOccurrencesTitle"><header class="section-head"><div><p class="kicker">Chronological instances</p><h2 id="speciesOccurrencesTitle">Every recognition</h2></div><p>Newest first. Each entry opens the exact archived claim.</p></header><div id="speciesOccurrenceGrid" class="occurrence-grid"><p class="loading">Gathering occurrences…</p></div><nav id="speciesPagination" class="pagination" aria-label="Species occurrence pages"></nav></section></section>
+    <section id="viewSpeciesDetail" class="route-view" hidden><nav class="breadcrumb" aria-label="Breadcrumb"><a href="/birds/species">Species index</a><span aria-hidden="true">/</span><span id="speciesCrumb">Field entry</span></nav><article class="species-profile"><img id="speciesArt" alt=""><div><p class="kicker">Species field entry</p><h1 id="speciesTitle">Loading species…</h1><p id="speciesLatin" class="latin"></p><div class="profile-stats"><div><strong id="speciesRecognitions">—</strong><span>recognitions</span></div><div><strong id="speciesDays">—</strong><span>days heard</span></div><div><strong id="speciesFirstHeard">—</strong><span>first heard</span></div><div><strong id="speciesLastHeard">—</strong><span>last heard</span></div></div><div id="speciesReviewSummary" class="review-summary"></div><a id="speciesInstancesLink" class="instances-link" href="/birds/species#speciesOccurrences">View all recognitions ↓</a></div></article><section id="speciesFieldCard" class="page-section species-field-card" aria-labelledby="speciesFieldCardTitle"><header class="section-head"><div><p class="kicker">Natural history</p><h2 id="speciesFieldCardTitle">Field card</h2></div><p>Sourced habitat, diet, dimensions, nesting, movement and conservation context.</p></header><div id="speciesFieldCardBody" class="species-field-card-body"><p class="loading">Opening the researched field card…</p></div></section><section id="speciesOccurrences" class="page-section species-occurrences" aria-labelledby="speciesOccurrencesTitle"><header class="section-head"><div><p class="kicker">Chronological instances</p><h2 id="speciesOccurrencesTitle">Every recognition</h2></div><p>Newest first. Each entry opens the exact archived claim.</p></header><div id="speciesOccurrenceGrid" class="occurrence-grid"><p class="loading">Gathering occurrences…</p></div><nav id="speciesPagination" class="pagination" aria-label="Species occurrence pages"></nav></section></section>
 
     <section id="viewDetectionDetail" class="route-view" hidden>
       <nav class="breadcrumb" aria-label="Breadcrumb"><a id="detectionBack" href="/birds/explore">Recognition ledger</a><span aria-hidden="true">/</span><span>Evidence</span></nav>
@@ -88,7 +98,7 @@
     <section id="viewNotFound" class="route-view" hidden><header class="route-header"><p class="kicker">Field note missing</p><h1>That path isn’t in the garden.</h1><p>The requested record may be malformed or no longer available.</p><a class="button-link" href="/birds/">Return to today</a></header></section>
   </main>
   <footer><div><strong>The Listening Garden</strong><span>Private tailnet archive</span></div><p>Owned locally. Auditable by design. No raw paths or garden coordinates published.</p></footer>
-  <nav class="mobile-nav" aria-label="Primary navigation"><a href="/birds/" data-route="today">Today</a><a href="/birds/explore" data-route="explore">Explore</a><a href="/birds/species" data-route="species-index">Species</a><a href="/birds/about" data-route="about">About</a></nav>
+  <nav class="mobile-nav" aria-label="Primary navigation"><a href="/birds/" data-route="today">Today</a><a href="/birds/explore" data-route="explore">Explore</a><a href="/birds/cards" data-route="cards">Cards</a><a href="/birds/species" data-route="species-index">Species</a><a href="/birds/about" data-route="about">About</a></nav>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

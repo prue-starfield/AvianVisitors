@@ -80,6 +80,24 @@ PERCH_LABELS_PATH = (
     Path.home() / "Library/Application Support/AvianVisitorsArchive/perch/assets/labels.csv"
 )
 PINNED_PERCH_LABELS_SHA256 = "e4d5c0397d8fb08bf90c6b13a34810af53504faad927e472fcc567793c9de057"
+BIRD_CARD_DATA_DIR = Path(__file__).resolve().parent / "data"
+BIRD_CARD_CATALOGUE_PATH = BIRD_CARD_DATA_DIR / "bird_cards.json"
+BIRD_CARD_REVIEW_PATH = BIRD_CARD_DATA_DIR / "bird_cards.review.json"
+BIRD_CARD_FACT_FIELDS = (
+    "habitat", "diet", "wingspan_cm", "length_cm", "nest", "clutch_size",
+    "migration", "conservation", "fact",
+)
+BIRD_CARD_OPTIONAL_FACT_FIELDS = ("taxonomy_note",)
+BIRD_CARD_SOURCE_HOSTS = frozenset({
+    "allaboutbirds.org", "audubon.org", "birdlife.org", "fws.gov",
+    "iucnredlist.org", "stateofthebirds.org",
+})
+BIRD_CARD_NEST_TYPES = frozenset({
+    "cavity", "cup", "ground", "platform", "pendant", "other",
+})
+BIRD_CARD_MIGRATION_CATEGORIES = frozenset({
+    "resident", "partial", "short-distance", "long-distance", "nomadic",
+})
 PERCH_CONCLUSIONS = (
     "Perch independently supports the BirdNET species claim.",
     "Perch strongly favours another species and does not support the BirdNET claim.",
@@ -112,6 +130,410 @@ class RelatedQueueTooLarge(Exception):
     """The candidate population exceeds the endpoint's bounded work budget."""
 
 
+def _json_without_duplicate_keys(raw: bytes, label: str) -> Any:
+    def pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in items:
+            if key in result:
+                raise RuntimeError(f"duplicate key in {label}: {key}")
+            result[key] = value
+        return result
+
+    def reject_constant(value: str) -> None:
+        raise RuntimeError(f"non-finite JSON constant in {label}: {value}")
+
+    try:
+        return json.loads(
+            raw,
+            object_pairs_hook=pairs,
+            parse_constant=reject_constant,
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"invalid {label} JSON") from exc
+
+
+def _exact_card_keys(value: Any, expected: set[str], label: str) -> None:
+    if not isinstance(value, dict):
+        raise RuntimeError(f"invalid {label}")
+    extra = set(value) - expected
+    missing = expected - set(value)
+    if extra:
+        raise RuntimeError(f"unknown {label} fields: {sorted(extra)}")
+    if missing:
+        raise RuntimeError(f"missing {label} fields: {sorted(missing)}")
+
+
+def _card_text(value: Any, field: str, maximum: int = 500) -> str:
+    if not isinstance(value, str) or not value.strip() or len(value) > maximum:
+        raise RuntimeError(f"invalid {field}")
+    if any(ord(char) < 32 or char in "\u2028\u2029" for char in value):
+        raise RuntimeError(f"invalid control character in {field}")
+    return value.strip()
+
+
+def _card_date(value: Any, field: str, *, allow_year: bool = False) -> str:
+    text = _card_text(value, field, 20)
+    if allow_year and re.fullmatch(r"20\d{2}", text):
+        return text
+    if not re.fullmatch(r"20\d{2}-\d{2}-\d{2}", text):
+        raise RuntimeError(f"invalid {field}")
+    try:
+        dt.date.fromisoformat(text)
+    except ValueError as exc:
+        raise RuntimeError(f"invalid {field}") from exc
+    return text
+
+
+def _card_sources(value: Any, field: str, known: set[str]) -> list[str]:
+    if not isinstance(value, list) or not value:
+        raise RuntimeError(f"{field}.sources must not be empty")
+    if any(not isinstance(item, str) or item not in known for item in value):
+        raise RuntimeError(f"{field}.sources references an unknown source")
+    if len(value) != len(set(value)):
+        raise RuntimeError(f"{field}.sources contains duplicates")
+    return list(value)
+
+
+def _card_number(value: Any, field: str, maximum: float) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise RuntimeError(f"invalid {field}")
+    number = float(value)
+    if not math.isfinite(number) or number <= 0 or number > maximum:
+        raise RuntimeError(f"invalid {field}")
+    if round(number, 1) != number:
+        raise RuntimeError(f"false precision in {field}")
+    return number
+
+
+def _card_range(
+    value: Any, field: str, known_sources: set[str], maximum: float,
+    *, integer: bool = False,
+) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise RuntimeError(f"invalid {field}")
+    _exact_card_keys(value, {"min", "max", "sources"}, field)
+    low = _card_number(value.get("min"), f"{field}.min", maximum)
+    high = _card_number(value.get("max"), f"{field}.max", maximum)
+    if low > high:
+        raise RuntimeError(f"invalid {field} range")
+    if integer and (not low.is_integer() or not high.is_integer()):
+        raise RuntimeError(f"invalid integer {field}")
+    return {
+        "min": int(low) if integer else low,
+        "max": int(high) if integer else high,
+        "sources": _card_sources(value.get("sources"), field, known_sources),
+    }
+
+
+def _allowed_card_source_url(value: Any) -> bool:
+    if not isinstance(value, str) or len(value) > 500:
+        return False
+    parsed = urlparse(value)
+    host = (parsed.hostname or "").lower().rstrip(".")
+    try:
+        port = parsed.port
+    except ValueError:
+        return False
+    return (
+        parsed.scheme == "https"
+        and not parsed.username
+        and not parsed.password
+        and port in (None, 443)
+        and any(host == allowed or host.endswith("." + allowed)
+                for allowed in BIRD_CARD_SOURCE_HOSTS)
+        and all(ord(char) >= 32 and char not in "\u2028\u2029" for char in value)
+    )
+
+
+def load_bird_card_catalogue(
+    catalogue_path: Path = BIRD_CARD_CATALOGUE_PATH,
+    review_path: Path = BIRD_CARD_REVIEW_PATH,
+) -> dict[str, Any]:
+    """Load the immutable, independently reviewed natural-history catalogue."""
+    raw = catalogue_path.read_bytes()
+    if not raw or len(raw) > 2_000_000:
+        raise RuntimeError("invalid bird-card catalogue size")
+    catalogue = _json_without_duplicate_keys(raw, "bird-card catalogue")
+    review = _json_without_duplicate_keys(
+        review_path.read_bytes(), "bird-card review manifest",
+    )
+    if not isinstance(catalogue, dict) or catalogue.get("schema_version") != 1:
+        raise RuntimeError("unsupported bird-card catalogue schema")
+    if not isinstance(review, dict) or review.get("schema_version") != 1:
+        raise RuntimeError("unsupported bird-card review schema")
+    _exact_card_keys(
+        catalogue,
+        {"schema_version", "catalogue_version", "sources", "species"},
+        "bird-card catalogue",
+    )
+    _exact_card_keys(
+        review,
+        {
+            "schema_version", "catalogue_sha256", "reviewed_at", "verdict",
+            "reviewers", "unresolved_conflicts",
+        },
+        "bird-card review",
+    )
+    expected_hash = hashlib.sha256(raw).hexdigest()
+    if review.get("catalogue_sha256") != expected_hash:
+        raise RuntimeError("bird-card review hash does not match catalogue")
+    if review.get("verdict") != "passed":
+        raise RuntimeError("bird-card review did not pass")
+    conflicts = review.get("unresolved_conflicts")
+    if conflicts != []:
+        raise RuntimeError("bird-card review has unresolved conflicts")
+    reviewers = review.get("reviewers")
+    if not isinstance(reviewers, list) or len(reviewers) < 2:
+        raise RuntimeError("bird-card catalogue needs two independent reviewers")
+    identities: set[tuple[str, str]] = set()
+    model_ids: set[str] = set()
+    for index, reviewer in enumerate(reviewers):
+        if not isinstance(reviewer, dict) or reviewer.get("verdict") != "passed":
+            raise RuntimeError(f"bird-card reviewer {index + 1} did not pass")
+        _exact_card_keys(
+            reviewer, {"provider", "model", "verdict"},
+            f"bird-card reviewer {index + 1}",
+        )
+        provider = _card_text(reviewer.get("provider"), "reviewer.provider", 80)
+        model = _card_text(reviewer.get("model"), "reviewer.model", 120)
+        identities.add((provider, model))
+        model_ids.add(model.casefold().rsplit("/", 1)[-1])
+    if len(identities) < 2:
+        raise RuntimeError("bird-card reviewers are not independent")
+    if len(model_ids) < 2:
+        raise RuntimeError("bird-card reviewer models are not distinct")
+    reviewed_at = _card_text(review.get("reviewed_at"), "reviewed_at", 80)
+    try:
+        dt.datetime.fromisoformat(reviewed_at)
+    except ValueError as exc:
+        raise RuntimeError("invalid reviewed_at") from exc
+    version = _card_text(catalogue.get("catalogue_version"), "catalogue_version", 80)
+
+    source_rows = catalogue.get("sources")
+    if not isinstance(source_rows, dict) or not source_rows:
+        raise RuntimeError("bird-card source catalogue is empty")
+    sources: dict[str, dict[str, str]] = {}
+    for source_id, source in source_rows.items():
+        if not isinstance(source_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{2,79}", source_id):
+            raise RuntimeError("invalid bird-card source id")
+        if not isinstance(source, dict) or source.get("id") != source_id:
+            raise RuntimeError(f"invalid source record: {source_id}")
+        _exact_card_keys(
+            source, {"id", "publisher", "title", "url", "accessed_at"},
+            f"source {source_id}",
+        )
+        url = source.get("url")
+        if not _allowed_card_source_url(url):
+            raise RuntimeError(f"unsafe source URL: {source_id}")
+        accessed_at = _card_date(
+            source.get("accessed_at"), f"{source_id}.accessed_at",
+        )
+        sources[source_id] = {
+            "id": source_id,
+            "publisher": _card_text(source.get("publisher"), f"{source_id}.publisher", 120),
+            "title": _card_text(source.get("title"), f"{source_id}.title", 200),
+            "url": str(url),
+            "accessed_at": accessed_at,
+        }
+    known_sources = set(sources)
+
+    species_rows = catalogue.get("species")
+    if not isinstance(species_rows, dict) or not species_rows:
+        raise RuntimeError("bird-card species catalogue is empty")
+    species: dict[str, dict[str, Any]] = {}
+    for scientific_name, raw_facts in species_rows.items():
+        if not isinstance(scientific_name, str) or not re.fullmatch(
+            r"[A-Z][a-z-]{1,40}(?: [a-z][a-z-]{1,40}){1,2}", scientific_name,
+        ):
+            raise RuntimeError("invalid bird-card scientific name")
+        if not isinstance(raw_facts, dict) or raw_facts.get("research_status") != "verified":
+            raise RuntimeError(f"unverified bird-card entry: {scientific_name}")
+        required_fact_keys = {"research_status", *BIRD_CARD_FACT_FIELDS}
+        extra_fact_keys = (
+            set(raw_facts) - required_fact_keys - set(BIRD_CARD_OPTIONAL_FACT_FIELDS)
+        )
+        missing_fact_keys = required_fact_keys - set(raw_facts)
+        if extra_fact_keys:
+            raise RuntimeError(
+                f"unknown bird-card entry {scientific_name} fields: "
+                f"{sorted(extra_fact_keys)}"
+            )
+        if missing_fact_keys:
+            raise RuntimeError(
+                f"missing bird-card entry {scientific_name} fields: "
+                f"{sorted(missing_fact_keys)}"
+            )
+
+        facts: dict[str, Any] = {"research_status": "verified"}
+        for field in ("habitat", "diet", "fact"):
+            item = raw_facts[field]
+            if not isinstance(item, dict):
+                raise RuntimeError(f"invalid {scientific_name}.{field}")
+            _exact_card_keys(
+                item, {"value", "sources"}, f"{scientific_name}.{field}",
+            )
+            facts[field] = {
+                "value": _card_text(item.get("value"), f"{scientific_name}.{field}"),
+                "sources": _card_sources(
+                    item.get("sources"), f"{scientific_name}.{field}", known_sources,
+                ),
+            }
+        facts["wingspan_cm"] = _card_range(
+            raw_facts["wingspan_cm"], f"{scientific_name}.wingspan_cm",
+            known_sources, 300.0,
+        )
+        facts["length_cm"] = _card_range(
+            raw_facts["length_cm"], f"{scientific_name}.length_cm",
+            known_sources, 250.0,
+        )
+        facts["clutch_size"] = _card_range(
+            raw_facts["clutch_size"], f"{scientific_name}.clutch_size",
+            known_sources, 30.0, integer=True,
+        )
+        nest = raw_facts["nest"]
+        if not isinstance(nest, dict) or nest.get("type") not in BIRD_CARD_NEST_TYPES:
+            raise RuntimeError(f"invalid {scientific_name}.nest")
+        _exact_card_keys(
+            nest, {"type", "value", "sources"}, f"{scientific_name}.nest",
+        )
+        facts["nest"] = {
+            "type": nest["type"],
+            "value": _card_text(nest.get("value"), f"{scientific_name}.nest"),
+            "sources": _card_sources(
+                nest.get("sources"), f"{scientific_name}.nest", known_sources,
+            ),
+        }
+        migration = raw_facts["migration"]
+        if not isinstance(migration, dict) or migration.get("category") not in BIRD_CARD_MIGRATION_CATEGORIES:
+            raise RuntimeError(f"invalid {scientific_name}.migration")
+        _exact_card_keys(
+            migration, {"category", "value", "sources"},
+            f"{scientific_name}.migration",
+        )
+        facts["migration"] = {
+            "category": migration["category"],
+            "value": _card_text(
+                migration.get("value"), f"{scientific_name}.migration",
+            ),
+            "sources": _card_sources(
+                migration.get("sources"), f"{scientific_name}.migration",
+                known_sources,
+            ),
+        }
+        conservation = raw_facts["conservation"]
+        if not isinstance(conservation, dict):
+            raise RuntimeError(f"invalid {scientific_name}.conservation")
+        _exact_card_keys(
+            conservation, {"system", "status", "assessed_at", "sources"},
+            f"{scientific_name}.conservation",
+        )
+        assessed_at = _card_date(
+            conservation.get("assessed_at"),
+            f"{scientific_name}.conservation.assessed_at",
+            allow_year=True,
+        )
+        facts["conservation"] = {
+            "system": _card_text(
+                conservation.get("system"), f"{scientific_name}.conservation.system", 80,
+            ),
+            "status": _card_text(
+                conservation.get("status"), f"{scientific_name}.conservation.status", 80,
+            ),
+            "assessed_at": assessed_at,
+            "sources": _card_sources(
+                conservation.get("sources"), f"{scientific_name}.conservation",
+                known_sources,
+            ),
+        }
+        taxonomy_note = raw_facts.get("taxonomy_note")
+        if taxonomy_note is not None:
+            _exact_card_keys(
+                taxonomy_note, {"value", "sources"},
+                f"{scientific_name}.taxonomy_note",
+            )
+            facts["taxonomy_note"] = {
+                "value": _card_text(
+                    taxonomy_note.get("value"),
+                    f"{scientific_name}.taxonomy_note",
+                ),
+                "sources": _card_sources(
+                    taxonomy_note.get("sources"),
+                    f"{scientific_name}.taxonomy_note", known_sources,
+                ),
+            }
+        species[scientific_name] = facts
+
+    return {
+        "schema_version": 1,
+        "catalogue_version": version,
+        "species": species,
+        "sources": sources,
+        "review": {
+            "reviewed_at": review["reviewed_at"],
+            "verdict": "passed",
+            "reviewers": [
+                {"provider": item["provider"], "model": item["model"], "verdict": "passed"}
+                for item in reviewers
+            ],
+        },
+    }
+
+
+def _card_source_ids(facts: dict[str, Any]) -> set[str]:
+    result: set[str] = set()
+    for field in BIRD_CARD_FACT_FIELDS:
+        result.update(facts[field]["sources"])
+    for field in BIRD_CARD_OPTIONAL_FACT_FIELDS:
+        if field in facts:
+            result.update(facts[field]["sources"])
+    return result
+
+
+def bird_card_for_species(scientific_name: str, catalogue: dict[str, Any]) -> dict[str, Any]:
+    facts = catalogue["species"].get(scientific_name)
+    if facts is None:
+        return {
+            "research_status": "research_pending",
+            "facts": None,
+            "sources": [],
+        }
+    source_ids = _card_source_ids(facts)
+    return {
+        "research_status": "verified",
+        "facts": {key: value for key, value in facts.items() if key != "research_status"},
+        "sources": [catalogue["sources"][key] for key in sorted(source_ids)],
+        "catalogue_version": catalogue["catalogue_version"],
+        "reviewed_at": catalogue["review"]["reviewed_at"],
+        "reviewers": catalogue["review"]["reviewers"],
+    }
+
+
+def _first_heard_sort_value(value: Any) -> float:
+    try:
+        return -dt.datetime.fromisoformat(str(value)).timestamp()
+    except (TypeError, ValueError, OverflowError):
+        return 0.0
+
+
+def join_bird_cards(
+    species_rows: Iterable[dict[str, Any]], catalogue: dict[str, Any],
+) -> list[dict[str, Any]]:
+    cards = [
+        {**row, "bird_card": bird_card_for_species(row["scientific_name"], catalogue)}
+        for row in species_rows
+    ]
+    cards.sort(key=lambda row: (
+        int(row.get("days_heard") or 0),
+        int(row.get("detections") or 0),
+        _first_heard_sort_value(row.get("first_heard")),
+        str(row.get("common_name") or ""),
+        str(row.get("scientific_name") or ""),
+    ))
+    for rank, card in enumerate(cards, 1):
+        card["garden_rarity_rank"] = rank
+    return cards
+
+
 def now_local() -> dt.datetime:
     return dt.datetime.now(TZ)
 
@@ -129,8 +551,8 @@ def canonical_species_slug(scientific_name: str) -> str:
 
 def is_frontend_route(path: str) -> bool:
     """Allow only the app's canonical document routes; reject catch-all paths."""
-    if path in {"/", "/index.html", "/explore", "/explore/", "/species",
-                "/species/", "/about", "/about/"}:
+    if path in {"/", "/index.html", "/explore", "/explore/", "/cards",
+                "/cards/", "/species", "/species/", "/about", "/about/"}:
         return True
     detection_match = re.fullmatch(r"/detection/([^/]+)/?", path)
     if detection_match:
@@ -530,15 +952,21 @@ def get_today(db_path: Path) -> dict[str, Any]:
     today = now_local().date().isoformat()
     with db_connect(db_path) as db:
         rows = rows_dict(db.execute(
-            """SELECT scientific_name, common_name, count(*) AS detections,
-                      min(time) AS first_heard, max(time) AS last_heard,
-                      max(confidence) AS best_confidence,
-                      avg(confidence) AS mean_confidence,
-                      sum(audio_sha256 IS NOT NULL) AS clips_preserved
-               FROM detections WHERE date=? AND confidence BETWEEN ? AND 1.0
-               GROUP BY scientific_name, common_name
+            """SELECT d.scientific_name,
+                      (SELECT d2.common_name FROM detections d2
+                       WHERE d2.scientific_name=d.scientific_name
+                         AND d2.confidence BETWEEN ? AND 1.0
+                       ORDER BY d2.observed_at_local DESC, d2.detection_id DESC
+                       LIMIT 1) AS common_name,
+                      count(*) AS detections,
+                      min(d.time) AS first_heard, max(d.time) AS last_heard,
+                      max(d.confidence) AS best_confidence,
+                      avg(d.confidence) AS mean_confidence,
+                      sum(d.audio_sha256 IS NOT NULL) AS clips_preserved
+               FROM detections d WHERE d.date=? AND d.confidence BETWEEN ? AND 1.0
+               GROUP BY d.scientific_name
                ORDER BY detections DESC, common_name""",
-            (today, PUBLICATION_MIN_CONFIDENCE),
+            (PUBLICATION_MIN_CONFIDENCE, today, PUBLICATION_MIN_CONFIDENCE),
         ))
     standing_by_species = {
         item["scientific_name"]: item["standing"]
@@ -584,7 +1012,13 @@ def get_activity(db_path: Path, days: int) -> dict[str, Any]:
 def get_species(db_path: Path) -> dict[str, Any]:
     with db_connect(db_path) as db:
         species = rows_dict(db.execute(
-            f"""SELECT d.scientific_name, d.common_name, count(*) AS detections,
+            f"""SELECT d.scientific_name,
+                      (SELECT d2.common_name FROM detections d2
+                       WHERE d2.scientific_name=d.scientific_name
+                         AND d2.confidence BETWEEN ? AND 1.0
+                       ORDER BY d2.observed_at_local DESC, d2.detection_id DESC
+                       LIMIT 1) AS common_name,
+                      count(*) AS detections,
                       count(DISTINCT d.date) AS days_heard,
                       min(d.observed_at_local) AS first_heard,
                       max(d.observed_at_local) AS last_heard,
@@ -606,9 +1040,9 @@ def get_species(db_path: Path) -> dict[str, Any]:
                  AND (r.review_score IS NULL OR r.review_score BETWEEN 0.0 AND 1.0)
                {REVIEW_INTERPRETATION_JOIN_SQL}
                WHERE d.confidence BETWEEN ? AND 1.0
-               GROUP BY d.scientific_name, d.common_name
-               ORDER BY days_heard DESC, detections DESC, d.common_name""",
-            (PUBLICATION_MIN_CONFIDENCE,),
+               GROUP BY d.scientific_name
+               ORDER BY days_heard DESC, detections DESC, common_name""",
+            (PUBLICATION_MIN_CONFIDENCE, PUBLICATION_MIN_CONFIDENCE),
         ))
     for row in species:
         counts = {
@@ -630,15 +1064,36 @@ def get_species(db_path: Path) -> dict[str, Any]:
     }
 
 
-def get_species_detail(db_path: Path, slug: str) -> Optional[dict[str, Any]]:
+def get_cards(db_path: Path, catalogue: dict[str, Any]) -> dict[str, Any]:
+    cards = join_bird_cards(get_species(db_path)["species"], catalogue)
+    return {
+        "cards": cards,
+        "rarity_method": "garden-days-then-recognitions-v1",
+        "rarity_description": (
+            "Fewest distinct days heard, then fewest recognitions, then most "
+            "recently first heard. This is rarity in this archive, not global rarity."
+        ),
+        "catalogue_version": catalogue["catalogue_version"],
+        "review": catalogue["review"],
+    }
+
+
+def get_species_detail(
+    db_path: Path, slug: str, catalogue: Optional[dict[str, Any]] = None,
+) -> Optional[dict[str, Any]]:
     if not SAFE_SLUG.fullmatch(slug):
         raise ValueError("invalid species slug")
     with db_connect(db_path) as db:
         published = db.execute(
-            """SELECT scientific_name, max(common_name) AS common_name
-               FROM detections WHERE confidence BETWEEN ? AND 1.0
-               GROUP BY scientific_name""",
-            (PUBLICATION_MIN_CONFIDENCE,),
+            """SELECT d.scientific_name,
+                      (SELECT d2.common_name FROM detections d2
+                       WHERE d2.scientific_name=d.scientific_name
+                         AND d2.confidence BETWEEN ? AND 1.0
+                       ORDER BY d2.observed_at_local DESC, d2.detection_id DESC
+                       LIMIT 1) AS common_name
+               FROM detections d WHERE d.confidence BETWEEN ? AND 1.0
+               GROUP BY d.scientific_name""",
+            (PUBLICATION_MIN_CONFIDENCE, PUBLICATION_MIN_CONFIDENCE),
         )
         published = list(published)
         canonical_matches = [
@@ -690,7 +1145,7 @@ def get_species_detail(db_path: Path, slug: str) -> Optional[dict[str, Any]]:
             "pending", "unreviewed",
         )
     }
-    return {
+    result = {
         "scientific_name": species["scientific_name"],
         "common_name": species["common_name"],
         "slug": canonical_species_slug(species["scientific_name"]),
@@ -702,19 +1157,30 @@ def get_species_detail(db_path: Path, slug: str) -> Optional[dict[str, Any]]:
         "review_policy_version": PUBLIC_REVIEW_POLICY_VERSION,
         "review_counts": review_counts,
     }
+    if catalogue is not None:
+        result["bird_card"] = bird_card_for_species(
+            species["scientific_name"], catalogue,
+        )
+    return result
 
 
 def get_seasonality(db_path: Path) -> dict[str, Any]:
     with db_connect(db_path) as db:
         rows = rows_dict(db.execute(
-            """SELECT CAST(strftime('%m',date) AS INTEGER) AS calendar_month,
-                      scientific_name, common_name, count(*) AS detections,
-                      count(DISTINCT date) AS days_heard,
-                      count(DISTINCT substr(date,1,4)) AS years_observed
-               FROM detections WHERE confidence BETWEEN ? AND 1.0
-               GROUP BY calendar_month,scientific_name,common_name
-               ORDER BY scientific_name,calendar_month""",
-            (PUBLICATION_MIN_CONFIDENCE,),
+            """SELECT CAST(strftime('%m',d.date) AS INTEGER) AS calendar_month,
+                      d.scientific_name,
+                      (SELECT d2.common_name FROM detections d2
+                       WHERE d2.scientific_name=d.scientific_name
+                         AND d2.confidence BETWEEN ? AND 1.0
+                       ORDER BY d2.observed_at_local DESC, d2.detection_id DESC
+                       LIMIT 1) AS common_name,
+                      count(*) AS detections,
+                      count(DISTINCT d.date) AS days_heard,
+                      count(DISTINCT substr(d.date,1,4)) AS years_observed
+               FROM detections d WHERE d.confidence BETWEEN ? AND 1.0
+               GROUP BY calendar_month,d.scientific_name
+               ORDER BY d.scientific_name,calendar_month""",
+            (PUBLICATION_MIN_CONFIDENCE, PUBLICATION_MIN_CONFIDENCE),
         ))
         monthly = rows_dict(db.execute(
             """SELECT substr(date,1,7) AS month, count(*) AS detections,
@@ -1245,10 +1711,19 @@ class ArchiveHandler(BaseHTTPRequestHandler):
                 self.json_response(get_activity(self.config.db, days))
             elif path == "/api/species":
                 self.json_response(get_species(self.config.db))
+            elif path == "/api/cards":
+                catalogue = getattr(self.config, "bird_cards", None)
+                if catalogue is None:
+                    catalogue = load_bird_card_catalogue()
+                self.json_response(get_cards(self.config.db, catalogue))
             elif re.fullmatch(r"/api/species/[a-z0-9]+(?:-[a-z0-9]+)*", path):
+                catalogue = getattr(self.config, "bird_cards", None)
+                if catalogue is None:
+                    catalogue = load_bird_card_catalogue()
                 species = get_species_detail(
                     self.config.db,
                     path[len("/api/species/"):],
+                    catalogue,
                 )
                 if species is None:
                     self.error_json("species not found", 404)
@@ -1341,7 +1816,7 @@ class ArchiveHandler(BaseHTTPRequestHandler):
             self.error_json(str(exc), 409)
         except RelatedQueueTooLarge as exc:
             self.error_json(str(exc), 503)
-        except (sqlite3.Error, OSError) as exc:
+        except (sqlite3.Error, OSError, RuntimeError) as exc:
             print(f"request failed: {exc}")
             self.error_json("archive temporarily unavailable", 503)
 
@@ -1378,8 +1853,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         raise SystemExit(f"archive database not found: {args.db}")
     try:
         validate_public_archive_schema(args.db)
+        args.bird_cards = load_bird_card_catalogue()
     except (sqlite3.Error, OSError, RuntimeError) as exc:
-        raise SystemExit(f"archive schema validation failed: {exc}") from exc
+        raise SystemExit(f"archive publication validation failed: {exc}") from exc
     server = ThreadingHTTPServer((args.host, args.port), ArchiveHandler)
     server.config = args  # type: ignore[attr-defined]
     print(f"Listening Garden on http://{args.host}:{args.port}", flush=True)

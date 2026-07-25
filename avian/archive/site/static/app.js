@@ -44,11 +44,11 @@ function focusRouteDestination(element) {
   element.focus({ preventScroll: true });
 }
 function makeIllustrationsSelfHealing(root) {
-  root.querySelectorAll("img").forEach(img => { let retries = 0; img.addEventListener("load", () => { img.style.visibility = "visible"; }); img.addEventListener("error", () => { img.style.visibility = "hidden"; if (retries >= ART_RETRY_DELAYS_MS.length) { img.alt += img.alt.endsWith("illustration unavailable") ? "" : " (illustration unavailable)"; return; } const delay = ART_RETRY_DELAYS_MS[retries++]; window.setTimeout(() => { const retry = new URL(img.src); retry.searchParams.set("retry", Date.now()); img.src = retry; }, delay); }); });
+  root.querySelectorAll("img").forEach(img => { let retries = 0; const header = img.closest(".field-card-header"); img.addEventListener("load", () => { img.style.visibility = "visible"; header?.classList.remove("illustration-missing"); }); img.addEventListener("error", () => { img.style.visibility = "hidden"; header?.classList.add("illustration-missing"); if (retries >= ART_RETRY_DELAYS_MS.length) { img.alt += img.alt.endsWith("illustration unavailable") ? "" : " (illustration unavailable)"; return; } const delay = ART_RETRY_DELAYS_MS[retries++]; window.setTimeout(() => { const retry = new URL(img.src); retry.searchParams.set("retry", Date.now()); img.src = retry.toString(); }, delay); }); if (img.complete && img.naturalWidth === 0) img.dispatchEvent(new Event("error")); });
 }
 
 function setCurrentRoute(route) {
-  const ids = { today: "viewToday", explore: "viewExplore", "species-index": "viewSpecies", "species-detail": "viewSpeciesDetail", "detection-detail": "viewDetectionDetail", about: "viewAbout", "not-found": "viewNotFound" };
+  const ids = { today: "viewToday", explore: "viewExplore", cards: "viewCards", "species-index": "viewSpecies", "species-detail": "viewSpeciesDetail", "detection-detail": "viewDetectionDetail", about: "viewAbout", "not-found": "viewNotFound" };
   $$(".route-view").forEach(view => { view.hidden = view.id !== ids[route.name]; });
   document.body.dataset.route = route.name;
   $$("[data-route]").forEach(link => { const current = link.dataset.route === route.name || (route.name === "species-detail" && link.dataset.route === "species-index"); if (current) link.setAttribute("aria-current", "page"); else link.removeAttribute("aria-current"); });
@@ -82,6 +82,53 @@ async function loadLedger(explore) { const offset = (explore.page - 1) * PAGE_SI
 function renderLedger(explore, data) { const offset = (explore.page - 1) * PAGE_SIZE; $("#ledgerRows").innerHTML = data.detections.length ? data.detections.map(ledgerRow).join("") : '<tr><td colspan="5" class="empty-state">No recognitions match these filters.</td></tr>'; const first = data.total ? offset + 1 : 0; $("#ledgerCount").textContent = `Showing ${formatNumber(first)}–${formatNumber(offset + data.detections.length)} of ${formatNumber(data.total)}`; const pages = Routes.pageCount(data.total); $("#pageNumber").textContent = `Page ${explore.page} of ${pages}`; for (const [selector, page, visible] of [["#previousPage", explore.page - 1, explore.page > 1], ["#nextPage", explore.page + 1, explore.page < pages]]) { const link = $(selector); link.hidden = !visible; link.href = Routes.href("explore") + Routes.exploreSearch({ ...explore, page }); } }
 async function restoreExplore() { const token = ++exploreRequestToken; let explore = Routes.parseExplore(window.location.search); try { let data = await loadLedger(explore); if (token !== exploreRequestToken) return; const lastPage = Routes.pageCount(data.total); if (explore.page > lastPage) { explore = { ...explore, page: lastPage }; history.replaceState({}, "", Routes.href("explore") + Routes.exploreSearch(explore) + window.location.hash); data = await loadLedger(explore); if (token !== exploreRequestToken) return; } state.explore = explore; applyExploreToForm(explore); renderLedger(explore, data); } catch (error) { if (token === exploreRequestToken) showError($("#ledgerRows"), error.message); } }
 async function initExplore() { const token = ++exploreRequestToken; try { const [activity, speciesData, seasonality] = await Promise.all([fetchJSON("api/activity?days=365"), fetchJSON("api/species"), fetchJSON("api/seasonality")]); if (token !== exploreRequestToken) return; renderActivity(activity); populateSpeciesControls(speciesData.species); state.seasonality = seasonality.by_species_month; const selected = state.species[0]?.scientific_name || ""; if (selected) { $("#seasonSpecies").value = selected; renderMonthChart(selected); } } catch (error) { if (token === exploreRequestToken) { showToast(`Explore unavailable: ${error.message}`); $("#ledgerCount").textContent = "The archive could not be read. Try again shortly."; } } $("#seasonSpecies").addEventListener("change", event => renderMonthChart(event.target.value)); $("#ledgerFilters").addEventListener("submit", event => { event.preventDefault(); const next = { q: $("#filterQuery").value.trim(), species: $("#filterSpecies").value, date_from: $("#filterFrom").value, confidence_min: $("#filterConfidence").value, review: $("#filterReview").value, page: 1 }; history.pushState({}, "", Routes.href("explore") + Routes.exploreSearch(next)); restoreExplore(); }); window.addEventListener("popstate", restoreExplore); await restoreExplore(); }
+
+function formatFactRange(item, suffix = "") {
+  if (!item) return "—";
+  const low = Number(item.min); const high = Number(item.max);
+  if (!Number.isFinite(low) || !Number.isFinite(high)) return "—";
+  const value = low === high ? `${low}` : `${low}–${high}`;
+  return `${value}${suffix}`;
+}
+function sourceSectionLabel(value) {
+  try {
+    const section = new URL(value).pathname.split("/").filter(Boolean).at(-1)?.toLowerCase();
+    const labels = { overview: "overview", lifehistory: "life history", id: "identification & measurements", maps: "range", sounds: "sounds & calls" };
+    return labels[section] ? ` · ${labels[section]}` : "";
+  } catch (_) { return ""; }
+}
+function sourceLinks(card) {
+  const sources = Array.isArray(card?.sources) ? card.sources : [];
+  if (!sources.length) return "";
+  return `<details class="card-sources"><summary>${formatNumber(sources.length)} source${sources.length === 1 ? "" : "s"}</summary><ol>${sources.map(source => `<li><a href="${escapeHTML(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(source.publisher)} · ${escapeHTML(source.title)}${escapeHTML(sourceSectionLabel(source.url))}</a></li>`).join("")}</ol></details>`;
+}
+function renderBirdCard(bird, detailed = false) {
+  const card = bird.bird_card || { research_status: "research_pending", facts: null, sources: [] };
+  const counts = bird.review_counts || {};
+  const standing = bird.standing === "corroborated" ? "corroborated" : (Number(counts.model_conflict) ? "model_conflict" : "uncorroborated");
+  const standingLabel = standing === "model_conflict" ? "Model conflict" : (standing === "corroborated" ? "Corroborated" : "Uncorroborated");
+  const href = Routes.href("species-detail", { slug: bird.slug || bird.art_slug });
+  const rarity = bird.garden_rarity_rank ? `#${formatNumber(bird.garden_rarity_rank)} rarest here` : `${formatNumber(bird.days_heard)} ${Number(bird.days_heard) === 1 ? "day" : "days"} heard`;
+  const header = `<header class="field-card-header"><span class="garden-rarity">${escapeHTML(rarity)}</span><span class="species-standing ${standing}">${escapeHTML(standingLabel)}</span><img src="${escapeHTML(artURL(bird.art_slug || bird.slug))}" alt="Illustration of ${escapeHTML(bird.common_name)}"><span class="field-card-art-fallback" role="img" aria-label="No independently verified illustration available for ${escapeHTML(bird.common_name)}"><b>Voice-first species</b><small>No verified illustration</small></span><a href="${escapeHTML(href)}"><h3>${escapeHTML(bird.common_name)}</h3><em>${escapeHTML(bird.scientific_name)}</em></a><p>${formatNumber(bird.detections)} archived recognition${Number(bird.detections) === 1 ? "" : "s"}</p></header>`;
+  if (card.research_status !== "verified" || !card.facts) {
+    return `<article class="field-card research-pending ${standing} ${detailed ? "field-card-detailed" : ""}">${header}<div class="field-card-pending"><strong>Research pending</strong><p>This newly heard species is visible immediately; its natural-history fields will appear only after source review passes.</p></div></article>`;
+  }
+  const facts = card.facts;
+  const reviewers = Array.isArray(card.reviewers) ? card.reviewers.length : 0;
+  const taxonomy = facts.taxonomy_note ? `<div><dt>Taxonomy note</dt><dd>${escapeHTML(facts.taxonomy_note.value)}</dd></div>` : "";
+  return `<article class="field-card ${standing} ${detailed ? "field-card-detailed" : ""}">${header}<div class="field-card-facts"><dl class="card-essentials"><div><dt>Habitat</dt><dd>${escapeHTML(facts.habitat.value)}</dd></div><div><dt>Diet</dt><dd>${escapeHTML(facts.diet.value)}</dd></div></dl><div class="card-measures"><div><span aria-hidden="true">↔</span><strong>${escapeHTML(formatFactRange(facts.wingspan_cm, " cm"))}</strong><small>wingspan</small></div><div><span aria-hidden="true">↕</span><strong>${escapeHTML(formatFactRange(facts.length_cm, " cm"))}</strong><small>length</small></div><div><span aria-hidden="true">◉</span><strong>${escapeHTML(formatFactRange(facts.clutch_size))}</strong><small>eggs</small></div></div><dl class="card-compact-facts"><div><dt>Nest · ${escapeHTML(facts.nest.type)}</dt><dd>${escapeHTML(facts.nest.value)}</dd></div><div><dt>Movement · ${escapeHTML(facts.migration.category)}</dt><dd>${escapeHTML(facts.migration.value)}</dd></div><div><dt>Conservation</dt><dd>${escapeHTML(facts.conservation.system)} ${escapeHTML(facts.conservation.status)} · assessed ${escapeHTML(facts.conservation.assessed_at)}</dd></div>${taxonomy}</dl><blockquote>${escapeHTML(facts.fact.value)}</blockquote>${sourceLinks(card)}<p class="card-review-proof">Catalogue ${escapeHTML(card.catalogue_version)} · independently reviewed by ${formatNumber(reviewers)} models</p></div></article>`;
+}
+async function initCards() {
+  const holder = $("#birdCardGallery");
+  try {
+    const data = await fetchJSON("api/cards");
+    document.title = "Bird cards · The Listening Garden";
+    $("#cardGalleryTitle").textContent = `The ${formatNumber(data.cards.length)}-card cabinet`;
+    holder.innerHTML = data.cards.length ? data.cards.map(bird => renderBirdCard(bird)).join("") : '<p class="empty-state">No published species claims yet.</p>';
+    $("#cardGalleryStatus").textContent = data.cards.length ? `${formatNumber(data.cards.length)} bird cards loaded.` : "No bird cards to display.";
+    makeIllustrationsSelfHealing(holder);
+  } catch (error) { $("#cardGalleryStatus").textContent = "Bird cards could not be loaded."; showError(holder, error.message); }
+}
 
 function renderSpecies(holder, species, candidate = false) { if (!species.length) { holder.innerHTML = `<p class="empty-state">${candidate ? "No uncorroborated species candidates." : "No species have been independently corroborated yet."}</p>`; return; } const max = Math.max(1, ...species.map(item => Number(item.days_heard))); holder.innerHTML = species.map((bird, index) => { const counts = bird.review_counts || {}; const warning = candidate ? `<span class="species-standing ${Number(counts.model_conflict) ? "model_conflict" : "uncorroborated"}">${Number(counts.model_conflict) ? "Model conflict" : "Uncorroborated"}</span>` : '<span class="species-standing corroborated">Corroborated</span>'; const dayLabel = bird.days_heard === 1 ? "day" : "days"; const recognitionLabel = bird.detections === 1 ? "recognition" : "recognitions"; return `<a class="species-row" href="${escapeHTML(speciesHistoryHref(bird.slug))}"><span class="species-rank">${String(index + 1).padStart(2, "0")}</span><span class="species-name"><strong>${escapeHTML(bird.common_name)}</strong><em>${escapeHTML(bird.scientific_name)}</em>${warning}</span><span>${formatNumber(bird.days_heard)} ${dayLabel} heard</span><i aria-hidden="true"><b style="width:${Math.max(3, Number(bird.days_heard) / max * 100)}%"></b></i><span>${formatNumber(bird.detections)} ${recognitionLabel}</span></a>`; }).join(""); }
 async function initSpeciesIndex() { try { const data = await fetchJSON("api/species"); const corroborated = data.species.filter(bird => bird.standing === "corroborated"); const uncorroborated = data.species.filter(bird => bird.standing !== "corroborated"); renderSpecies($("#corroboratedSpeciesIndex"), corroborated); renderSpecies($("#uncorroboratedSpeciesIndex"), uncorroborated, true); } catch (error) { showError($("#corroboratedSpeciesIndex"), error.message); showError($("#uncorroboratedSpeciesIndex"), error.message); } }
@@ -127,6 +174,9 @@ async function initSpeciesDetail(route) {
     const reviewSummary = $("#speciesReviewSummary");
     reviewSummary.className = `review-summary ${bird.standing === "corroborated" ? "corroborated" : "uncorroborated"}`;
     reviewSummary.innerHTML = `<strong>${bird.standing === "corroborated" ? "Corroborated species" : "Uncorroborated candidate"}</strong><span>${formatNumber(reviews.corroborated)} corroborated · ${formatNumber(reviews.uncorroborated)} uncorroborated · ${formatNumber(reviews.model_conflict)} model conflict · ${formatNumber(reviews.pending)} pending · ${formatNumber(reviews.unreviewed)} unreviewed</span>`;
+    const fieldCard = $("#speciesFieldCardBody");
+    fieldCard.innerHTML = renderBirdCard(bird, true);
+    makeIllustrationsSelfHealing(fieldCard);
     const loadOccurrences = value => fetchJSON(`api/detections?${new URLSearchParams({ species: bird.scientific_name, limit: PAGE_SIZE, offset: (value - 1) * PAGE_SIZE })}`);
     let occurrences = await loadOccurrences(page);
     const lastPage = Routes.pageCount(occurrences.total);
@@ -348,5 +398,5 @@ async function initDetectionDetail(route) {
 function renderEpochs(data) { const holder = $("#epochTimeline"); holder.innerHTML = data.epochs.length ? data.epochs.map((epoch, index) => `<li><time datetime="${escapeHTML(epoch.effective_at)}">${escapeHTML(String(epoch.effective_at).replace("T", " ").slice(0, 16))}</time><div><h3>${escapeHTML(epoch.reason || `Configuration epoch ${index + 1}`)}</h3><p>${escapeHTML(epoch.audio_model || "Detector recorded")} · range ${escapeHTML(epoch.range_model || "—")} · confidence ${formatConfidence(epoch.confidence_threshold)}</p></div></li>`).join("") : '<li class="empty-state">No configuration epochs recorded.</li>'; }
 async function initAbout() { try { renderEpochs(await fetchJSON("api/epochs")); } catch (error) { showError($("#epochTimeline"), error.message); } }
 
-async function init() { const legacyHref = Routes.legacyDetectionHref(window.location.pathname, window.location.search); if (legacyHref) { window.location.replace(legacyHref); return; } const documentURL = `${window.location.pathname}${window.location.search}`; $("#skipLink").href = `${documentURL}#main`; const route = Routes.parseRoute(window.location.pathname); setCurrentRoute(route); if (route.name !== "not-found") loadCommonStatus(); const initializers = { today: initToday, explore: initExplore, "species-index": initSpeciesIndex, "species-detail": () => initSpeciesDetail(route), "detection-detail": () => initDetectionDetail(route), about: initAbout, "not-found": async () => {} }; try { await initializers[route.name](); } catch (error) { console.error(error); showToast(`Archive unavailable: ${error.message}`); } }
+async function init() { const legacyHref = Routes.legacyDetectionHref(window.location.pathname, window.location.search); if (legacyHref) { window.location.replace(legacyHref); return; } const documentURL = `${window.location.pathname}${window.location.search}`; $("#skipLink").href = `${documentURL}#main`; const route = Routes.parseRoute(window.location.pathname); setCurrentRoute(route); if (route.name !== "not-found") loadCommonStatus(); const initializers = { today: initToday, explore: initExplore, cards: initCards, "species-index": initSpeciesIndex, "species-detail": () => initSpeciesDetail(route), "detection-detail": () => initDetectionDetail(route), about: initAbout, "not-found": async () => {} }; try { await initializers[route.name](); } catch (error) { console.error(error); showToast(`Archive unavailable: ${error.message}`); } }
 document.addEventListener("DOMContentLoaded", init);

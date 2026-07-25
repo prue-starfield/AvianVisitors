@@ -16,6 +16,7 @@ def test_shell_declares_task_led_route_views_and_canonical_navigation():
     for view_id in (
         "viewToday",
         "viewExplore",
+        "viewCards",
         "viewSpecies",
         "viewSpeciesDetail",
         "viewDetectionDetail",
@@ -23,7 +24,7 @@ def test_shell_declares_task_led_route_views_and_canonical_navigation():
         "viewNotFound",
     ):
         assert f'id="{view_id}"' in html
-    for href in ("/birds/", "/birds/explore", "/birds/species", "/birds/about"):
+    for href in ("/birds/", "/birds/explore", "/birds/cards", "/birds/species", "/birds/about"):
         assert f'href="{href}"' in html
 
 
@@ -50,6 +51,7 @@ def test_frontend_loads_only_the_current_route_and_restores_explore_state():
     assert "history.replaceState" in app
     assert "initToday" in app
     assert "initExplore" in app
+    assert "initCards" in app
     assert "initSpeciesIndex" in app
     assert "initSpeciesDetail" in app
     assert "renderSpeciesPagination" in app
@@ -176,3 +178,32 @@ def test_species_index_and_evidence_make_uncorroborated_claims_visually_explicit
     assert ".candidate-species-section" in styles
     assert ".review-callout.model_conflict" in styles
     assert ".review-callout.uncorroborated" in styles
+
+
+def test_field_cards_are_source_grounded_accessible_and_keep_candidates_visible():
+    html = (STATIC / "index.html").read_text()
+    app = (STATIC / "app.js").read_text()
+    styles = (STATIC / "styles.css").read_text()
+    assert 'id="birdCardGallery"' in html
+    assert 'id="speciesFieldCard"' in html
+    assert "Garden rarity" in html
+    assert "rarest in this archive" in html.lower()
+    assert "Illustrated natural-history cards for every" not in html
+    assert 'fetchJSON("api/cards")' in app
+    assert "renderBirdCard" in app
+    assert "research pending" in app.lower()
+    assert "voice-first species" in app.lower()
+    assert "illustration-missing" in app
+    assert "garden_rarity_rank" in app
+    assert "independently reviewed by" in app.lower()
+    assert "fact-checked by" not in app.lower()
+    assert "bird.standing" in app
+    assert 'rel="noopener noreferrer"' in app
+    assert "escapeHTML(source.url)" in app
+    assert "sourceSectionLabel" in app
+    assert "identification & measurements" in app
+    assert 'sounds: "sounds & calls"' in app
+    assert ".field-card-grid" in styles
+    assert ".field-card" in styles
+    assert "@media(max-width:650px)" in styles
+    assert ".field-card-grid{grid-template-columns:1fr}" in styles

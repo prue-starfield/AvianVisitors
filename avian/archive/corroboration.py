@@ -22,14 +22,14 @@ _CONCLUSIONS = (
     "Perch strongly favours another species and does not support the BirdNET claim.",
     "Perch is inconclusive or disagrees; human review remains appropriate.",
 )
-_TAXON = r"[A-Za-z][A-Za-z_]*(?: [A-Za-z][A-Za-z_-]*){0,2}"
+_LABEL = r"[A-Za-z][A-Za-z_()' -]{0,119}"
 _NOTE_PATTERN = re.compile(
     rf"^(?:{'|'.join(map(re.escape, _CONCLUSIONS))}) "
     r"Claimed species rank (?P<rank>[1-9][0-9]*) of (?P<count>[1-9][0-9]*) "
     r"with score (?P<claim>[0-9]{1,3}\.[0-9])%\. Perch top results: "
-    rf"(?P<label1>{_TAXON}) (?P<score1>[0-9]{{1,3}}\.[0-9])%; "
-    rf"(?P<label2>{_TAXON}) (?P<score2>[0-9]{{1,3}}\.[0-9])%; "
-    rf"(?P<label3>{_TAXON}) (?P<score3>[0-9]{{1,3}}\.[0-9])%\. "
+    rf"(?P<label1>{_LABEL}) (?P<score1>[0-9]{{1,3}}\.[0-9])%; "
+    rf"(?P<label2>{_LABEL}) (?P<score2>[0-9]{{1,3}}\.[0-9])%; "
+    rf"(?P<label3>{_LABEL}) (?P<score3>[0-9]{{1,3}}\.[0-9])%\. "
     r"Scores are independent classifier outputs, not calibrated probabilities\.$"
 )
 
@@ -177,8 +177,6 @@ def interpret_result(
     if rank < 1 or count != EXPECTED_LABEL_COUNT or rank > count or len(top) < 3:
         raise ValueError("invalid Perch inference result")
     labels = tuple(str(item[0]) for item in top[:3])
-    if any(not re.fullmatch(_TAXON, label) for label in labels):
-        raise ValueError("invalid Perch top label")
     _validate_taxa(labels, allowed_labels)
     claim_label = result.get("claim_label")
     if claim_label is not None:

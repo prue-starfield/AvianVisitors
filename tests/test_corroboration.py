@@ -26,10 +26,18 @@ WOOD_THRUSH_NOTE = (
     "Turdus migratorius 5.3%. Scores are independent classifier outputs, "
     "not calibrated probabilities."
 )
+GOLDFINCH_KEYBOARD_NOTE = (
+    "Perch independently supports the BirdNET species claim. "
+    "Claimed species rank 1 of 14795 with score 62.6%. "
+    "Perch top results: Spinus tristis 62.6%; Tringa glareola 5.1%; "
+    "Keyboard_(musical) 2.4%. Scores are independent classifier outputs, "
+    "not calibrated probabilities."
+)
 PINNED_LABELS = {
     "Pandion haliaetus", "Icterus galbula", "Pyrrhula pyrrhula",
     "Catharus fuscescens", "Calcarius lapponicus", "Plectrophenax nivalis",
     "Hylocichla mustelina", "Vermivora cyanoptera", "Turdus migratorius",
+    "Spinus tristis", "Tringa glareola", "Keyboard_(musical)",
 }
 
 
@@ -194,6 +202,48 @@ def test_new_review_result_and_historical_backfill_use_identical_policy():
     assert fresh.claim_rank == historical.claim_rank == 2
     assert fresh.top_label == historical.top_label == "Icterus galbula"
     assert fresh.top_score_provenance == "live_model_output_exact"
+
+
+def test_pinned_environmental_sound_label_does_not_block_perch_review():
+    result = {
+        "claim_label": "Spinus tristis",
+        "claim_score": 0.625779,
+        "claim_rank": 1,
+        "label_count": 14795,
+        "top": [
+            ("Spinus tristis", 0.625779),
+            ("Tringa glareola", 0.050511),
+            ("Keyboard_(musical)", 0.024457),
+        ],
+    }
+
+    fresh = corroboration.interpret_result(result, PINNED_LABELS)
+    historical = corroboration.interpret_review(
+        0.625779, GOLDFINCH_KEYBOARD_NOTE, PINNED_LABELS,
+        claim_label="Spinus tristis",
+    )
+
+    assert fresh.outcome == historical.outcome == "corroborated"
+    assert fresh.top_label == historical.top_label == "Spinus tristis"
+
+
+def test_fresh_result_rejects_grammar_valid_unpinned_top_label():
+    result = {
+        "claim_label": "Spinus tristis",
+        "claim_score": 0.625779,
+        "claim_rank": 1,
+        "label_count": 14795,
+        "top": [
+            ("Spinus tristis", 0.625779),
+            ("Tringa glareola", 0.050511),
+            ("Keyboard_(musical)", 0.024457),
+        ],
+    }
+
+    with pytest.raises(ValueError, match="pinned taxonomy"):
+        corroboration.interpret_result(
+            result, PINNED_LABELS - {"Keyboard_(musical)"},
+        )
 
 
 @pytest.mark.parametrize(

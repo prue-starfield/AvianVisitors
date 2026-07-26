@@ -207,3 +207,50 @@ def test_field_cards_are_source_grounded_accessible_and_keep_candidates_visible(
     assert ".field-card" in styles
     assert "@media(max-width:650px)" in styles
     assert ".field-card-grid{grid-template-columns:1fr}" in styles
+
+
+def test_field_cards_use_a_physical_card_hierarchy_and_progressive_disclosure():
+    result = run_app_behavior("""
+const bird = {
+  standing: 'corroborated', slug: 'wood-thrush', art_slug: 'hylocichla-mustelina',
+  common_name: 'Wood Thrush', scientific_name: 'Hylocichla mustelina',
+  detections: 19, days_heard: 4, garden_rarity_rank: 21, review_counts: {},
+  bird_card: {
+    research_status: 'verified', catalogue_version: 'test-v1', reviewers: ['one', 'two'], sources: [],
+    facts: {
+      habitat: {value: 'Deciduous woodland.'}, diet: {value: 'Insects and berries.'},
+      wingspan_cm: {min: 30, max: 34}, length_cm: {min: 19, max: 21}, clutch_size: {min: 3, max: 4},
+      nest: {type: 'cup', value: 'A compact cup in a tree.'},
+      migration: {category: 'long-distance', value: 'Migrates mostly at night.'},
+      conservation: {system: 'IUCN Red List', status: 'Least Concern', assessed_at: '2020'},
+      fact: {value: 'Known for its flute-like song.'}, taxonomy_note: null
+    }
+  }
+};
+const gallery = renderBirdCard(bird, false);
+const detailed = renderBirdCard(bird, true);
+for (const marker of ['field-card-masthead', 'field-card-portrait', 'card-stat-rail', 'card-field-notes']) {
+  if (!gallery.includes(marker)) throw new Error('missing ' + marker);
+}
+if (!gallery.includes('<details class="card-field-notes">')) throw new Error('gallery notes are not collapsed');
+if (!detailed.includes('<details class="card-field-notes" open>')) throw new Error('species-page notes are not expanded');
+if (!gallery.includes('Open field notes')) throw new Error('gallery disclosure lacks a clear action');
+""")
+    assert result.returncode == 0, result.stderr
+
+    styles = (STATIC / "styles.css").read_text()
+    assert re.search(r"\.field-card\{[^}]*min-height:", styles)
+    assert re.search(r"\.field-card\{[^}]*border-radius:", styles)
+    assert ".field-card-portrait" in styles
+    assert ".card-stat-rail" in styles
+    assert "-webkit-line-clamp" in styles
+
+
+def test_field_card_shell_does_not_clip_progressively_disclosed_content():
+    styles = (STATIC / "styles.css").read_text()
+    rule = re.search(r"\.field-card\{([^}]*)\}", styles)
+    assert rule is not None
+    compact = rule.group(1).replace(" ", "")
+    assert "overflow:hidden" not in compact
+    assert "aspect-ratio:" not in compact
+    assert "min-height:" in compact

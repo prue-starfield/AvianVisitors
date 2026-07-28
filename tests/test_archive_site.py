@@ -197,6 +197,19 @@ def test_summary_and_today_share_calendar_day_policy(archive_site):
     assert today["species"][0]["detections"] == 2
 
 
+def test_empty_archive_summary_reports_zero_accepted_recognitions(tmp_path):
+    db_path = tmp_path / "empty.sqlite3"
+    with sqlite3.connect(db_path) as conn:
+        sync_archive.initialise_archive(conn)
+        conn.commit()
+
+    summary = site.get_summary(db_path)
+    assert summary["totals"]["detections"] == 0
+    assert summary["totals"]["species"] == 0
+    assert summary["today"]["detections"] == 0
+    assert summary["today"]["species"] == 0
+
+
 def test_species_aggregation_uses_scientific_taxon_and_newest_common_name(archive_site):
     _, db_path = archive_site
     today = site.now_local().date().isoformat()
@@ -232,7 +245,7 @@ def test_cards_api_orders_rarest_first_and_species_detail_includes_same_card(arc
 
     status, _, payload = get_json(base + "/api/cards")
     assert status == 200
-    assert payload["rarity_method"] == "garden-days-then-recognitions-v1"
+    assert payload["rarity_method"] == "accepted-garden-days-then-recognitions-v2"
     assert [card["common_name"] for card in payload["cards"]] == [
         "Future Bird", "Northern Cardinal", "American Robin",
     ]
@@ -408,6 +421,83 @@ def test_species_and_detection_apis_expose_versioned_corroboration_standing(arch
     assert summary["totals"]["uncorroborated_species"] == 2
 
 
+def test_model_conflicts_remain_visible_evidence_but_do_not_count_as_recognitions(
+    archive_site,
+):
+    base, db_path = archive_site
+    today = site.now_local().date().isoformat()
+    with sqlite3.connect(db_path) as conn:
+        insert_interpretation(
+            conn, "a" * 64, "model_conflict", 0.02, 12,
+            "Catharus fuscescens", 0.48,
+        )
+        insert_interpretation(
+            conn, "c" * 64, "model_conflict", 0.01, 20,
+            "Spinus tristis", 0.51,
+        )
+        conn.commit()
+
+    summary = get_json(base + "/api/summary")[2]
+    assert summary["totals"]["detections"] == 1
+    assert summary["totals"]["species"] == 1
+    assert summary["today"] == {
+        "detections": 1,
+        "species": 1,
+        "date": today,
+    }
+    assert summary["trend"]["last_7"] == 1
+
+    today_payload = get_json(base + "/api/today")[2]
+    assert [(row["common_name"], row["detections"]) for row in today_payload["species"]] == [
+        ("American Robin", 1),
+    ]
+
+    activity = get_json(base + "/api/activity?days=365")[2]
+    assert sum(row["detections"] for row in activity["daily"]) == 1
+    assert sum(row["detections"] for row in activity["by_hour"]) == 1
+
+    species = get_json(base + "/api/species")[2]["species"]
+    by_name = {row["common_name"]: row for row in species}
+    assert by_name["American Robin"]["detections"] == 1
+    assert by_name["American Robin"]["days_heard"] == 1
+    assert by_name["American Robin"]["best_confidence"] == 0.94
+    assert by_name["American Robin"]["mean_confidence"] == 0.94
+    assert by_name["American Robin"]["review_counts"]["model_conflict"] == 1
+    assert by_name["Northern Cardinal"]["detections"] == 0
+    assert by_name["Northern Cardinal"]["days_heard"] == 0
+    assert by_name["Northern Cardinal"]["first_heard"] is None
+    assert by_name["Northern Cardinal"]["last_heard"] is None
+    assert by_name["Northern Cardinal"]["review_counts"]["model_conflict"] == 1
+
+    robin_slug = canonical_slug("Turdus migratorius")
+    robin = get_json(base + f"/api/species/{robin_slug}")[2]["species"]
+    assert robin["detections"] == 1
+    assert robin["days_heard"] == 1
+    assert robin["best_confidence"] == 0.94
+    assert robin["mean_confidence"] == 0.94
+    assert robin["review_counts"]["model_conflict"] == 1
+
+    seasonality = get_json(base + "/api/seasonality")[2]
+    assert sum(row["detections"] for row in seasonality["by_species_month"]) == 1
+    assert sum(row["detections"] for row in seasonality["timeline"]) == 1
+    assert sum(row["species"] for row in seasonality["timeline"]) == 1
+
+    conflicted = get_json(base + "/api/detections?review=model_conflict")[2]
+    assert conflicted["total"] == 2
+    assert {row["common_name"] for row in conflicted["detections"]} == {
+        "American Robin", "Northern Cardinal",
+    }
+
+    cards = get_json(base + "/api/cards")[2]
+    assert cards["rarity_method"] == "accepted-garden-days-then-recognitions-v2"
+    assert "Model-conflict candidates remain visible but contribute zero" in cards[
+        "rarity_description"
+    ]
+    card_by_name = {card["common_name"]: card for card in cards["cards"]}
+    assert card_by_name["Northern Cardinal"]["detections"] == 0
+    assert card_by_name["Northern Cardinal"]["days_heard"] == 0
+
+
 def test_public_surfaces_share_one_fail_closed_interpretation_boundary(archive_site):
     base, db_path = archive_site
     before = get_json(base + "/api/summary")[2]["totals"]
@@ -460,6 +550,109 @@ def test_public_surfaces_share_one_fail_closed_interpretation_boundary(archive_s
     }
     after = get_json(base + "/api/summary")[2]["totals"]
     assert after["corroborated_species"] == before["corroborated_species"]
+
+
+def test_mismatched_interpretation_score_fails_closed_on_every_public_surface(
+    archive_site,
+):
+    base, db_path = archive_site
+    before = get_json(base + "/api/summary")[2]["totals"]["detections"]
+    did = "8" * 64
+    with sqlite3.connect(db_path) as conn:
+        insert_detection(
+            conn, did, "2026-07-24", "09:30:00", "Pandion haliaetus",
+            "Mismatched Osprey", 0.81,
+        )
+        conn.execute(
+            "INSERT INTO reviews VALUES (?,?,?,?,?,?,?)",
+            (
+                did, "uncertain", "reviewer", corroboration.PERCH_MODEL_NAME,
+                0.01, "review note", "2026-07-24T13:00:00+00:00",
+            ),
+        )
+        conn.execute(
+            """INSERT INTO review_interpretations
+               (detection_id,policy_version,outcome,claim_score,claim_rank,
+                label_count,top_label,top_score,top_score_provenance,interpreted_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (
+                did, corroboration.POLICY_VERSION, "model_conflict", 0.02, 8,
+                14795, "Catharus fuscescens", 0.48, "live_model_output_exact",
+                "2026-07-24T13:00:00+00:00",
+            ),
+        )
+        conn.commit()
+
+    detail = get_json(base + f"/api/detections/{did}")[2]["detection"]
+    assert detail["review_status"] == "pending"
+    assert detail["review_policy_version"] is None
+
+    conflicted = get_json(
+        base + "/api/detections?q=Mismatched&review=model_conflict"
+    )[2]
+    assert conflicted["total"] == 0
+    assert conflicted["detections"] == []
+
+    pending = get_json(base + "/api/detections?q=Mismatched&review=pending")[2]
+    assert pending["total"] == 1
+    assert pending["detections"][0]["review_status"] == "pending"
+
+    osprey = next(
+        item for item in get_json(base + "/api/species")[2]["species"]
+        if item["scientific_name"] == "Pandion haliaetus"
+    )
+    assert osprey["detections"] == 1
+    assert osprey["review_counts"] == {
+        "corroborated": 0,
+        "uncorroborated": 0,
+        "model_conflict": 0,
+        "pending": 1,
+        "unreviewed": 0,
+    }
+    after = get_json(base + "/api/summary")[2]["totals"]["detections"]
+    assert after == before + 1
+
+
+def test_interpretation_from_wrong_source_model_fails_closed(archive_site):
+    base, db_path = archive_site
+    before = get_json(base + "/api/summary")[2]["totals"]["detections"]
+    did = "7" * 64
+    with sqlite3.connect(db_path) as conn:
+        insert_detection(
+            conn, did, "2026-07-24", "09:45:00", "Pandion haliaetus",
+            "Wrong-model Osprey", 0.81,
+        )
+        conn.execute(
+            "INSERT INTO reviews VALUES (?,?,?,?,?,?,?)",
+            (
+                did, "uncertain", "reviewer", "Some other classifier",
+                0.02, "review note", "2026-07-24T13:00:00+00:00",
+            ),
+        )
+        conn.execute(
+            """INSERT INTO review_interpretations
+               (detection_id,policy_version,outcome,claim_score,claim_rank,
+                label_count,top_label,top_score,top_score_provenance,interpreted_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (
+                did, corroboration.POLICY_VERSION, "model_conflict", 0.02, 8,
+                14795, "Catharus fuscescens", 0.48, "live_model_output_exact",
+                "2026-07-24T13:00:00+00:00",
+            ),
+        )
+        conn.commit()
+
+    detail = get_json(base + f"/api/detections/{did}")[2]["detection"]
+    assert detail["review_status"] == "pending"
+    assert detail["review_policy_version"] is None
+    assert get_json(
+        base + "/api/detections?q=Wrong-model&review=model_conflict"
+    )[2]["total"] == 0
+    assert get_json(base + "/api/detections?q=Wrong-model&review=pending")[2][
+        "total"
+    ] == 1
+    after = get_json(base + "/api/summary")[2]["totals"]["detections"]
+    assert after == before + 1
 
 
 def test_species_detail_endpoint_rejects_invalid_or_missing_slug(archive_site):

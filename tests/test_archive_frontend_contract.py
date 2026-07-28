@@ -171,6 +171,8 @@ def test_species_index_and_evidence_make_uncorroborated_claims_visually_explicit
     assert 'bird.standing !== "corroborated"' in app
     assert 'bird.days_heard === 1 ? "day" : "days"' in app
     assert 'bird.detections === 1 ? "recognition" : "recognitions"' in app
+    assert "accepted recognition" in app.lower()
+    assert "model-conflict candidate" in app.lower()
     assert "model_conflict" in app
     assert "rank #${formatNumber(item.review_rank)}" in app
     assert "model score—not probability" in app

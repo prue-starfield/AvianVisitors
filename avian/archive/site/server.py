@@ -74,7 +74,13 @@ REVIEW_INTERPRETATION_JOIN_SQL = (
     f"AND i.policy_version='{PUBLIC_REVIEW_POLICY_VERSION}' "
     "AND valid_current_interpretation(i.outcome,i.claim_score,i.claim_rank,"
     "i.label_count,i.top_label,i.top_score,i.top_score_provenance)=1"
+    " AND EXISTS (SELECT 1 FROM reviews interpretation_review "
+    "WHERE interpretation_review.detection_id=i.detection_id "
+    f"AND interpretation_review.review_model='{PUBLIC_REVIEW_MODEL}' "
+    "AND interpretation_review.review_score BETWEEN 0.0 AND 1.0 "
+    "AND interpretation_review.review_score=i.claim_score)"
 )
+COUNTABLE_RECOGNITION_SQL = "(i.outcome IS NULL OR i.outcome <> 'model_conflict')"
 PUBLIC_AUDIO_QUALITY_ALGORITHM = "frame-level-percentiles-v1"
 PERCH_LABELS_PATH = (
     Path.home() / "Library/Application Support/AvianVisitorsArchive/perch/assets/labels.csv"
@@ -872,13 +878,21 @@ def get_summary(db_path: Path) -> dict[str, Any]:
     previous_end = (now_local().date() - dt.timedelta(days=7)).isoformat()
     with db_connect(db_path) as db:
         totals = dict(db.execute(
-            """SELECT count(*) AS detections,
-                      count(DISTINCT scientific_name) AS species,
-                      count(DISTINCT date) AS days_listening,
-                      min(observed_at_local) AS first_record,
-                      max(observed_at_local) AS latest_record,
-                      sum(audio_sha256 IS NOT NULL) AS clips_preserved
-               FROM detections WHERE confidence BETWEEN ? AND 1.0""",
+            f"""SELECT
+                      count(CASE WHEN {COUNTABLE_RECOGNITION_SQL} THEN 1 END)
+                        AS detections,
+                      count(DISTINCT CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.scientific_name END) AS species,
+                      count(DISTINCT CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.date END) AS days_listening,
+                      min(CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.observed_at_local END) AS first_record,
+                      max(CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.observed_at_local END) AS latest_record,
+                      sum(d.audio_sha256 IS NOT NULL) AS clips_preserved
+               FROM detections d
+               {REVIEW_INTERPRETATION_JOIN_SQL}
+               WHERE d.confidence BETWEEN ? AND 1.0""",
             (PUBLICATION_MIN_CONFIDENCE,),
         ).fetchone())
         standings = db.execute(
@@ -899,16 +913,23 @@ def get_summary(db_path: Path) -> dict[str, Any]:
         totals["corroborated_species"] = int(standings["corroborated_species"] or 0)
         totals["uncorroborated_species"] = int(standings["uncorroborated_species"] or 0)
         today_row = dict(db.execute(
-            """SELECT count(*) AS detections,
-                      count(DISTINCT scientific_name) AS species
-               FROM detections WHERE date=? AND confidence BETWEEN ? AND 1.0""",
+            f"""SELECT count(*) AS detections,
+                      count(DISTINCT d.scientific_name) AS species
+               FROM detections d
+               {REVIEW_INTERPRETATION_JOIN_SQL}
+               WHERE d.date=? AND d.confidence BETWEEN ? AND 1.0
+                 AND {COUNTABLE_RECOGNITION_SQL}""",
             (today, PUBLICATION_MIN_CONFIDENCE),
         ).fetchone())
         recent = db.execute(
-            """SELECT
-                 sum(CASE WHEN date BETWEEN ? AND ? THEN 1 ELSE 0 END) AS last_7,
-                 sum(CASE WHEN date BETWEEN ? AND ? THEN 1 ELSE 0 END) AS previous_7
-               FROM detections WHERE confidence BETWEEN ? AND 1.0""",
+            f"""SELECT
+                 sum(CASE WHEN d.date BETWEEN ? AND ?
+                           AND {COUNTABLE_RECOGNITION_SQL} THEN 1 ELSE 0 END) AS last_7,
+                 sum(CASE WHEN d.date BETWEEN ? AND ?
+                           AND {COUNTABLE_RECOGNITION_SQL} THEN 1 ELSE 0 END) AS previous_7
+               FROM detections d
+               {REVIEW_INTERPRETATION_JOIN_SQL}
+               WHERE d.confidence BETWEEN ? AND 1.0""",
             (seven_start, today, previous_start, previous_end,
              PUBLICATION_MIN_CONFIDENCE),
         ).fetchone()
@@ -939,7 +960,9 @@ def get_summary(db_path: Path) -> dict[str, Any]:
         "latest_sync": dict(sync) if sync else None,
         "policy": {
             "name": "publication-v1",
-            "description": "Accepted BirdNET detections for the local calendar day",
+            "description": (
+                "Accepted non-conflicted BirdNET recognitions for the local calendar day"
+            ),
             "minimum_confidence": PUBLICATION_MIN_CONFIDENCE,
             "timezone": "America/New_York",
             "frame_parity": True,
@@ -952,7 +975,7 @@ def get_today(db_path: Path) -> dict[str, Any]:
     today = now_local().date().isoformat()
     with db_connect(db_path) as db:
         rows = rows_dict(db.execute(
-            """SELECT d.scientific_name,
+            f"""SELECT d.scientific_name,
                       (SELECT d2.common_name FROM detections d2
                        WHERE d2.scientific_name=d.scientific_name
                          AND d2.confidence BETWEEN ? AND 1.0
@@ -963,7 +986,10 @@ def get_today(db_path: Path) -> dict[str, Any]:
                       max(d.confidence) AS best_confidence,
                       avg(d.confidence) AS mean_confidence,
                       sum(d.audio_sha256 IS NOT NULL) AS clips_preserved
-               FROM detections d WHERE d.date=? AND d.confidence BETWEEN ? AND 1.0
+               FROM detections d
+               {REVIEW_INTERPRETATION_JOIN_SQL}
+               WHERE d.date=? AND d.confidence BETWEEN ? AND 1.0
+                 AND {COUNTABLE_RECOGNITION_SQL}
                GROUP BY d.scientific_name
                ORDER BY detections DESC, common_name""",
             (PUBLICATION_MIN_CONFIDENCE, today, PUBLICATION_MIN_CONFIDENCE),
@@ -992,17 +1018,23 @@ def get_activity(db_path: Path, days: int) -> dict[str, Any]:
     start = (now_local().date() - dt.timedelta(days=days - 1)).isoformat()
     with db_connect(db_path) as db:
         daily = rows_dict(db.execute(
-            """SELECT date, count(*) AS detections,
-                      count(DISTINCT scientific_name) AS species,
-                      max(confidence) AS best_confidence
-               FROM detections WHERE date>=? AND confidence BETWEEN ? AND 1.0
-               GROUP BY date ORDER BY date""",
+            f"""SELECT d.date, count(*) AS detections,
+                      count(DISTINCT d.scientific_name) AS species,
+                      max(d.confidence) AS best_confidence
+               FROM detections d
+               {REVIEW_INTERPRETATION_JOIN_SQL}
+               WHERE d.date>=? AND d.confidence BETWEEN ? AND 1.0
+                 AND {COUNTABLE_RECOGNITION_SQL}
+               GROUP BY d.date ORDER BY d.date""",
             (start, PUBLICATION_MIN_CONFIDENCE),
         ))
         hourly = rows_dict(db.execute(
-            """SELECT CAST(substr(time,1,2) AS INTEGER) AS hour,
+            f"""SELECT CAST(substr(d.time,1,2) AS INTEGER) AS hour,
                       count(*) AS detections
-               FROM detections WHERE date>=? AND confidence BETWEEN ? AND 1.0
+               FROM detections d
+               {REVIEW_INTERPRETATION_JOIN_SQL}
+               WHERE d.date>=? AND d.confidence BETWEEN ? AND 1.0
+                 AND {COUNTABLE_RECOGNITION_SQL}
                GROUP BY hour ORDER BY hour""",
             (start, PUBLICATION_MIN_CONFIDENCE),
         ))
@@ -1018,12 +1050,18 @@ def get_species(db_path: Path) -> dict[str, Any]:
                          AND d2.confidence BETWEEN ? AND 1.0
                        ORDER BY d2.observed_at_local DESC, d2.detection_id DESC
                        LIMIT 1) AS common_name,
-                      count(*) AS detections,
-                      count(DISTINCT d.date) AS days_heard,
-                      min(d.observed_at_local) AS first_heard,
-                      max(d.observed_at_local) AS last_heard,
-                      max(d.confidence) AS best_confidence,
-                      avg(d.confidence) AS mean_confidence,
+                      count(CASE WHEN {COUNTABLE_RECOGNITION_SQL} THEN 1 END)
+                        AS detections,
+                      count(DISTINCT CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.date END) AS days_heard,
+                      min(CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.observed_at_local END) AS first_heard,
+                      max(CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.observed_at_local END) AS last_heard,
+                      max(CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.confidence END) AS best_confidence,
+                      avg(CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.confidence END) AS mean_confidence,
                       sum(CASE WHEN i.outcome='corroborated' THEN 1 ELSE 0 END)
                         AS corroborated,
                       sum(CASE WHEN i.outcome='uncorroborated' THEN 1 ELSE 0 END)
@@ -1068,10 +1106,11 @@ def get_cards(db_path: Path, catalogue: dict[str, Any]) -> dict[str, Any]:
     cards = join_bird_cards(get_species(db_path)["species"], catalogue)
     return {
         "cards": cards,
-        "rarity_method": "garden-days-then-recognitions-v1",
+        "rarity_method": "accepted-garden-days-then-recognitions-v2",
         "rarity_description": (
-            "Fewest distinct days heard, then fewest recognitions, then most "
-            "recently first heard. This is rarity in this archive, not global rarity."
+            "Fewest distinct accepted days heard, then fewest accepted recognitions, "
+            "then most recently first heard. Model-conflict candidates remain visible "
+            "but contribute zero. This is rarity in this archive, not global rarity."
         ),
         "catalogue_version": catalogue["catalogue_version"],
         "review": catalogue["review"],
@@ -1112,12 +1151,19 @@ def get_species_detail(
         if species is None:
             return None
         row = dict(db.execute(
-            f"""SELECT count(*) AS detections,
-                      count(DISTINCT d.date) AS days_heard,
-                      min(d.observed_at_local) AS first_heard,
-                      max(d.observed_at_local) AS last_heard,
-                      max(d.confidence) AS best_confidence,
-                      avg(d.confidence) AS mean_confidence,
+            f"""SELECT
+                      count(CASE WHEN {COUNTABLE_RECOGNITION_SQL} THEN 1 END)
+                        AS detections,
+                      count(DISTINCT CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.date END) AS days_heard,
+                      min(CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.observed_at_local END) AS first_heard,
+                      max(CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.observed_at_local END) AS last_heard,
+                      max(CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.confidence END) AS best_confidence,
+                      avg(CASE WHEN {COUNTABLE_RECOGNITION_SQL}
+                        THEN d.confidence END) AS mean_confidence,
                       sum(d.audio_sha256 IS NOT NULL) AS clips_preserved,
                       sum(CASE WHEN i.outcome='corroborated' THEN 1 ELSE 0 END)
                         AS corroborated,
@@ -1167,7 +1213,7 @@ def get_species_detail(
 def get_seasonality(db_path: Path) -> dict[str, Any]:
     with db_connect(db_path) as db:
         rows = rows_dict(db.execute(
-            """SELECT CAST(strftime('%m',d.date) AS INTEGER) AS calendar_month,
+            f"""SELECT CAST(strftime('%m',d.date) AS INTEGER) AS calendar_month,
                       d.scientific_name,
                       (SELECT d2.common_name FROM detections d2
                        WHERE d2.scientific_name=d.scientific_name
@@ -1177,17 +1223,23 @@ def get_seasonality(db_path: Path) -> dict[str, Any]:
                       count(*) AS detections,
                       count(DISTINCT d.date) AS days_heard,
                       count(DISTINCT substr(d.date,1,4)) AS years_observed
-               FROM detections d WHERE d.confidence BETWEEN ? AND 1.0
+               FROM detections d
+               {REVIEW_INTERPRETATION_JOIN_SQL}
+               WHERE d.confidence BETWEEN ? AND 1.0
+                 AND {COUNTABLE_RECOGNITION_SQL}
                GROUP BY calendar_month,d.scientific_name
                ORDER BY d.scientific_name,calendar_month""",
             (PUBLICATION_MIN_CONFIDENCE, PUBLICATION_MIN_CONFIDENCE),
         ))
         monthly = rows_dict(db.execute(
-            """SELECT substr(date,1,7) AS month, count(*) AS detections,
-                      count(DISTINCT scientific_name) AS species,
-                      count(DISTINCT date) AS listening_days
-               FROM detections WHERE confidence BETWEEN ? AND 1.0
-               GROUP BY substr(date,1,7) ORDER BY month""",
+            f"""SELECT substr(d.date,1,7) AS month, count(*) AS detections,
+                      count(DISTINCT d.scientific_name) AS species,
+                      count(DISTINCT d.date) AS listening_days
+               FROM detections d
+               {REVIEW_INTERPRETATION_JOIN_SQL}
+               WHERE d.confidence BETWEEN ? AND 1.0
+                 AND {COUNTABLE_RECOGNITION_SQL}
+               GROUP BY substr(d.date,1,7) ORDER BY month""",
             (PUBLICATION_MIN_CONFIDENCE,),
         ))
     return {"by_species_month": rows, "timeline": monthly}
@@ -1332,8 +1384,10 @@ def prepare_detection_rows(
         top_score = public_score(row.get("review_top_score"))
         top_label = row.get("review_top_label")
         provenance = row.get("review_top_score_provenance")
+        raw_review_model = row.get("review_model")
         valid_interpretation = (
             policy == PUBLIC_REVIEW_POLICY_VERSION
+            and raw_review_model == PUBLIC_REVIEW_MODEL
             and interpretation_claim_score == row["review_score"]
             and corroboration.valid_interpretation(
                 row.get("review_status"), interpretation_claim_score, rank,
@@ -1367,7 +1421,6 @@ def prepare_detection_rows(
         else:
             row["has_audio"] = archived
         row["audio_quality"] = public_audio_quality(row)
-        raw_review_model = row.get("review_model")
         row["review_kind"] = public_review_kind(raw_review_model)
         row["review_model"] = public_review_model(raw_review_model)
         row["notes"] = (

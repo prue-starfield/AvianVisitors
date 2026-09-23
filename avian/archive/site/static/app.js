@@ -1,7 +1,7 @@
 "use strict";
 
 const Routes = window.ListeningGardenRoutes;
-const ART_VERSION = "r2";
+const ART_VERSION = "r3"; // Rusty Blackbird exact-species artwork.
 const ART_RETRY_DELAYS_MS = [5000, 30000, 300000];
 const PAGE_SIZE = Routes.PAGE_SIZE;
 const state = { summary: null, species: [], seasonality: [], explore: null };
